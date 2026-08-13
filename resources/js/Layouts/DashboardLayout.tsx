@@ -11,12 +11,13 @@ interface DashboardLayoutProps {
     /** Page title, rendered by the page itself when it needs one. */
     header?: ReactNode;
     children: ReactNode;
+    noScroll?: boolean;
 }
 
 const GRADING_ROLES = ['instructor', 'teaching_assistant', 'course_manager', 'platform_admin', 'super_admin'];
 const SIDEBAR_KEY = 'sidebar:open';
 
-export default function DashboardLayout({ header, children }: DashboardLayoutProps) {
+export default function DashboardLayout({ header, children, noScroll = false }: DashboardLayoutProps) {
     const { auth, flash, notifications_count } = usePage<PageProps>().props;
 
     // Collapsed state persists, so the sidebar stays how the user left it.
@@ -91,7 +92,8 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
 
     const canGrade = GRADING_ROLES.includes(auth?.user?.role?.name ?? '');
     const isAdmin = ['platform_admin', 'super_admin'].includes(auth?.user?.role?.name ?? '');
-    const isTutor = ['instructor', 'course_manager', ...(['platform_admin', 'super_admin'])].includes(auth?.user?.role?.name ?? '');
+    const isTutor = ['instructor', 'course_manager'].includes(auth?.user?.role?.name ?? '');
+    const isStudent = !isAdmin && !isTutor;
     const unread = notifications_count ?? 0;
 
     const navigation = [
@@ -139,33 +141,36 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                 sidebarOpen ? 'mx-3 px-3 gap-3' : 'mx-3 justify-center'
             } ${
                 isActive(item.href, item.exact)
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
-                    : 'text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'
+                    ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-8 before:w-1 before:bg-primary-600 dark:before:bg-primary-500 before:rounded-r-full'
+                    : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200'
             }`}
         >
-            <item.icon className="w-[18px] h-[18px] shrink-0" />
+            <item.icon
+                className={`shrink-0 transition-colors ${
+                    sidebarOpen ? 'w-5 h-5' : 'w-6 h-6'
+                } ${isActive(item.href, item.exact) ? 'text-primary-600 dark:text-primary-400' : 'text-surface-400 dark:text-surface-500 group-hover:text-surface-600 dark:group-hover:text-surface-300'}`}
+                strokeWidth={isActive(item.href, item.exact) ? 2.5 : 2}
+            />
             
-            {/* The text is hidden visually and structurally when sidebar is closed to match Kaggle */}
             {sidebarOpen && (
                 <span className="flex-1 truncate">{item.name}</span>
             )}
 
-            {/* Badges */}
-            {!!item.badge && item.badge > 0 && sidebarOpen && (
-                <span className="px-1.5 py-0.5 rounded-md text-[11px] font-semibold bg-primary-600 text-white">
+            {item.badge !== undefined && item.badge > 0 && sidebarOpen && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center">
                     {item.badge > 99 ? '99+' : item.badge}
                 </span>
             )}
-            {!!item.badge && item.badge > 0 && !sidebarOpen && (
-                <span className="absolute top-2.5 right-3.5 w-2 h-2 rounded-full bg-primary-600 border border-white dark:border-surface-900" />
+            
+            {item.badge !== undefined && item.badge > 0 && !sidebarOpen && (
+                <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-surface-900"></span>
             )}
         </Link>
     );
 
     return (
-        <div className="min-h-screen bg-surface-50 dark:bg-surface-950 flex">
-            
-            {/* ── Fixed Sidebar ───────────────────────────────────── */}
+        <div className={`bg-surface-50 dark:bg-surface-950 font-sans selection:bg-primary-200 dark:selection:bg-primary-900/40 text-surface-900 dark:text-surface-100 transition-colors duration-200 ${noScroll ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+            {/* Sidebar */}
             <aside
                 className={`fixed top-0 left-0 z-40 h-full flex flex-col bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-[width,transform] duration-200 ease-in-out
                     ${sidebarOpen ? 'w-[248px]' : 'w-[72px] -translate-x-full lg:translate-x-0'}`}
@@ -190,18 +195,21 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
 
                 {/* Navigation Links */}
                 <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin overflow-x-hidden">
-                    <div className="space-y-1">{navigation.map(navLink)}</div>
+                    {isStudent && (
+                        <>
+                            <div className="space-y-1">{navigation.map(navLink)}</div>
 
-                    {/* Section Header */}
-                    <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
-                        {sidebarOpen ? (
-                            <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Your Work</p>
-                        ) : (
-                            <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
-                        )}
-                    </div>
+                            <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
+                                {sidebarOpen ? (
+                                    <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Your Work</p>
+                                ) : (
+                                    <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
+                                )}
+                            </div>
 
-                    <div className="space-y-1">{yourWork.map(navLink)}</div>
+                            <div className="space-y-1">{yourWork.map(navLink)}</div>
+                        </>
+                    )}
 
                     {/* Tutor section */}
                     {isTutor && tutorNav.length > 0 && (
@@ -256,21 +264,28 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
             )}
 
             {/* ── Main Content Area ───────────────────────────────── */}
-            <div className={`flex-1 transition-[margin] duration-200 ease-in-out ${sidebarOpen ? 'lg:ml-[248px]' : 'ml-0 lg:ml-[72px]'}`}>
+            <div className={`transition-[margin] duration-200 ease-in-out ${sidebarOpen ? 'lg:ml-[248px]' : 'ml-0 lg:ml-[72px]'} ${noScroll ? 'h-screen overflow-hidden flex flex-col' : 'flex-1'}`}>
                 
-                {/* ── Top Bar (Mobile menu toggle + Island) ───────── */}
-                <div className="fixed top-0 right-0 z-30 h-[72px] flex items-center justify-between px-4 pointer-events-none" style={{ left: sidebarOpen ? '248px' : '72px' }}>
+                {/* ── Top Bar (Mobile menu toggle + Topic + Island) ───────── */}
+                <div className="fixed top-0 right-0 z-30 h-[72px] flex items-center justify-between px-4 sm:px-6 lg:px-10 pointer-events-none transition-all duration-200" style={{ left: sidebarOpen ? '248px' : '72px' }}>
                     
-                    {/* Mobile Hamburger (Only visible on mobile when sidebar is closed) */}
-                    <div className="pointer-events-auto lg:hidden">
+                    <div className="pointer-events-auto flex items-center gap-4 min-w-0 pr-4">
+                        {/* Mobile Hamburger */}
                         {!sidebarOpen && (
                             <button
                                 onClick={toggleSidebar}
-                                className="btn-icon"
+                                className="btn-icon lg:hidden shrink-0"
                                 aria-label="Show menu"
                             >
                                 <Menu className="w-5 h-5" />
                             </button>
+                        )}
+                        
+                        {/* Page Topic / Header */}
+                        {header && (
+                            <h1 className="text-xl md:text-2xl font-bold text-surface-900 dark:text-white truncate">
+                                {header}
+                            </h1>
                         )}
                     </div>
                     
@@ -351,15 +366,12 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                 </div>
 
                 {/* ── Page Content ────────────────────────────────── */}
-                <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[88px] pb-16 overflow-x-hidden">
-                    {header && (
-                        <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-6">{header}</h1>
-                    )}
+                <div className={`max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-10 pt-[88px] overflow-x-hidden ${noScroll ? 'flex-1 flex flex-col min-h-0 pb-4' : 'pb-16'}`}>
 
                     {message && !dismissed && (
                         <div
                             role="status"
-                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl mb-6 text-sm border ${
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl mb-6 text-sm border shrink-0 ${
                                 tone === 'error'
                                     ? 'bg-red-50 text-red-700 border-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900'
                                     : tone === 'warning'
