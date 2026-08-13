@@ -6,7 +6,9 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,6 +50,10 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_enabled' => 'boolean',
+            // Encrypted at rest; both are also in $hidden so they can never be
+            // serialised into a response.
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
             'preferences' => 'array',
             'last_login_at' => 'datetime',
         ];
@@ -95,12 +101,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Submission::class);
     }
 
-    public function stat(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function stat(): HasOne
     {
         return $this->hasOne(UserStat::class);
     }
 
-    public function badges(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function badges(): BelongsToMany
     {
         return $this->belongsToMany(Badge::class, 'user_badges')->withPivot('earned_at');
     }
@@ -130,6 +136,20 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isStudent(): bool
     {
         return $this->hasRole(Role::STUDENT);
+    }
+
+    /**
+     * Privileged roles are required to hold 2FA (Plan §7.1) — these are the
+     * accounts that can publish content, change roles, or issue refunds.
+     */
+    public function requiresTwoFactor(): bool
+    {
+        return $this->hasAnyRole([
+            Role::INSTRUCTOR,
+            Role::COURSE_MANAGER,
+            Role::PLATFORM_ADMIN,
+            Role::SUPER_ADMIN,
+        ]);
     }
 
     public function isSuperAdmin(): bool

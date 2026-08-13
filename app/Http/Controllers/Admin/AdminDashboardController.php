@@ -34,6 +34,7 @@ class AdminDashboardController extends Controller
         // New signups over last 30 days
         $signups = collect(range(29, 0))->map(function (int $daysAgo) use ($now) {
             $date = $now->copy()->subDays($daysAgo)->toDateString();
+
             return [
                 'date' => $date,
                 'count' => User::whereDate('created_at', $date)->count(),

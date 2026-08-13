@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\LiveSession;
 use App\Models\Progress;
 use App\Models\Submission;
+use App\Services\LevelingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -41,6 +42,7 @@ class DashboardController extends Controller
         $completedLessons = $enrollments->sum('completed_lessons_count');
 
         $userStat = $user->stat()->first();
+        $leveling = app(LevelingService::class);
 
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -54,10 +56,21 @@ class DashboardController extends Controller
                 'progress_percentage' => $totalLessons > 0
                     ? (int) round($completedLessons / $totalLessons * 100)
                     : 0,
-                'level' => $userStat?->level ?? 1,
-                'xp' => $userStat?->xp ?? 0,
+                'level' => (int) ($userStat?->level ?? 1),
+                'xp' => (int) ($userStat?->xp ?? 0),
+                'xp_to_next_level' => $leveling->xpToNextLevel((int) ($userStat?->xp ?? 0)),
             ],
-            'streak' => $this->streak($enrollmentIds),
+            'streak' => [
+                'current' => (int) ($userStat?->current_streak ?? 0),
+                'longest' => (int) ($userStat?->longest_streak ?? 0),
+            ],
+            'badges' => $user->badges()->orderByPivot('earned_at', 'desc')->get()
+                ->map(fn ($badge) => [
+                    'id' => $badge->id,
+                    'name' => $badge->name,
+                    'description' => $badge->description,
+                    'earned_at' => $badge->pivot->earned_at,
+                ])->values(),
             'activity' => $this->activity($enrollmentIds),
             'enrollments' => $enrollments->map(fn ($e) => [
                 'id' => $e->id,
@@ -75,43 +88,6 @@ class DashboardController extends Controller
                 ->take(3)
                 ->get(),
         ]);
-    }
-
-    /**
-     * Current and longest run of consecutive days with a completed lesson.
-     *
-     * @return array{current: int, longest: int}
-     */
-    private function streak(Collection $enrollmentIds): array
-    {
-        $days = Progress::whereIn('enrollment_id', $enrollmentIds)
-            ->where('status', Progress::STATUS_COMPLETED)
-            ->whereNotNull('completed_at')
-            ->pluck('completed_at')
-            ->map(fn ($date) => Carbon::parse($date)->toDateString())
-            ->unique()
-            ->sort()
-            ->values();
-
-        if ($days->isEmpty()) {
-            return ['current' => 0, 'longest' => 0];
-        }
-
-        $longest = 1;
-        $run = 1;
-
-        foreach ($days->slice(1) as $index => $day) {
-            $previous = Carbon::parse($days[$index]);
-
-            $run = Carbon::parse($day)->diffInDays($previous) === 1 ? $run + 1 : 1;
-            $longest = max($longest, $run);
-        }
-
-        // The current streak only counts if it reaches today or yesterday.
-        $lastDay = Carbon::parse($days->last());
-        $current = $lastDay->diffInDays(now()->startOfDay()) <= 1 ? $run : 0;
-
-        return ['current' => $current, 'longest' => $longest];
     }
 
     /**

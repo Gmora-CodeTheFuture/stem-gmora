@@ -3,8 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\ExperienceEarned;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Services\LevelingService;
 
 class AwardExperience
 {
@@ -13,7 +12,7 @@ class AwardExperience
     /**
      * Create the event listener.
      */
-    public function __construct(\App\Services\LevelingService $levelingService)
+    public function __construct(LevelingService $levelingService)
     {
         $this->levelingService = $levelingService;
     }

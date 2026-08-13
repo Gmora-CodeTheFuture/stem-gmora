@@ -3,17 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\User;
+use App\Services\CourseContentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CourseManagementController extends Controller
 {
+    public function __construct(private readonly CourseContentService $content) {}
+
     public function index(Request $request): Response
     {
         $query = Course::with('instructor:id,full_name')
@@ -74,10 +77,15 @@ class CourseManagementController extends Controller
             'thumbnail_url' => ['nullable', 'string'],
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']);
+        $validated['slug'] = $this->content->uniqueSlug($validated['title']);
         $validated['status'] = Course::STATUS_DRAFT;
 
         $course = Course::create($validated);
+
+        AuditLog::record('course.created', 'course', $course->id, [
+            'title' => $course->title,
+            'instructor_id' => $course->instructor_id,
+        ], $request->user()->id);
 
         return Redirect::route('admin.courses.index')
             ->with('success', "Course \"{$course->title}\" created.");
@@ -87,7 +95,8 @@ class CourseManagementController extends Controller
     {
         $course->load([
             'instructor:id,full_name,email',
-            'modules.lessons',
+            'modules' => fn ($q) => $q->orderBy('order_index'),
+            'modules.lessons' => fn ($q) => $q->orderBy('order_index'),
             'enrollments' => fn ($q) => $q->latest()->take(10),
             'enrollments.user:id,full_name,email',
         ]);
@@ -125,16 +134,27 @@ class CourseManagementController extends Controller
             'thumbnail_url' => ['nullable', 'string'],
         ]);
 
+        $previousInstructor = $course->instructor_id;
+
         $course->update($validated);
+
+        if ($previousInstructor !== $course->instructor_id) {
+            AuditLog::record('course.instructor_changed', 'course', $course->id, [
+                'from' => $previousInstructor,
+                'to' => $course->instructor_id,
+            ], $request->user()->id);
+        }
 
         return Redirect::route('admin.courses.index')
             ->with('success', "Course \"{$course->title}\" updated.");
     }
 
-    public function destroy(Course $course): RedirectResponse
+    public function destroy(Request $request, Course $course): RedirectResponse
     {
         $title = $course->title;
-        $course->delete();
+        $this->content->deleteCourse($course);
+
+        AuditLog::record('course.deleted', 'course', $course->id, ['title' => $title], $request->user()->id);
 
         return Redirect::route('admin.courses.index')
             ->with('success', "Course \"{$title}\" deleted.");
@@ -146,7 +166,14 @@ class CourseManagementController extends Controller
             'status' => ['required', 'in:draft,pending_review,published,archived'],
         ]);
 
+        $previous = $course->status;
         $course->update($validated);
+        $this->content->syncCounters($course);
+
+        AuditLog::record('course.status_changed', 'course', $course->id, [
+            'from' => $previous,
+            'to' => $validated['status'],
+        ], $request->user()->id);
 
         return Redirect::back()
             ->with('success', "Course status changed to \"{$validated['status']}\".");

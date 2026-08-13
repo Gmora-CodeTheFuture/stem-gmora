@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\BadgeManagementController;
+use App\Http\Controllers\Admin\CourseManagementController;
+use App\Http\Controllers\Admin\EnrollmentManagementController;
+use App\Http\Controllers\Admin\PaymentManagementController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CertificateController;
@@ -12,17 +18,12 @@ use App\Http\Controllers\MyCoursesController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
-use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Admin\CourseManagementController;
-use App\Http\Controllers\Admin\EnrollmentManagementController;
-use App\Http\Controllers\Admin\PaymentManagementController;
-use App\Http\Controllers\Admin\BadgeManagementController;
-use App\Http\Controllers\Tutor\TutorDashboardController;
+use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\Tutor\CourseBuilderController;
-use App\Http\Controllers\Tutor\ModuleController;
 use App\Http\Controllers\Tutor\LessonController;
+use App\Http\Controllers\Tutor\ModuleController;
 use App\Http\Controllers\Tutor\StudentController;
+use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Models\Certificate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -32,11 +33,14 @@ use Inertia\Inertia;
 | Marketing (Public) Routes
 |--------------------------------------------------------------------------
 */
+// Signed-in users go straight to work; visitors get the marketing site, which
+// is what every public link (About, Pricing, Contact, course pages) hangs off.
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
-    return redirect()->route('login');
+
+    return Inertia::render('Welcome');
 })->name('home');
 
 Route::get('/courses', [CourseCatalogController::class, 'index'])->name('courses.index');
@@ -142,6 +146,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Account security: 2FA status and active devices.
+    Route::get('/profile/security', [SecurityController::class, 'show'])->name('profile.security');
+    Route::delete('/profile/sessions/{session}', [SecurityController::class, 'destroySession'])
+        ->name('profile.sessions.destroy');
+    Route::delete('/profile/sessions', [SecurityController::class, 'destroyOtherSessions'])
+        ->name('profile.sessions.destroy-others');
 });
 
 /*

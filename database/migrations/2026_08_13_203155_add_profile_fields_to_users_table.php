@@ -31,7 +31,7 @@ return new class extends Migration
                 'github_url',
                 'linkedin_url',
                 'website_url',
-                'is_public'
+                'is_public',
             ]);
         });
     }

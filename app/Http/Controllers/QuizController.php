@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ExperienceEarned;
 use App\Models\AuditLog;
 use App\Models\Enrollment;
 use App\Models\Progress;
@@ -156,6 +157,15 @@ class QuizController extends Controller
             'score' => (float) $attempt->score,
         ], $attempt->user_id);
 
+        // XP for a pass, and only for the first passing attempt.
+        if ($this->grading->hasPassed($attempt->quiz, $attempt) && $this->isFirstPass($attempt)) {
+            ExperienceEarned::dispatch(
+                $request->user(),
+                (int) config('gamification.xp.quiz_passed'),
+                'quiz_passed',
+            );
+        }
+
         return redirect()->route('quiz.result', $attempt);
     }
 
@@ -227,6 +237,18 @@ class QuizController extends Controller
     }
 
     /** @return Collection<int, QuizAttempt> */
+    /** True when this is the earliest passing attempt for the quiz. */
+    private function isFirstPass(QuizAttempt $attempt): bool
+    {
+        $threshold = (float) $attempt->quiz->passing_score;
+
+        return ! QuizAttempt::where('user_id', $attempt->user_id)
+            ->where('quiz_id', $attempt->quiz_id)
+            ->whereKeyNot($attempt->id)
+            ->where('score', '>=', $threshold)
+            ->exists();
+    }
+
     private function attemptsFor(Request $request, Quiz $quiz)
     {
         return QuizAttempt::where('user_id', $request->user()->id)

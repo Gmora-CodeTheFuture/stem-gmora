@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ExperienceEarned;
 use App\Jobs\GenerateCertificate;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -50,7 +51,7 @@ class LearningController extends Controller
         $allLessons = $course->modules->flatMap->lessons;
         $current = $lesson?->is_published ? $lesson : null;
 
-        if (!$current) {
+        if (! $current) {
             $incomplete = $allLessons->first(function ($l) use ($progress) {
                 return $progress->get($l->id)?->status !== 'completed';
             });
@@ -97,11 +98,22 @@ class LearningController extends Controller
         $watched = max((float) $validated['watch_percentage'], (float) ($progress->watch_percentage ?? 0));
         $isComplete = ($validated['completed'] ?? false) || $watched >= 90;
 
+        $wasComplete = $progress->exists && $progress->status === Progress::STATUS_COMPLETED;
+
         $progress->fill([
             'watch_percentage' => $watched,
             'status' => $isComplete ? Progress::STATUS_COMPLETED : Progress::STATUS_IN_PROGRESS,
             'completed_at' => $isComplete ? ($progress->completed_at ?? now()) : null,
         ])->save();
+
+        // XP is granted once per lesson, on the transition to complete.
+        if ($isComplete && ! $wasComplete) {
+            ExperienceEarned::dispatch(
+                $request->user(),
+                (int) config('gamification.xp.lesson_completed'),
+                'lesson_completed',
+            );
+        }
 
         $this->rollUpCourseCompletion($enrollment);
 
@@ -132,6 +144,14 @@ class LearningController extends Controller
         ]);
 
         GenerateCertificate::dispatch($enrollment->id);
+
+        if ($enrollment->user) {
+            ExperienceEarned::dispatch(
+                $enrollment->user,
+                (int) config('gamification.xp.course_completed'),
+                'course_completed',
+            );
+        }
     }
 
     private function completionPercentage(Enrollment $enrollment, int $totalLessons): float

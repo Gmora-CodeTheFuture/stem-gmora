@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Tutor;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Course;
+use App\Services\CourseContentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CourseBuilderController extends Controller
 {
+    public function __construct(private readonly CourseContentService $content) {}
+
     /**
      * Only show courses owned by the authenticated tutor.
      */
@@ -49,7 +52,7 @@ class CourseBuilderController extends Controller
         ]);
 
         $validated['instructor_id'] = $request->user()->id;
-        $validated['slug'] = Str::slug($validated['title']);
+        $validated['slug'] = $this->content->uniqueSlug($validated['title']);
         $validated['status'] = Course::STATUS_DRAFT;
 
         $course = Course::create($validated);
@@ -63,9 +66,17 @@ class CourseBuilderController extends Controller
         $this->authorizeTutor($request, $course);
 
         $course->load([
-            'modules.lessons' => fn ($q) => $q->withoutGlobalScopes(),
             'modules' => fn ($q) => $q->orderBy('order_index'),
+            'modules.lessons' => fn ($q) => $q->orderBy('order_index'),
+            'modules.lessons.liveSession',
+            'modules.lessons.quiz:id,lesson_id,title,is_published',
         ]);
+
+        // `content_ref` is hidden from every student-facing response; the tutor
+        // who owns the course is the one audience that must see it to edit it.
+        $course->modules->each(
+            fn ($module) => $module->lessons->each->makeVisible('content_ref')
+        );
 
         return Inertia::render('Tutor/Courses/Edit', [
             'course' => $course,
@@ -98,7 +109,9 @@ class CourseBuilderController extends Controller
         $this->authorizeTutor($request, $course);
 
         $title = $course->title;
-        $course->delete();
+        $this->content->deleteCourse($course);
+
+        AuditLog::record('course.deleted', 'course', $course->id, ['title' => $title], $request->user()->id);
 
         return Redirect::route('tutor.courses.index')
             ->with('success', "Course \"{$title}\" deleted.");
@@ -113,11 +126,18 @@ class CourseBuilderController extends Controller
         ]);
 
         // Tutors can only submit for review or unpublish — only admins can directly publish
-        if ($validated['status'] === 'published' && !$request->user()->isAdmin()) {
+        if ($validated['status'] === 'published' && ! $request->user()->isAdmin()) {
             $validated['status'] = 'pending_review';
         }
 
+        $previous = $course->status;
         $course->update($validated);
+        $this->content->syncCounters($course);
+
+        AuditLog::record('course.status_changed', 'course', $course->id, [
+            'from' => $previous,
+            'to' => $validated['status'],
+        ], $request->user()->id);
 
         return Redirect::back()
             ->with('success', "Course status changed to \"{$validated['status']}\".");
@@ -129,7 +149,7 @@ class CourseBuilderController extends Controller
     private function authorizeTutor(Request $request, Course $course): void
     {
         $user = $request->user();
-        if (!$user->isAdmin() && $course->instructor_id !== $user->id) {
+        if (! $user->isAdmin() && $course->instructor_id !== $user->id) {
             abort(403, 'You can only manage your own courses.');
         }
     }

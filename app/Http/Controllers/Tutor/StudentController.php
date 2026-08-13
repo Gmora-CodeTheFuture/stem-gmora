@@ -24,10 +24,14 @@ class StudentController extends Controller
             ->latest('enrolled_at')
             ->paginate(20);
 
-        // Add percentage to each enrollment
-        $totalLessons = $course->total_lessons ?: 1;
+        // Percentages use the same denominator as the student's own view, and
+        // are capped so an unpublished-lesson race cannot show 120%.
+        $totalLessons = $course->total_lessons;
         $enrollments->getCollection()->transform(function ($enrollment) use ($totalLessons) {
-            $enrollment->percentage = (int) round($enrollment->completed_lessons_count / $totalLessons * 100);
+            $enrollment->percentage = $totalLessons > 0
+                ? min((int) round($enrollment->completed_lessons_count / $totalLessons * 100), 100)
+                : 0;
+
             return $enrollment;
         });
 
@@ -40,7 +44,7 @@ class StudentController extends Controller
     private function authorizeTutor(Request $request, Course $course): void
     {
         $user = $request->user();
-        if (!$user->isAdmin() && $course->instructor_id !== $user->id) {
+        if (! $user->isAdmin() && $course->instructor_id !== $user->id) {
             abort(403, 'You can only manage your own courses.');
         }
     }

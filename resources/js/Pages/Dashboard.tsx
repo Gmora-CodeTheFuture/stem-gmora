@@ -16,8 +16,10 @@ interface DashboardProps extends PageProps {
         progress_percentage: number;
         level: number;
         xp: number;
+        xp_to_next_level: number;
     };
     streak: { current: number; longest: number };
+    badges: Array<{ id: string; name: string; description: string; earned_at: string }>;
     activity: Array<{ date: string; count: number }>;
     enrollments: Array<{
         id: string;
@@ -54,7 +56,7 @@ function relative(iso: string): string {
 }
 
 export default function Dashboard({
-    auth, stats, streak, activity, enrollments, resume, upcoming, dueSoon, certificates,
+    auth, stats, streak, activity, enrollments, resume, upcoming, dueSoon, certificates, badges,
 }: DashboardProps) {
     const tiles = [
         { label: 'Courses', value: stats.courses, caption: 'enrolled', icon: BookOpen },
@@ -90,7 +92,9 @@ export default function Dashboard({
                                 {stats.level}
                             </span>
                         </div>
-                        <p className="text-xs text-surface-400 mt-2">{stats.xp} total XP</p>
+                        <p className="text-xs text-surface-400 mt-2">
+                            {stats.xp} XP · {stats.xp_to_next_level} to level {stats.level + 1}
+                        </p>
                     </div>
 
                     <div>

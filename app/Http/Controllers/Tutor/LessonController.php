@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Module;
+use App\Services\CourseContentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
 class LessonController extends Controller
 {
+    public function __construct(private readonly CourseContentService $content) {}
+
     public function store(Request $request, Module $module): RedirectResponse
     {
         $course = $module->course;
@@ -30,14 +33,12 @@ class LessonController extends Controller
 
         $module->lessons()->create([
             ...$validated,
+            'content_ref' => $validated['content_ref'] ?: null,
             'order_index' => $maxOrder + 1,
             'is_published' => false,
         ]);
 
-        // Update the course total lesson count
-        $course->update([
-            'total_lessons' => $course->modules()->withCount('lessons')->get()->sum('lessons_count'),
-        ]);
+        $this->content->syncCounters($course);
 
         return Redirect::back()->with('success', "Lesson \"{$validated['title']}\" added.");
     }
@@ -57,7 +58,22 @@ class LessonController extends Controller
             'is_published' => ['boolean'],
         ]);
 
-        $lesson->update($validated);
+        // An empty `content_ref` means "unchanged", never "erase it". The edit
+        // form submits an empty string whenever the field was not touched, and
+        // clearing it would silently break playback for enrolled students.
+        if (($validated['content_ref'] ?? '') === '') {
+            unset($validated['content_ref']);
+        }
+
+        $lesson->fill($validated);
+
+        if ($lesson->is_published && ($blocker = $this->content->publishBlocker($lesson))) {
+            return Redirect::back()->with('error', $blocker);
+        }
+
+        $lesson->save();
+
+        $this->content->syncCounters($course);
 
         return Redirect::back()->with('success', 'Lesson updated.');
     }
@@ -70,10 +86,7 @@ class LessonController extends Controller
         $title = $lesson->title;
         $lesson->delete();
 
-        // Update total
-        $course->update([
-            'total_lessons' => $course->modules()->withCount('lessons')->get()->sum('lessons_count'),
-        ]);
+        $this->content->syncCounters($course);
 
         return Redirect::back()->with('success', "Lesson \"{$title}\" deleted.");
     }
@@ -100,7 +113,7 @@ class LessonController extends Controller
     private function authorizeTutor(Request $request, Course $course): void
     {
         $user = $request->user();
-        if (!$user->isAdmin() && $course->instructor_id !== $user->id) {
+        if (! $user->isAdmin() && $course->instructor_id !== $user->id) {
             abort(403, 'You can only manage your own courses.');
         }
     }

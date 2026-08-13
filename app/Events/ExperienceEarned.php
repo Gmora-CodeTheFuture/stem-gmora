@@ -2,41 +2,21 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use App\Models\User;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Raised whenever a student does something worth experience points. The
+ * listener applies the XP, updates the streak, and re-evaluates badges.
+ */
 class ExperienceEarned
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, SerializesModels;
 
-    public $user;
-    public $xpAmount;
-    public $source;
-
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(\App\Models\User $user, int $xpAmount, string $source)
-    {
-        $this->user = $user;
-        $this->xpAmount = $xpAmount;
-        $this->source = $source;
-    }
-
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, Channel>
-     */
-    public function broadcastOn(): array
-    {
-        return [
-            new PrivateChannel('channel-name'),
-        ];
-    }
+    public function __construct(
+        public User $user,
+        public int $xpAmount,
+        public string $source,
+    ) {}
 }

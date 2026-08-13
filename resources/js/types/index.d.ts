@@ -7,6 +7,11 @@ export interface User {
     email_verified_at?: string;
     avatar_url?: string;
     bio?: string;
+    headline?: string;
+    github_url?: string;
+    linkedin_url?: string;
+    website_url?: string;
+    is_public?: boolean;
     role: Role;
     role_id: string;
     locale: string;

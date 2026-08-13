@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Tutor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Certificate;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use Illuminate\Http\Request;

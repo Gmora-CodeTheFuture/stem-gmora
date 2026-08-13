@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Services\TwoFactorService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -45,9 +46,39 @@ class UserFactory extends Factory
         ]);
     }
 
+    /**
+     * Privileged roles are required to hold 2FA, so factory-made staff satisfy
+     * that by default — otherwise every staff test would be bounced to setup.
+     * Use withoutTwoFactor() to build staff that still need to enrol.
+     */
     public function role(string $roleName): static
     {
-        return $this->state(fn () => ['role_id' => $this->roleId($roleName)]);
+        $factory = $this->state(fn () => ['role_id' => $this->roleId($roleName)]);
+
+        return in_array($roleName, [
+            Role::INSTRUCTOR,
+            Role::COURSE_MANAGER,
+            Role::PLATFORM_ADMIN,
+            Role::SUPER_ADMIN,
+        ], true) ? $factory->withTwoFactor() : $factory;
+    }
+
+    public function withTwoFactor(): static
+    {
+        return $this->state(fn () => [
+            'two_factor_enabled' => true,
+            'two_factor_secret' => app(TwoFactorService::class)->generateSecret(),
+            'two_factor_recovery_codes' => app(TwoFactorService::class)->generateRecoveryCodes(),
+        ]);
+    }
+
+    public function withoutTwoFactor(): static
+    {
+        return $this->state(fn () => [
+            'two_factor_enabled' => false,
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+        ]);
     }
 
     public function instructor(): static

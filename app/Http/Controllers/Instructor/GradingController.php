@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Instructor;
 
+use App\Events\ExperienceEarned;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Course;
@@ -93,6 +94,8 @@ class GradingController extends Controller
             'status' => ['required', 'in:graded,returned'],
         ]);
 
+        $previousStatus = $submission->status;
+
         $submission->update([
             ...$validated,
             'graded_at' => now(),
@@ -105,6 +108,15 @@ class GradingController extends Controller
         ], $request->user()->id);
 
         $submission->user?->notify(new SubmissionGraded($submission->fresh('assignment')));
+
+        // XP once per assignment, when it is first marked (not on re-grades).
+        if ($validated['status'] === 'graded' && $submission->user && $previousStatus !== 'graded') {
+            ExperienceEarned::dispatch(
+                $submission->user,
+                (int) config('gamification.xp.assignment_graded'),
+                'assignment_graded',
+            );
+        }
 
         return back()->with('success', 'Grade recorded.');
     }
