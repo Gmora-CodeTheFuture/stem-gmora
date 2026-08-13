@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\AuditLog;
+use App\Models\Certificate;
+use App\Models\Enrollment;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Str;
+
+/**
+ * Queued on 100% course completion (Plan §8.8). Issues the certificate row and
+ * its verification code; PDF rendering + R2 upload land in a later milestone,
+ * so `pdf_url` stays null and the public /verify/{code} page reads the row.
+ */
+class GenerateCertificate implements ShouldQueue
+{
+    use Queueable;
+
+    public function __construct(public string $enrollmentId) {}
+
+    public function handle(): void
+    {
+        $enrollment = Enrollment::with('course')->find($this->enrollmentId);
+
+        if (! $enrollment || $enrollment->status !== Enrollment::STATUS_COMPLETED) {
+            return;
+        }
+
+        $certificate = Certificate::firstOrCreate(
+            [
+                'user_id' => $enrollment->user_id,
+                'course_id' => $enrollment->course_id,
+            ],
+            [
+                'enrollment_id' => $enrollment->id,
+                'certificate_code' => $this->generateCode(),
+                'issued_at' => now(),
+            ]
+        );
+
+        if ($certificate->wasRecentlyCreated) {
+            AuditLog::record(
+                'certificate.issued',
+                'certificate',
+                $certificate->id,
+                ['course_id' => $enrollment->course_id],
+                $enrollment->user_id,
+            );
+        }
+    }
+
+    private function generateCode(): string
+    {
+        do {
+            $code = 'GM-'.Str::upper(Str::random(4)).'-'.Str::upper(Str::random(4));
+        } while (Certificate::where('certificate_code', $code)->exists());
+
+        return $code;
+    }
+}

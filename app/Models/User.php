@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable implements MustVerifyEmail
+{
+    use HasFactory, HasUuids, Notifiable, SoftDeletes;
+
+    protected $fillable = [
+        'full_name',
+        'email',
+        'password',
+        'avatar_url',
+        'bio',
+        'role_id',
+        'locale',
+        'preferences',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'last_login_at',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'two_factor_enabled' => 'boolean',
+            'preferences' => 'array',
+            'last_login_at' => 'datetime',
+        ];
+    }
+
+    // ─── Relationships ──────────────────────────────────────────────
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function courses(): HasMany
+    {
+        return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    public function loginSessions(): HasMany
+    {
+        return $this->hasMany(LoginSession::class);
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(Submission::class);
+    }
+
+    // ─── Role Helpers ───────────────────────────────────────────────
+
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role->name === $roleName;
+    }
+
+    public function hasAnyRole(array $roleNames): bool
+    {
+        return in_array($this->role->name, $roleNames);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyRole([Role::PLATFORM_ADMIN, Role::SUPER_ADMIN]);
+    }
+
+    public function isInstructor(): bool
+    {
+        return $this->hasRole(Role::INSTRUCTOR);
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->hasRole(Role::STUDENT);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole(Role::SUPER_ADMIN);
+    }
+
+    /**
+     * Check if user is enrolled in a specific course with active status.
+     */
+    public function isEnrolledIn(string $courseId): bool
+    {
+        return $this->enrollments()
+            ->where('course_id', $courseId)
+            ->where('status', 'active')
+            ->exists();
+    }
+}

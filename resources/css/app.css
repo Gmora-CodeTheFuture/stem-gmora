@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+
+/* Tailwind v4 loads the legacy JS theme config (colors, fonts, animations). */
+@config '../../tailwind.config.js';
+
+/*
+ * Composable design-system primitives. These live in `@utility` rather than
+ * `@layer components` so that variants (`card-interactive`, `badge-primary`)
+ * can `@apply` them — Tailwind v4 only resolves custom classes this way.
+ */
+@utility card {
+    @apply bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700
+           rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300;
+}
+
+@utility card-interactive {
+    @apply card hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-glow
+           cursor-pointer transition-all duration-300;
+}
+
+@utility badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+}
+
+@utility badge-primary {
+    @apply badge bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300;
+}
+
+@utility badge-accent {
+    @apply badge bg-accent-100 text-accent-700 dark:bg-accent-900/50 dark:text-accent-300;
+}
+
+@utility badge-violet {
+    @apply badge bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300;
+}
+
+@layer base {
+    :root {
+        --color-primary: 66 110 245;
+        --color-accent: 32 201 151;
+        --color-violet: 112 72 232;
+        --color-background: 248 250 252;
+        --color-foreground: 15 23 42;
+        --color-card: 255 255 255;
+        --color-card-foreground: 15 23 42;
+        --color-border: 226 232 240;
+        --color-muted: 241 245 249;
+        --color-muted-foreground: 100 116 139;
+        --radius: 0.75rem;
+    }
+
+    .dark {
+        --color-background: 2 6 23;
+        --color-foreground: 248 250 252;
+        --color-card: 15 23 42;
+        --color-card-foreground: 248 250 252;
+        --color-border: 51 65 85;
+        --color-muted: 30 41 59;
+        --color-muted-foreground: 148 163 184;
+    }
+
+    * {
+        @apply border-surface-200 dark:border-surface-700;
+    }
+
+    body {
+        @apply bg-surface-50 text-surface-900 dark:bg-surface-950 dark:text-surface-50;
+        @apply antialiased;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Selection styling */
+    ::selection {
+        @apply bg-primary-500/30 text-primary-900 dark:text-primary-100;
+    }
+}
+
+@layer components {
+    /* Glass card effect */
+    .glass-card {
+        @apply bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl border border-white/20 dark:border-surface-700/50 rounded-2xl shadow-glass;
+    }
+
+    /* Gradient text */
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 via-violet-500 to-accent-500;
+    }
+
+    /* Premium button styles */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
+               bg-gradient-to-r from-primary-600 to-primary-700
+               hover:from-primary-500 hover:to-primary-600
+               shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40
+               transition-all duration-300 ease-out
+               active:scale-[0.98]
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
+               dark:focus-visible:ring-offset-surface-900;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold
+               text-primary-700 dark:text-primary-300
+               bg-primary-50 dark:bg-primary-950/50
+               hover:bg-primary-100 dark:hover:bg-primary-900/50
+               border border-primary-200 dark:border-primary-800
+               transition-all duration-300 ease-out
+               active:scale-[0.98]
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2
+               dark:focus-visible:ring-offset-surface-900;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold
+               text-surface-600 dark:text-surface-300
+               hover:bg-surface-100 dark:hover:bg-surface-800
+               transition-all duration-300 ease-out
+               active:scale-[0.98]
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    }
+
+    .btn-accent {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white
+               bg-gradient-to-r from-accent-600 to-accent-700
+               hover:from-accent-500 hover:to-accent-600
+               shadow-lg shadow-accent-500/25 hover:shadow-accent-500/40
+               transition-all duration-300 ease-out
+               active:scale-[0.98]
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2;
+    }
+
+    /* Input styles */
+    .input {
+        @apply w-full px-4 py-3 rounded-xl border border-surface-300 dark:border-surface-600
+               bg-white dark:bg-surface-800
+               text-surface-900 dark:text-surface-100
+               placeholder:text-surface-400 dark:placeholder:text-surface-500
+               focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+               transition-all duration-200;
+    }
+
+    /* Section spacing */
+    .section {
+        @apply py-16 md:py-24;
+    }
+
+    .container-wide {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+}
+
+@layer utilities {
+    /* Scrollbar styling */
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.surface.400') transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        @apply bg-surface-300 dark:bg-surface-600 rounded-full;
+    }
+}
