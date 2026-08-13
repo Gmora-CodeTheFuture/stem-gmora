@@ -36,7 +36,7 @@ class EnsureEnrolled
 
         $enrollment = Enrollment::where('user_id', $user->id)
             ->where('course_id', $courseId)
-            ->where('status', Enrollment::STATUS_ACTIVE)
+            ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
             ->first();
 
         if (! $enrollment) {

@@ -48,7 +48,14 @@ class LearningController extends Controller
         ]);
 
         $allLessons = $course->modules->flatMap->lessons;
-        $current = $lesson?->is_published ? $lesson : $allLessons->first();
+        $current = $lesson?->is_published ? $lesson : null;
+
+        if (!$current) {
+            $incomplete = $allLessons->first(function ($l) use ($progress) {
+                return $progress->get($l->id)?->status !== 'completed';
+            });
+            $current = $incomplete ?? $allLessons->last();
+        }
 
         abort_if($current === null, 404, 'This course has no published lessons yet.');
         abort_unless($allLessons->contains('id', $current->id), 404);
