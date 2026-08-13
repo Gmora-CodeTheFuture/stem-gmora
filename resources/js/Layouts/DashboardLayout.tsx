@@ -229,12 +229,32 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                     </div>
                     
                     {/* Island (top-right): search + profile */}
-                    <div className="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800 shadow-card pointer-events-auto ml-auto">
-                        <button onClick={() => setSearchOpen(true)} className="btn-icon" aria-label="Search">
-                            <Search className="w-[18px] h-[18px]" />
-                        </button>
+                    <div 
+                        className={`flex items-center justify-between p-1 rounded-full bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800 shadow-card pointer-events-auto ml-auto transition-[width] duration-300 ease-out overflow-visible ${
+                            searchOpen ? 'w-[320px]' : 'w-[84px]'
+                        }`}
+                    >
+                        {!searchOpen ? (
+                            <button onClick={() => setSearchOpen(true)} className="btn-icon shrink-0" aria-label="Search">
+                                <Search className="w-[18px] h-[18px]" />
+                            </button>
+                        ) : (
+                            <form onSubmit={search} className="flex-1 flex items-center pl-2 min-w-0 fade-in">
+                                <Search className="w-4 h-4 text-surface-400 shrink-0" />
+                                <input
+                                    ref={searchRef}
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Search courses…"
+                                    className="flex-1 bg-transparent border-0 text-sm py-1.5 px-2 focus:ring-0 min-w-0 dark:text-white placeholder:text-surface-400"
+                                />
+                                <button type="button" onClick={() => setSearchOpen(false)} className="p-1 mr-1 text-surface-400 hover:text-surface-600 shrink-0">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </form>
+                        )}
 
-                        <div className="relative" ref={menuRef}>
+                        <div className="relative shrink-0" ref={menuRef}>
                             <button
                                 onClick={() => setMenuOpen((open) => !open)}
                                 className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-medium flex items-center justify-center"
@@ -283,33 +303,6 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                         </div>
                     </div>
                 </div>
-
-                {/* ── Search overlay ──────────────────────────────── */}
-                {searchOpen && (
-                    <div
-                        className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-[18vh] px-4"
-                        onClick={() => setSearchOpen(false)}
-                    >
-                        <form
-                            onSubmit={search}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full max-w-xl card p-2 flex items-center gap-2 shadow-2xl"
-                        >
-                            <Search className="w-5 h-5 text-surface-400 ml-3 shrink-0" />
-                            <input
-                                ref={searchRef}
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search courses…"
-                                aria-label="Search courses"
-                                className="flex-1 bg-transparent border-0 py-2.5 text-sm text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:ring-0"
-                            />
-                            <button type="submit" className="btn-primary py-2 px-4">
-                                Search
-                            </button>
-                        </form>
-                    </div>
-                )}
 
                 {/* ── Page Content ────────────────────────────────── */}
                 <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[88px] pb-16 overflow-x-hidden">
