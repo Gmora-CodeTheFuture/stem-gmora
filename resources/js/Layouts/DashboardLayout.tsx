@@ -30,7 +30,9 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
 
     useEffect(() => {
         setIsDark(document.documentElement.classList.contains('dark'));
-        setSidebarOpen(localStorage.getItem(SIDEBAR_KEY) !== 'false');
+        const saved = localStorage.getItem(SIDEBAR_KEY);
+        // Default to expanded (true) if nothing is saved
+        setSidebarOpen(saved !== 'false');
     }, []);
 
     useEffect(() => {
@@ -54,7 +56,6 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
     const toggleSidebar = () => {
         setSidebarOpen((open) => {
             localStorage.setItem(SIDEBAR_KEY, String(!open));
-
             return !open;
         });
     };
@@ -99,123 +100,90 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
         <Link
             key={item.name}
             href={item.href}
+            title={!sidebarOpen ? item.name : undefined}
             aria-current={isActive(item.href, item.exact) ? 'page' : undefined}
-            className={`flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+            className={`flex items-center relative py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                sidebarOpen ? 'mx-3 px-3 gap-3' : 'mx-3 justify-center'
+            } ${
                 isActive(item.href, item.exact)
                     ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
                     : 'text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'
             }`}
         >
             <item.icon className="w-[18px] h-[18px] shrink-0" />
-            <span className="flex-1 truncate">{item.name}</span>
-            {!!item.badge && item.badge > 0 && (
+            
+            {/* The text is hidden visually and structurally when sidebar is closed to match Kaggle */}
+            {sidebarOpen && (
+                <span className="flex-1 truncate">{item.name}</span>
+            )}
+
+            {/* Badges */}
+            {!!item.badge && item.badge > 0 && sidebarOpen && (
                 <span className="px-1.5 py-0.5 rounded-md text-[11px] font-semibold bg-primary-600 text-white">
                     {item.badge > 99 ? '99+' : item.badge}
                 </span>
+            )}
+            {!!item.badge && item.badge > 0 && !sidebarOpen && (
+                <span className="absolute top-2.5 right-3.5 w-2 h-2 rounded-full bg-primary-600 border border-white dark:border-surface-900" />
             )}
         </Link>
     );
 
     return (
-        <div className="min-h-screen bg-surface-50 dark:bg-surface-950">
-            {/* ── Brand + sidebar toggle (top-left, no bar) ───── */}
-            <div className="fixed top-0 left-0 z-50 h-[72px] flex items-center gap-3 px-4">
-                <button
-                    onClick={toggleSidebar}
-                    className="btn-icon"
-                    aria-label={sidebarOpen ? 'Hide menu' : 'Show menu'}
-                    aria-expanded={sidebarOpen}
-                >
-                    <Menu className="w-5 h-5" />
-                </button>
-
-                <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-primary-900 dark:text-primary-300">
-                    gmora
-                </Link>
-            </div>
-
-            {/* ── Island (top-right): search + profile only ───── */}
-            <div className="fixed top-4 right-4 z-50 flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800 shadow-card">
-                <button onClick={() => setSearchOpen(true)} className="btn-icon" aria-label="Search">
-                    <Search className="w-[18px] h-[18px]" />
-                </button>
-
-                <div className="relative">
+        <div className="min-h-screen bg-surface-50 dark:bg-surface-950 flex">
+            
+            {/* ── Fixed Sidebar ───────────────────────────────────── */}
+            <aside
+                className={`fixed top-0 left-0 z-40 h-full flex flex-col bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-[width,transform] duration-200 ease-in-out
+                    ${sidebarOpen ? 'w-[248px]' : 'w-[72px] -translate-x-full lg:translate-x-0'}`}
+            >
+                {/* Brand / Toggle Header */}
+                <div className={`h-[72px] flex items-center shrink-0 ${sidebarOpen ? 'px-4 gap-3' : 'justify-center'}`}>
                     <button
-                        onClick={() => setMenuOpen((open) => !open)}
-                        className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-medium flex items-center justify-center"
-                        aria-label="Account menu"
-                        aria-expanded={menuOpen}
+                        onClick={toggleSidebar}
+                        className="btn-icon shrink-0"
+                        aria-label={sidebarOpen ? 'Collapse menu' : 'Expand menu'}
+                        aria-expanded={sidebarOpen}
                     >
-                        {auth?.user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                        <Menu className="w-5 h-5" />
                     </button>
 
-                    {menuOpen && (
-                        <>
-                            <div className="fixed inset-0 -z-10" onClick={() => setMenuOpen(false)} aria-hidden />
-                            <div className="absolute right-0 mt-2 w-60 card p-2">
-                                <div className="px-3 py-2.5 mb-1 border-b border-surface-100 dark:border-surface-800">
-                                    <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
-                                        {auth?.user?.full_name}
-                                    </p>
-                                    <p className="text-xs text-surface-500 truncate">{auth?.user?.email}</p>
-                                </div>
-
-                                <Link
-                                    href="/profile"
-                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                >
-                                    <Settings className="w-4 h-4" />
-                                    Settings
-                                </Link>
-
-                                <button
-                                    onClick={toggleTheme}
-                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                >
-                                    {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                    {isDark ? 'Light mode' : 'Dark mode'}
-                                </button>
-
-                                <button
-                                    onClick={() => router.post(route('logout'))}
-                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Sign out
-                                </button>
-                            </div>
-                        </>
+                    {sidebarOpen && (
+                        <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-primary-900 dark:text-primary-300 overflow-hidden whitespace-nowrap fade-in">
+                            gmora
+                        </Link>
                     )}
                 </div>
-            </div>
 
-            {/* ── Search overlay ──────────────────────────────── */}
-            {searchOpen && (
-                <div
-                    className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-[18vh] px-4"
-                    onClick={() => setSearchOpen(false)}
-                >
-                    <form
-                        onSubmit={search}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-xl card p-2 flex items-center gap-2"
+                {/* Navigation Links */}
+                <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin overflow-x-hidden">
+                    <div className="space-y-1">{navigation.map(navLink)}</div>
+
+                    {/* Section Header */}
+                    <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
+                        {sidebarOpen ? (
+                            <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Your Work</p>
+                        ) : (
+                            <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
+                        )}
+                    </div>
+
+                    <div className="space-y-1">{yourWork.map(navLink)}</div>
+                </nav>
+
+                <div className="p-3 border-t border-surface-200 dark:border-surface-800">
+                    <Link
+                        href={route('courses.index')}
+                        className={`flex items-center py-2.5 rounded-xl text-sm font-medium text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors ${
+                            sidebarOpen ? 'px-3 gap-3' : 'justify-center'
+                        }`}
+                        title={!sidebarOpen ? 'Browse catalog' : undefined}
                     >
-                        <Search className="w-5 h-5 text-surface-400 ml-3 shrink-0" />
-                        <input
-                            ref={searchRef}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search courses…"
-                            aria-label="Search courses"
-                            className="flex-1 bg-transparent border-0 py-2.5 text-sm text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:ring-0"
-                        />
-                        <button type="submit" className="btn-primary py-2 px-4">
-                            Search
-                        </button>
-                    </form>
+                        <BookOpen className="w-[18px] h-[18px] shrink-0" />
+                        {sidebarOpen && <span className="whitespace-nowrap">Browse catalog</span>}
+                    </Link>
                 </div>
-            )}
+            </aside>
 
             {/* Mobile scrim */}
             {sidebarOpen && (
@@ -226,34 +194,111 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                 />
             )}
 
-            {/* ── Sidebar ─────────────────────────────────────── */}
-            <aside
-                className={`fixed top-[72px] left-0 z-40 h-[calc(100vh-72px)] w-[248px] flex flex-col
-                    bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800
-                    transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-            >
-                <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin">
-                    <div className="space-y-1">{navigation.map(navLink)}</div>
+            {/* ── Main Content Area ───────────────────────────────── */}
+            <div className={`flex-1 transition-[margin] duration-200 ease-in-out ${sidebarOpen ? 'lg:ml-[248px]' : 'ml-0 lg:ml-[72px]'}`}>
+                
+                {/* ── Top Bar (Mobile menu toggle + Island) ───────── */}
+                <div className="fixed top-0 right-0 z-30 h-[72px] flex items-center justify-between px-4 pointer-events-none" style={{ left: sidebarOpen ? '248px' : '72px' }}>
+                    
+                    {/* Mobile Hamburger (Only visible on mobile when sidebar is closed) */}
+                    <div className="pointer-events-auto lg:hidden">
+                        {!sidebarOpen && (
+                            <button
+                                onClick={toggleSidebar}
+                                className="btn-icon"
+                                aria-label="Show menu"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </button>
+                        )}
+                    </div>
+                    
+                    {/* Island (top-right): search + profile */}
+                    <div className="flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800 shadow-card pointer-events-auto ml-auto">
+                        <button onClick={() => setSearchOpen(true)} className="btn-icon" aria-label="Search">
+                            <Search className="w-[18px] h-[18px]" />
+                        </button>
 
-                    <p className="px-6 pt-6 pb-2 text-xs font-semibold text-surface-500">Your Work</p>
+                        <div className="relative">
+                            <button
+                                onClick={() => setMenuOpen((open) => !open)}
+                                className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-medium flex items-center justify-center"
+                                aria-label="Account menu"
+                                aria-expanded={menuOpen}
+                            >
+                                {auth?.user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                            </button>
 
-                    <div className="space-y-1">{yourWork.map(navLink)}</div>
-                </nav>
+                            {menuOpen && (
+                                <>
+                                    <div className="fixed inset-0 -z-10" onClick={() => setMenuOpen(false)} aria-hidden />
+                                    <div className="absolute right-0 mt-2 w-60 card p-2 shadow-lg">
+                                        <div className="px-3 py-2.5 mb-1 border-b border-surface-100 dark:border-surface-800">
+                                            <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
+                                                {auth?.user?.full_name}
+                                            </p>
+                                            <p className="text-xs text-surface-500 truncate">{auth?.user?.email}</p>
+                                        </div>
 
-                <div className="p-3 border-t border-surface-200 dark:border-surface-800">
-                    <Link
-                        href={route('courses.index')}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-                    >
-                        <BookOpen className="w-[18px] h-[18px]" />
-                        Browse catalog
-                    </Link>
+                                        <Link
+                                            href="/profile"
+                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            Settings
+                                        </Link>
+
+                                        <button
+                                            onClick={toggleTheme}
+                                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                        >
+                                            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                            {isDark ? 'Light mode' : 'Dark mode'}
+                                        </button>
+
+                                        <button
+                                            onClick={() => router.post(route('logout'))}
+                                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Sign out
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
-            </aside>
 
-            {/* ── Content ─────────────────────────────────────── */}
-            <div className={`transition-[padding] duration-200 ${sidebarOpen ? 'lg:pl-[248px]' : 'pl-0'}`}>
-                <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[88px] pb-16">
+                {/* ── Search overlay ──────────────────────────────── */}
+                {searchOpen && (
+                    <div
+                        className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-[18vh] px-4"
+                        onClick={() => setSearchOpen(false)}
+                    >
+                        <form
+                            onSubmit={search}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full max-w-xl card p-2 flex items-center gap-2 shadow-2xl"
+                        >
+                            <Search className="w-5 h-5 text-surface-400 ml-3 shrink-0" />
+                            <input
+                                ref={searchRef}
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Search courses…"
+                                aria-label="Search courses"
+                                className="flex-1 bg-transparent border-0 py-2.5 text-sm text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:ring-0"
+                            />
+                            <button type="submit" className="btn-primary py-2 px-4">
+                                Search
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* ── Page Content ────────────────────────────────── */}
+                <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[88px] pb-16 overflow-x-hidden">
                     {header && (
                         <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-6">{header}</h1>
                     )}
