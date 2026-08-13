@@ -152,6 +152,21 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                                     Previous lesson
                                 </Link>
                             )}
+
+                            {nextLessonId && (
+                                isComplete ? (
+                                    <Link
+                                        href={route('learn.lesson', [course.slug, nextLessonId])}
+                                        className="btn-secondary"
+                                    >
+                                        Next lesson
+                                    </Link>
+                                ) : (
+                                    <button disabled className="btn-secondary opacity-50 cursor-not-allowed">
+                                        Next lesson
+                                    </button>
+                                )
+                            )}
                             
                             <button
                                 onClick={markComplete}
