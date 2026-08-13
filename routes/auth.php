@@ -8,6 +8,8 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
+use App\Http\Controllers\Auth\TwoFactorSetupController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,7 +37,22 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+// Second login step for accounts holding 2FA — the user is not yet signed in.
+Route::middleware('guest')->group(function () {
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+        ->name('two-factor.challenge');
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('two-factor.verify');
+});
+
 Route::middleware('auth')->group(function () {
+    Route::get('two-factor-setup', [TwoFactorSetupController::class, 'show'])->name('two-factor.setup');
+    Route::post('two-factor-setup', [TwoFactorSetupController::class, 'store'])->name('two-factor.enable');
+    Route::delete('two-factor-setup', [TwoFactorSetupController::class, 'destroy'])->name('two-factor.disable');
+    Route::post('two-factor-recovery-codes', [TwoFactorSetupController::class, 'regenerateRecoveryCodes'])
+        ->name('two-factor.recovery-codes');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

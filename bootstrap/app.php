@@ -2,7 +2,10 @@
 
 use App\Http\Middleware\EnsureEnrolled;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireTwoFactor;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\TrackLoginSession;
 use App\Jobs\PurgeExpiredVideoTokens;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -23,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            SecurityHeaders::class,
+            TrackLoginSession::class,
+            RequireTwoFactor::class,
         ]);
 
         $middleware->alias([

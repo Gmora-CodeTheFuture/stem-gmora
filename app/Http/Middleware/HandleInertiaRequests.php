@@ -40,6 +40,8 @@ class HandleInertiaRequests extends Middleware
                 'warning' => fn () => $request->session()->get('warning'),
                 'info' => fn () => $request->session()->get('info'),
             ],
+            // Shown once, immediately after 2FA enrolment.
+            'recoveryCodes' => fn () => $request->session()->get('recoveryCodes'),
             'notifications_count' => fn () => $request->user()
                 ? $request->user()->unreadNotifications()->count()
                 : 0,
