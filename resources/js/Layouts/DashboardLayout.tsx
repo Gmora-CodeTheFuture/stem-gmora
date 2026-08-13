@@ -19,7 +19,12 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
     const { auth, flash, notifications_count } = usePage<PageProps>().props;
 
     // Collapsed state persists, so the sidebar stays how the user left it.
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem(SIDEBAR_KEY) !== 'false';
+        }
+        return true;
+    });
     const [isDark, setIsDark] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -27,12 +32,10 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
     const [query, setQuery] = useState('');
 
     const searchRef = useRef<HTMLInputElement | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         setIsDark(document.documentElement.classList.contains('dark'));
-        const saved = localStorage.getItem(SIDEBAR_KEY);
-        // Default to expanded (true) if nothing is saved
-        setSidebarOpen(saved !== 'false');
     }, []);
 
     useEffect(() => {
@@ -52,6 +55,18 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
 
         return () => window.removeEventListener('keydown', onKey);
     }, []);
+
+    // Click outside to close menu
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [menuOpen]);
 
     const toggleSidebar = () => {
         setSidebarOpen((open) => {
@@ -219,7 +234,7 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                             <Search className="w-[18px] h-[18px]" />
                         </button>
 
-                        <div className="relative">
+                        <div className="relative" ref={menuRef}>
                             <button
                                 onClick={() => setMenuOpen((open) => !open)}
                                 className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-medium flex items-center justify-center"
@@ -231,8 +246,7 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
 
                             {menuOpen && (
                                 <>
-                                    <div className="fixed inset-0 -z-10" onClick={() => setMenuOpen(false)} aria-hidden />
-                                    <div className="absolute right-0 mt-2 w-60 card p-2 shadow-lg">
+                                    <div className="absolute right-0 mt-2 w-60 card p-2 shadow-lg z-50">
                                         <div className="px-3 py-2.5 mb-1 border-b border-surface-100 dark:border-surface-800">
                                             <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
                                                 {auth?.user?.full_name}
