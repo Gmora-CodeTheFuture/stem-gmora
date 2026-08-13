@@ -12,7 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->string('headline')->nullable();
+            $table->string('github_url')->nullable();
+            $table->string('linkedin_url')->nullable();
+            $table->string('website_url')->nullable();
+            $table->boolean('is_public')->default(false);
         });
     }
 
@@ -22,7 +26,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn([
+                'headline',
+                'github_url',
+                'linkedin_url',
+                'website_url',
+                'is_public'
+            ]);
         });
     }
 };

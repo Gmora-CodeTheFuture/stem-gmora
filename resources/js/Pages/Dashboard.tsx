@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowUpRight, Award, BookOpen, CalendarClock, ClipboardCheck,
-    Flame, GraduationCap, PlayCircle,
+    Flame, GraduationCap, PlayCircle, Shield, Zap
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Certificate, Course, PageProps } from '@/types';
@@ -14,6 +14,8 @@ interface DashboardProps extends PageProps {
         submissions: number;
         hours_learned: number;
         progress_percentage: number;
+        level: number;
+        xp: number;
     };
     streak: { current: number; longest: number };
     activity: Array<{ date: string; count: number }>;
@@ -78,6 +80,19 @@ export default function Dashboard({
                 </div>
 
                 <div className="flex items-start gap-8 sm:gap-10">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
+                            Level
+                        </p>
+                        <div className="flex items-baseline gap-2">
+                            <Shield className="w-5 h-5 text-indigo-500" />
+                            <span className="text-3xl font-semibold text-surface-900 dark:text-white leading-none">
+                                {stats.level}
+                            </span>
+                        </div>
+                        <p className="text-xs text-surface-400 mt-2">{stats.xp} total XP</p>
+                    </div>
+
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Learning streak

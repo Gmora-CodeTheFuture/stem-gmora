@@ -21,6 +21,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'avatar_url',
         'bio',
+        'headline',
+        'github_url',
+        'linkedin_url',
+        'website_url',
+        'is_public',
         'role_id',
         'locale',
         'preferences',
@@ -88,6 +93,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function submissions(): HasMany
     {
         return $this->hasMany(Submission::class);
+    }
+
+    public function stat(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(UserStat::class);
+    }
+
+    public function badges(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')->withPivot('earned_at');
     }
 
     // ─── Role Helpers ───────────────────────────────────────────────

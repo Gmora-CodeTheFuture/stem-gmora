@@ -3,6 +3,7 @@ import { FormEventHandler, ReactNode, useEffect, useRef, useState } from 'react'
 import {
     Award, Bell, BookOpen, Calendar, ClipboardCheck, GraduationCap, Home,
     LogOut, Menu, Moon, Search, Settings, Sun, X,
+    LayoutDashboard, Users, CreditCard, Trophy, Wrench, PenSquare, UserCheck,
 } from 'lucide-react';
 import { PageProps } from '@/types';
 
@@ -89,6 +90,8 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
     };
 
     const canGrade = GRADING_ROLES.includes(auth?.user?.role?.name ?? '');
+    const isAdmin = ['platform_admin', 'super_admin'].includes(auth?.user?.role?.name ?? '');
+    const isTutor = ['instructor', 'course_manager', ...(['platform_admin', 'super_admin'])].includes(auth?.user?.role?.name ?? '');
     const unread = notifications_count ?? 0;
 
     const navigation = [
@@ -103,6 +106,21 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
         { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
         ...(canGrade ? [{ name: 'Grading', href: '/instructor/grading', icon: GraduationCap }] : []),
     ];
+
+    const tutorNav = isTutor ? [
+        { name: 'Overview', href: '/tutor', icon: LayoutDashboard, exact: true },
+        { name: 'My Courses', href: '/tutor/courses', icon: PenSquare },
+        { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
+    ] : [];
+
+    const adminNav = isAdmin ? [
+        { name: 'Overview', href: '/admin', icon: LayoutDashboard, exact: true },
+        { name: 'Users', href: '/admin/users', icon: Users },
+        { name: 'All Courses', href: '/admin/courses', icon: BookOpen },
+        { name: 'Enrollments', href: '/admin/enrollments', icon: UserCheck },
+        { name: 'Payments', href: '/admin/payments', icon: CreditCard },
+        { name: 'Badges', href: '/admin/badges', icon: Trophy },
+    ] : [];
 
     const path = typeof window === 'undefined' ? '' : window.location.pathname;
     const isActive = (href: string, exact = false) =>
@@ -184,6 +202,34 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
                     </div>
 
                     <div className="space-y-1">{yourWork.map(navLink)}</div>
+
+                    {/* Tutor section */}
+                    {isTutor && tutorNav.length > 0 && (
+                        <>
+                            <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
+                                {sidebarOpen ? (
+                                    <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Teaching</p>
+                                ) : (
+                                    <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
+                                )}
+                            </div>
+                            <div className="space-y-1">{tutorNav.map(navLink)}</div>
+                        </>
+                    )}
+
+                    {/* Admin section */}
+                    {isAdmin && adminNav.length > 0 && (
+                        <>
+                            <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
+                                {sidebarOpen ? (
+                                    <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Administration</p>
+                                ) : (
+                                    <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
+                                )}
+                            </div>
+                            <div className="space-y-1">{adminNav.map(navLink)}</div>
+                        </>
+                    )}
                 </nav>
 
                 <div className="p-3 border-t border-surface-200 dark:border-surface-800">

@@ -40,6 +40,8 @@ class DashboardController extends Controller
         $totalLessons = $enrollments->sum(fn ($e) => $e->course?->total_lessons ?? 0);
         $completedLessons = $enrollments->sum('completed_lessons_count');
 
+        $userStat = $user->stat()->first();
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'courses' => $enrollments->count(),
@@ -52,6 +54,8 @@ class DashboardController extends Controller
                 'progress_percentage' => $totalLessons > 0
                     ? (int) round($completedLessons / $totalLessons * 100)
                     : 0,
+                'level' => $userStat?->level ?? 1,
+                'xp' => $userStat?->xp ?? 0,
             ],
             'streak' => $this->streak($enrollmentIds),
             'activity' => $this->activity($enrollmentIds),

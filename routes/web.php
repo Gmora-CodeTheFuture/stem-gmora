@@ -12,6 +12,17 @@ use App\Http\Controllers\MyCoursesController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\CourseManagementController;
+use App\Http\Controllers\Admin\EnrollmentManagementController;
+use App\Http\Controllers\Admin\PaymentManagementController;
+use App\Http\Controllers\Admin\BadgeManagementController;
+use App\Http\Controllers\Tutor\TutorDashboardController;
+use App\Http\Controllers\Tutor\CourseBuilderController;
+use App\Http\Controllers\Tutor\ModuleController;
+use App\Http\Controllers\Tutor\LessonController;
+use App\Http\Controllers\Tutor\StudentController;
 use App\Models\Certificate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -42,6 +53,9 @@ Route::get('/pricing', function () {
 Route::get('/contact', function () {
     return Inertia::render('Marketing/Contact');
 })->name('contact');
+
+// Public User Portfolio
+Route::get('/u/{user}', [ProfileController::class, 'show'])->name('portfolio.show');
 
 // Certificate verification (public)
 Route::get('/verify/{code}', function (string $code) {
@@ -129,5 +143,86 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
+    ->prefix('admin')
+    ->group(function () {
+        Route::get('/', AdminDashboardController::class)->name('admin.dashboard');
+
+        // Users
+        Route::get('/users', [UserManagementController::class, 'index'])->name('admin.users.index');
+        Route::get('/users/{user}', [UserManagementController::class, 'show'])->name('admin.users.show');
+        Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('admin.users.edit');
+        Route::patch('/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
+        Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('admin.users.reset-password');
+
+        // Courses
+        Route::get('/courses', [CourseManagementController::class, 'index'])->name('admin.courses.index');
+        Route::get('/courses/create', [CourseManagementController::class, 'create'])->name('admin.courses.create');
+        Route::post('/courses', [CourseManagementController::class, 'store'])->name('admin.courses.store');
+        Route::get('/courses/{course}', [CourseManagementController::class, 'show'])->name('admin.courses.show');
+        Route::get('/courses/{course}/edit', [CourseManagementController::class, 'edit'])->name('admin.courses.edit');
+        Route::patch('/courses/{course}', [CourseManagementController::class, 'update'])->name('admin.courses.update');
+        Route::delete('/courses/{course}', [CourseManagementController::class, 'destroy'])->name('admin.courses.destroy');
+        Route::patch('/courses/{course}/status', [CourseManagementController::class, 'updateStatus'])->name('admin.courses.status');
+
+        // Enrollments
+        Route::get('/enrollments', [EnrollmentManagementController::class, 'index'])->name('admin.enrollments.index');
+        Route::post('/enrollments', [EnrollmentManagementController::class, 'store'])->name('admin.enrollments.store');
+        Route::patch('/enrollments/{enrollment}', [EnrollmentManagementController::class, 'update'])->name('admin.enrollments.update');
+
+        // Payments
+        Route::get('/payments', [PaymentManagementController::class, 'index'])->name('admin.payments.index');
+
+        // Badges
+        Route::get('/badges', [BadgeManagementController::class, 'index'])->name('admin.badges.index');
+        Route::post('/badges', [BadgeManagementController::class, 'store'])->name('admin.badges.store');
+        Route::patch('/badges/{badge}', [BadgeManagementController::class, 'update'])->name('admin.badges.update');
+        Route::delete('/badges/{badge}', [BadgeManagementController::class, 'destroy'])->name('admin.badges.destroy');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Tutor Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'role:instructor,course_manager,platform_admin,super_admin'])
+    ->prefix('tutor')
+    ->group(function () {
+        Route::get('/', TutorDashboardController::class)->name('tutor.dashboard');
+
+        // Courses
+        Route::get('/courses', [CourseBuilderController::class, 'index'])->name('tutor.courses.index');
+        Route::get('/courses/create', [CourseBuilderController::class, 'create'])->name('tutor.courses.create');
+        Route::post('/courses', [CourseBuilderController::class, 'store'])->name('tutor.courses.store');
+        Route::get('/courses/{course}/edit', [CourseBuilderController::class, 'edit'])->name('tutor.courses.edit');
+        Route::patch('/courses/{course}', [CourseBuilderController::class, 'update'])->name('tutor.courses.update');
+        Route::delete('/courses/{course}', [CourseBuilderController::class, 'destroy'])->name('tutor.courses.destroy');
+        Route::patch('/courses/{course}/status', [CourseBuilderController::class, 'updateStatus'])->name('tutor.courses.status');
+
+        // Modules
+        Route::post('/courses/{course}/modules', [ModuleController::class, 'store'])->name('tutor.modules.store');
+        Route::patch('/modules/{module}', [ModuleController::class, 'update'])->name('tutor.modules.update');
+        Route::delete('/modules/{module}', [ModuleController::class, 'destroy'])->name('tutor.modules.destroy');
+        Route::post('/courses/{course}/modules/reorder', [ModuleController::class, 'reorder'])->name('tutor.modules.reorder');
+
+        // Lessons
+        Route::post('/modules/{module}/lessons', [LessonController::class, 'store'])->name('tutor.lessons.store');
+        Route::patch('/lessons/{lesson}', [LessonController::class, 'update'])->name('tutor.lessons.update');
+        Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy'])->name('tutor.lessons.destroy');
+        Route::post('/modules/{module}/lessons/reorder', [LessonController::class, 'reorder'])->name('tutor.lessons.reorder');
+
+        // Students
+        Route::get('/courses/{course}/students', [StudentController::class, 'index'])->name('tutor.students.index');
+
+        // Grading (link existing)
+        Route::get('/grading', [GradingController::class, 'index'])->name('tutor.grading');
+    });
 
 require __DIR__.'/auth.php';

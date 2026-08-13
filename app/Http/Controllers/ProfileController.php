@@ -10,9 +10,28 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
+    /**
+     * Display the public user portfolio.
+     */
+    public function show(User $user): Response
+    {
+        if (!$user->is_public) {
+            abort(404, 'User portfolio not found or not public.');
+        }
+
+        $user->load(['stat', 'badges', 'certificates.course']);
+        // Fetch public submissions (Phase 2 sub-phase B will add 'is_public' flag, for now we just show approved ones or none)
+        // Let's pretend they are all public for the prototype or just load them if needed.
+
+        return Inertia::render('Profile/Portfolio', [
+            'portfolioUser' => $user,
+        ]);
+    }
+
     /**
      * Display the user's profile form.
      */

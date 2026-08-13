@@ -17,10 +17,16 @@ export default function UpdateProfileInformation({
 }) {
     const user = usePage().props.auth.user;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
+        const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
-            full_name: user.full_name,
-            email: user.email,
+            full_name: user.full_name || '',
+            email: user.email || '',
+            bio: user.bio || '',
+            headline: user.headline || '',
+            github_url: user.github_url || '',
+            linkedin_url: user.linkedin_url || '',
+            website_url: user.website_url || '',
+            is_public: user.is_public || false,
         });
 
     const submit: FormEventHandler = (e) => {
@@ -72,6 +78,85 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.email} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="headline" value="Headline" />
+                    <TextInput
+                        id="headline"
+                        className="mt-1 block w-full"
+                        value={data.headline}
+                        onChange={(e) => setData('headline', e.target.value)}
+                        placeholder="e.g. Aspiring Robotics Engineer"
+                    />
+                    <InputError className="mt-2" message={errors.headline} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="bio" value="Bio" />
+                    <textarea
+                        id="bio"
+                        className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm"
+                        value={data.bio}
+                        onChange={(e) => setData('bio', e.target.value)}
+                        rows={4}
+                        placeholder="Tell the community about yourself..."
+                    ></textarea>
+                    <InputError className="mt-2" message={errors.bio} />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <InputLabel htmlFor="github_url" value="GitHub URL" />
+                        <TextInput
+                            id="github_url"
+                            type="url"
+                            className="mt-1 block w-full"
+                            value={data.github_url}
+                            onChange={(e) => setData('github_url', e.target.value)}
+                            placeholder="https://github.com/username"
+                        />
+                        <InputError className="mt-2" message={errors.github_url} />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="linkedin_url" value="LinkedIn URL" />
+                        <TextInput
+                            id="linkedin_url"
+                            type="url"
+                            className="mt-1 block w-full"
+                            value={data.linkedin_url}
+                            onChange={(e) => setData('linkedin_url', e.target.value)}
+                            placeholder="https://linkedin.com/in/username"
+                        />
+                        <InputError className="mt-2" message={errors.linkedin_url} />
+                    </div>
+                    
+                    <div className="md:col-span-2">
+                        <InputLabel htmlFor="website_url" value="Personal Website" />
+                        <TextInput
+                            id="website_url"
+                            type="url"
+                            className="mt-1 block w-full"
+                            value={data.website_url}
+                            onChange={(e) => setData('website_url', e.target.value)}
+                            placeholder="https://yourportfolio.com"
+                        />
+                        <InputError className="mt-2" message={errors.website_url} />
+                    </div>
+                </div>
+
+                <div className="block mt-4">
+                    <label className="flex items-center">
+                        <input
+                            type="checkbox"
+                            name="is_public"
+                            checked={data.is_public}
+                            onChange={(e) => setData('is_public', e.target.checked)}
+                            className="rounded dark:bg-surface-900 border-surface-300 dark:border-surface-700 text-primary-600 shadow-sm focus:ring-primary-500 dark:focus:ring-primary-600 dark:focus:ring-offset-surface-800"
+                        />
+                        <span className="ms-2 text-sm text-surface-600 dark:text-surface-400">Make my portfolio page public to everyone</span>
+                    </label>
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

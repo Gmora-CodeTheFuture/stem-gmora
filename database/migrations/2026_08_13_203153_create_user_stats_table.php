@@ -12,8 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_stats', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->integer('xp')->default(0);
+            $table->integer('level')->default(1);
+            $table->integer('current_streak')->default(0);
+            $table->integer('longest_streak')->default(0);
+            $table->date('last_activity_date')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
