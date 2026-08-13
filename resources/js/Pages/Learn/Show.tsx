@@ -31,7 +31,18 @@ function formatDuration(seconds: number): string {
 
 export default function LearnShow({ course, modules, currentLesson, completionPercentage }: LearnPageProps) {
     const [openModules, setOpenModules] = useState<string[]>(modules.map((m) => m.id));
-    const [curriculumOpen, setCurriculumOpen] = useState(true);
+    const [curriculumOpen, setCurriculumOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('gmora_curriculum_open') !== 'false';
+        }
+        return true;
+    });
+
+    const toggleCurriculum = () => {
+        const nextState = !curriculumOpen;
+        setCurriculumOpen(nextState);
+        localStorage.setItem('gmora_curriculum_open', String(nextState));
+    };
 
     const toggleModule = (id: string) =>
         setOpenModules((open) => (open.includes(id) ? open.filter((m) => m !== id) : [...open, id]));
@@ -98,7 +109,7 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                         {completionPercentage}% complete
                     </span>
                     <button
-                        onClick={() => setCurriculumOpen(!curriculumOpen)}
+                        onClick={toggleCurriculum}
                         className={`p-2 rounded-lg transition-colors ${
                             curriculumOpen 
                                 ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400' 
