@@ -8,30 +8,10 @@ use App\Models\Enrollment;
 use App\Services\VideoAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class EnrollmentController extends Controller
 {
     public function __construct(private readonly VideoAccessService $videoAccess) {}
-
-    /** The student's "My Courses" list. */
-    public function index(Request $request): Response
-    {
-        $enrollments = Enrollment::query()
-            ->where('user_id', $request->user()->id)
-            ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
-            ->with('course:id,title,slug,subtitle,thumbnail_url,category,difficulty,total_lessons,duration_minutes')
-            ->withCount([
-                'progress as completed_lessons_count' => fn ($q) => $q->where('status', 'completed'),
-            ])
-            ->latest('enrolled_at')
-            ->get();
-
-        return Inertia::render('Dashboard/Courses', [
-            'enrollments' => $enrollments,
-        ]);
-    }
 
     /**
      * Enroll in a course. Free courses are granted immediately; paid courses

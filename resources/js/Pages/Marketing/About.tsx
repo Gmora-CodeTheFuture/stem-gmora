@@ -38,12 +38,12 @@ export default function About() {
         <MarketingLayout>
             <Head title="About — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-16 bg-gradient-to-b from-primary-950 to-surface-950">
+            <section className="pt-28 md:pt-36 pb-16 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide max-w-3xl text-center">
-                    <h1 className="text-3xl md:text-5xl font-extrabold font-display text-white mb-5">
-                        Learn. Build. <span className="text-gradient">Innovate.</span>
+                    <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-5">
+                        Learn. Build. <span className="text-primary-600 dark:text-primary-400">Innovate.</span>
                     </h1>
-                    <p className="text-lg text-surface-300 leading-relaxed">
+                    <p className="text-lg text-surface-500 dark:text-surface-400 leading-relaxed">
                         Gmora STEM exists to make hands-on STEM education accessible, project-driven, and
                         AI-augmented — a platform built from day one to host many subjects, not a single
                         video library.
@@ -55,7 +55,7 @@ export default function About() {
                 <div className="container-wide grid md:grid-cols-2 gap-6 max-w-5xl">
                     <div className="card p-7">
                         <Rocket className="w-8 h-8 text-primary-500 mb-4" />
-                        <h2 className="text-xl font-bold font-display text-surface-900 dark:text-white mb-2">
+                        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
                             Our mission
                         </h2>
                         <p className="text-surface-500 leading-relaxed">
@@ -67,7 +67,7 @@ export default function About() {
 
                     <div className="card p-7">
                         <Users className="w-8 h-8 text-accent-500 mb-4" />
-                        <h2 className="text-xl font-bold font-display text-surface-900 dark:text-white mb-2">
+                        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
                             Who we build for
                         </h2>
                         <p className="text-surface-500 leading-relaxed">
@@ -81,7 +81,7 @@ export default function About() {
 
             <section className="section pt-0">
                 <div className="container-wide max-w-5xl">
-                    <h2 className="text-2xl font-bold font-display text-surface-900 dark:text-white text-center mb-10">
+                    <h2 className="text-2xl font-semibold text-surface-900 dark:text-white text-center mb-10">
                         What we value
                     </h2>
 
@@ -108,7 +108,7 @@ export default function About() {
 
             <section className="section pt-0">
                 <div className="container-wide max-w-3xl">
-                    <h2 className="text-2xl font-bold font-display text-surface-900 dark:text-white text-center mb-10">
+                    <h2 className="text-2xl font-semibold text-surface-900 dark:text-white text-center mb-10">
                         Where we're heading
                     </h2>
 

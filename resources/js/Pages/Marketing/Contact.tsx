@@ -17,12 +17,12 @@ export default function Contact() {
         <MarketingLayout>
             <Head title="Contact — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-14 bg-gradient-to-b from-primary-950 to-surface-950">
+            <section className="pt-28 md:pt-36 pb-14 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide text-center max-w-2xl">
-                    <h1 className="text-3xl md:text-5xl font-extrabold font-display text-white mb-4">
-                        Get in <span className="text-gradient">touch</span>
+                    <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-4">
+                        Get in <span className="text-primary-600 dark:text-primary-400">touch</span>
                     </h1>
-                    <p className="text-surface-300">
+                    <p className="text-surface-500 dark:text-surface-400">
                         Questions about a course, a school partnership, or joining as an instructor? We read
                         everything.
                     </p>

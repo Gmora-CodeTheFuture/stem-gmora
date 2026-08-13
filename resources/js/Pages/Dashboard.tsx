@@ -1,16 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
+import {
+    ArrowUpRight, Award, BookOpen, CalendarClock, ClipboardCheck,
+    Flame, GraduationCap, PlayCircle,
+} from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { Certificate, Course, PageProps } from '@/types';
-import { motion } from 'framer-motion';
-import { Award, BookOpen, Clock, TrendingUp, ArrowRight, Play, Radio } from 'lucide-react';
 
 interface DashboardProps extends PageProps {
     stats: {
-        enrolled_courses: number;
-        hours_learned: number;
+        courses: number;
+        lessons_completed: number;
         certificates: number;
+        submissions: number;
+        hours_learned: number;
         progress_percentage: number;
     };
+    streak: { current: number; longest: number };
+    activity: Array<{ date: string; count: number }>;
     enrollments: Array<{
         id: string;
         course?: Course;
@@ -24,203 +30,318 @@ interface DashboardProps extends PageProps {
         course_title?: string;
         course_slug?: string;
         watch_percentage: number;
+        updated_at: string;
     } | null;
-    nextLive: { id: string; title: string; scheduled_start: string; duration_minutes: number } | null;
+    upcoming: Array<{ id: string; title: string; type: string; starts_at: string; course_title?: string }>;
+    dueSoon: Array<{ id: string; title: string; deadline_at: string; course_title?: string }>;
     certificates: Array<Certificate & { course?: Course }>;
 }
 
-export default function Dashboard({ auth, stats, enrollments, resume, nextLive, certificates }: DashboardProps) {
+function relative(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const days = Math.round(Math.abs(diff) / 86_400_000);
+    const future = diff < 0;
+
+    if (days === 0) return 'today';
+    if (days === 1) return future ? 'tomorrow' : 'yesterday';
+    if (days < 30) return future ? `in ${days} days` : `${days} days ago`;
+
+    const months = Math.round(days / 30);
+
+    return future ? `in ${months} month${months > 1 ? 's' : ''}` : `${months} month${months > 1 ? 's' : ''} ago`;
+}
+
+export default function Dashboard({
+    auth, stats, streak, activity, enrollments, resume, upcoming, dueSoon, certificates,
+}: DashboardProps) {
     const tiles = [
-        { label: 'Enrolled Courses', value: `${stats.enrolled_courses}`, icon: BookOpen, color: 'text-primary-600 bg-primary-50 dark:bg-primary-950/50 dark:text-primary-400' },
-        { label: 'Hours Learned', value: `${stats.hours_learned}`, icon: Clock, color: 'text-accent-600 bg-accent-50 dark:bg-accent-950/50 dark:text-accent-400' },
-        { label: 'Certificates', value: `${stats.certificates}`, icon: Award, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/50 dark:text-violet-400' },
-        { label: 'Progress', value: `${stats.progress_percentage}%`, icon: TrendingUp, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/50 dark:text-amber-400' },
+        { label: 'Courses', value: stats.courses, caption: 'enrolled', icon: BookOpen },
+        { label: 'Lessons', value: stats.lessons_completed, caption: 'completed', icon: GraduationCap },
+        { label: 'Assignments', value: stats.submissions, caption: 'submitted', icon: ClipboardCheck },
+        { label: 'Certificates', value: stats.certificates, caption: 'earned', icon: Award },
+        { label: 'Hours', value: stats.hours_learned, caption: 'of content watched', icon: PlayCircle },
     ];
 
+    const busiest = Math.max(...activity.map((day) => day.count), 1);
+
     return (
-        <DashboardLayout header="Dashboard">
-            <Head title="Dashboard — Gmora STEM" />
+        <DashboardLayout>
+            <Head title="Home — Gmora STEM" />
 
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                <h1 className="text-2xl md:text-3xl font-bold font-display text-surface-900 dark:text-white mb-2">
-                    Welcome back, {auth?.user?.full_name?.split(' ')[0] || 'Student'} 👋
-                </h1>
-                <p className="text-surface-500">Continue where you left off or explore new courses.</p>
-            </motion.div>
+            {/* ── Welcome + at-a-glance ──────────────────────── */}
+            <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 mb-10">
+                <div className="flex-1">
+                    <h1 className="text-3xl font-semibold text-surface-900 dark:text-white mb-1.5">
+                        Welcome, {auth?.user?.full_name?.split(' ')[0]}
+                    </h1>
+                    <p className="text-surface-500">Jump back in, or start something new.</p>
+                </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {tiles.map((stat, i) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="card p-5"
-                    >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${stat.color}`}>
-                            <stat.icon className="w-5 h-5" />
+                <div className="flex items-start gap-8 sm:gap-10">
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
+                            Learning streak
+                        </p>
+                        <div className="flex items-baseline gap-2">
+                            <Flame className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            <span className="text-3xl font-semibold text-surface-900 dark:text-white leading-none">
+                                {streak.current}
+                            </span>
+                            <span className="text-sm text-surface-500">
+                                day{streak.current === 1 ? '' : 's'}
+                            </span>
                         </div>
-                        <div className="text-2xl font-bold font-display text-surface-900 dark:text-white">{stat.value}</div>
-                        <div className="text-sm text-surface-500 mt-0.5">{stat.label}</div>
-                    </motion.div>
+                        <p className="text-xs text-surface-400 mt-2">Longest: {streak.longest} days</p>
+                    </div>
+
+                    <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
+                            Overall progress
+                        </p>
+                        <div className="relative w-16 h-16">
+                            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100" aria-hidden>
+                                <circle cx="50" cy="50" r="45" strokeWidth="8" fill="none" className="stroke-surface-100 dark:stroke-surface-800" />
+                                <circle
+                                    cx="50" cy="50" r="45" strokeWidth="8" fill="none" strokeLinecap="round"
+                                    className="stroke-primary-600"
+                                    strokeDasharray={2 * Math.PI * 45}
+                                    strokeDashoffset={2 * Math.PI * 45 * (1 - stats.progress_percentage / 100)}
+                                />
+                            </svg>
+                            <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-surface-900 dark:text-white">
+                                {stats.progress_percentage}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="hidden sm:block">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
+                            Last 4 weeks
+                        </p>
+                        <div className="grid grid-cols-7 grid-flow-row gap-1">
+                            {activity.map((day) => (
+                                <span
+                                    key={day.date}
+                                    title={`${day.count} lesson${day.count === 1 ? '' : 's'} on ${day.date}`}
+                                    className={`w-3 h-3 rounded-sm ${
+                                        day.count === 0
+                                            ? 'bg-surface-100 dark:bg-surface-800'
+                                            : day.count >= busiest
+                                              ? 'bg-primary-600'
+                                              : 'bg-primary-300 dark:bg-primary-800'
+                                    }`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Stat row ───────────────────────────────────── */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-surface-200 dark:bg-surface-800 rounded-3xl overflow-hidden border border-surface-200 dark:border-surface-800 mb-10">
+                {tiles.map((tile) => (
+                    <div key={tile.label} className="bg-white dark:bg-surface-900 p-5">
+                        <div className="flex items-center gap-2 text-surface-500 mb-3">
+                            <tile.icon className="w-4 h-4" />
+                            <span className="text-sm font-medium">{tile.label}</span>
+                        </div>
+                        <p className="text-2xl font-semibold text-surface-900 dark:text-white leading-none">
+                            {tile.value}
+                        </p>
+                        <p className="text-xs text-surface-400 mt-1.5">{tile.caption}</p>
+                    </div>
                 ))}
             </div>
 
-            <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
-                <div className="space-y-6">
-                    {/* Continue learning */}
-                    {resume?.course_slug ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="card p-6"
-                        >
-                            <div className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-2">
-                                Continue learning
-                            </div>
-                            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
-                                {resume.lesson_title}
-                            </h2>
-                            <p className="text-sm text-surface-500 mt-0.5">{resume.course_title}</p>
+            {/* ── Next steps ─────────────────────────────────── */}
+            <div className="flex items-center gap-2 mb-6">
+                <ArrowUpRight className="w-5 h-5 text-surface-900 dark:text-white" />
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Next steps</h2>
+            </div>
 
-                            <div className="h-2 rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden mt-4">
-                                <div
-                                    className="h-full rounded-full bg-gradient-to-r from-primary-500 to-accent-500"
-                                    style={{ width: `${Math.round(resume.watch_percentage)}%` }}
-                                />
-                            </div>
+            <div className="grid lg:grid-cols-2 gap-10">
+                {/* Jump back in */}
+                <section>
+                    <h3 className="text-sm font-semibold text-surface-900 dark:text-white mb-4">Jump back in</h3>
 
-                            <Link
-                                href={route('learn.lesson', [resume.course_slug, resume.lesson_id])}
-                                className="btn-primary mt-5"
-                            >
-                                <Play className="w-4 h-4" />
-                                Resume lesson
-                            </Link>
-                        </motion.div>
-                    ) : enrollments.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
-                            className="card p-8 text-center"
-                        >
-                            <div className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-950/50 flex items-center justify-center mx-auto mb-4">
-                                <Play className="w-8 h-8 text-primary-500" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">No courses yet</h3>
-                            <p className="text-surface-500 mb-6 max-w-md mx-auto">
-                                Start your STEM journey by enrolling in your first course. Our AI Fundamentals course
-                                is a great place to begin.
+                    {enrollments.length === 0 ? (
+                        <div className="card p-8 text-center">
+                            <BookOpen className="w-8 h-8 text-surface-300 dark:text-surface-600 mx-auto mb-3" />
+                            <p className="text-sm text-surface-500 mb-5">
+                                You're not enrolled in anything yet.
                             </p>
-                            <Link href={route('courses.index')} className="btn-primary text-sm">
-                                <BookOpen className="w-4 h-4" />
-                                Browse Courses
-                                <ArrowRight className="w-4 h-4" />
+                            <Link href={route('dashboard.courses')} className="btn-primary">
+                                Find a course
                             </Link>
-                        </motion.div>
-                    ) : null}
-
-                    {/* Enrolled courses */}
-                    {enrollments.length > 0 && (
-                        <div className="card p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="font-semibold text-surface-900 dark:text-white">Your courses</h2>
+                        </div>
+                    ) : (
+                        <div className="space-y-1">
+                            {resume?.course_slug && (
                                 <Link
-                                    href={route('dashboard.courses')}
-                                    className="text-sm text-primary-600 hover:text-primary-500 inline-flex items-center gap-1"
+                                    href={route('learn.lesson', [resume.course_slug, resume.lesson_id])}
+                                    className="group flex items-center gap-4 p-4 -mx-4 rounded-2xl bg-surface-100/70 dark:bg-surface-900 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
                                 >
-                                    View all <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </div>
-
-                            <ul className="divide-y divide-surface-100 dark:divide-surface-800">
-                                {enrollments.slice(0, 4).map((enrollment) => (
-                                    <li key={enrollment.id} className="py-3 flex items-center gap-4">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium text-surface-900 dark:text-white truncate">
-                                                {enrollment.course?.title}
-                                            </div>
-                                            <div className="h-1.5 rounded-full bg-surface-100 dark:bg-surface-800 overflow-hidden mt-2 max-w-xs">
-                                                <div
-                                                    className="h-full rounded-full bg-primary-500"
-                                                    style={{ width: `${enrollment.percentage}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <span className="text-sm text-surface-500 shrink-0">
-                                            {enrollment.percentage}%
+                                    <span className="w-11 h-11 rounded-full bg-primary-50 dark:bg-primary-950 flex items-center justify-center shrink-0">
+                                        <PlayCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                    </span>
+                                    <span className="flex-1 min-w-0">
+                                        <span className="block text-sm font-semibold text-surface-900 dark:text-white truncate">
+                                            {resume.course_title}
                                         </span>
-                                        {enrollment.course?.slug && (
-                                            <Link
-                                                href={route('learn.show', enrollment.course.slug)}
-                                                className="btn-ghost px-3 py-1.5 text-sm shrink-0"
-                                            >
-                                                Open
-                                            </Link>
-                                        )}
-                                    </li>
+                                        <span className="block text-xs text-surface-500 truncate">
+                                            {resume.lesson_title} · {relative(resume.updated_at)}
+                                        </span>
+                                    </span>
+                                    <span className="hidden sm:inline text-sm text-primary-600 dark:text-primary-400 font-medium shrink-0">
+                                        Resume learning →
+                                    </span>
+                                </Link>
+                            )}
+
+                            {enrollments
+                                .filter((enrollment) => enrollment.course?.slug !== resume?.course_slug)
+                                .slice(0, 3)
+                                .map((enrollment) => (
+                                    <Link
+                                        key={enrollment.id}
+                                        href={
+                                            enrollment.course?.slug
+                                                ? route('learn.show', enrollment.course.slug)
+                                                : '#'
+                                        }
+                                        className="flex items-center gap-4 p-4 -mx-4 rounded-2xl hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors"
+                                    >
+                                        <span className="w-11 h-11 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
+                                            <BookOpen className="w-4 h-4 text-surface-400" />
+                                        </span>
+                                        <span className="flex-1 min-w-0">
+                                            <span className="block text-sm font-semibold text-surface-900 dark:text-white truncate">
+                                                {enrollment.course?.title}
+                                            </span>
+                                            <span className="block text-xs text-surface-500">
+                                                {enrollment.completed_lessons_count} of{' '}
+                                                {enrollment.course?.total_lessons ?? 0} lessons ·{' '}
+                                                {enrollment.percentage}%
+                                            </span>
+                                        </span>
+                                    </Link>
                                 ))}
-                            </ul>
                         </div>
                     )}
-                </div>
+                </section>
 
-                {/* Sidebar */}
-                <div className="space-y-6">
-                    <div className="card p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Radio className="w-4 h-4 text-violet-500" />
-                            <h2 className="font-semibold text-surface-900 dark:text-white">Next live class</h2>
-                        </div>
-                        {nextLive ? (
-                            <>
-                                <div className="font-medium text-surface-900 dark:text-white">{nextLive.title}</div>
-                                <p className="text-sm text-surface-500 mt-1">
-                                    {new Date(nextLive.scheduled_start).toLocaleString(undefined, {
-                                        dateStyle: 'medium',
-                                        timeStyle: 'short',
-                                    })}{' '}
-                                    · {nextLive.duration_minutes} min
-                                </p>
-                            </>
-                        ) : (
-                            <p className="text-sm text-surface-500">Nothing scheduled right now.</p>
+                {/* More things to do */}
+                <section>
+                    <h3 className="text-sm font-semibold text-surface-900 dark:text-white mb-4">
+                        More things to do
+                    </h3>
+
+                    <div className="space-y-6">
+                        {dueSoon.length > 0 && (
+                            <div className="flex items-start gap-4">
+                                <span className="w-10 h-10 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
+                                    <ClipboardCheck className="w-4 h-4 text-surface-500" />
+                                </span>
+                                <div className="min-w-0">
+                                    <h4 className="text-sm font-semibold text-surface-900 dark:text-white">
+                                        Assignments waiting
+                                    </h4>
+                                    <ul className="mt-1.5 space-y-1.5">
+                                        {dueSoon.map((assignment) => (
+                                            <li key={assignment.id} className="text-sm text-surface-500">
+                                                <Link
+                                                    href={route('assignments.show', assignment.id)}
+                                                    className="text-primary-600 dark:text-primary-400 hover:underline"
+                                                >
+                                                    {assignment.title}
+                                                </Link>{' '}
+                                                — due {relative(assignment.deadline_at)}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
                         )}
-                    </div>
 
-                    <div className="card p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Award className="w-4 h-4 text-accent-500" />
-                            <h2 className="font-semibold text-surface-900 dark:text-white">Certificates</h2>
-                        </div>
-                        {certificates.length > 0 ? (
-                            <ul className="space-y-3">
-                                {certificates.map((certificate) => (
-                                    <li key={certificate.id}>
+                        {upcoming.length > 0 && (
+                            <div className="flex items-start gap-4">
+                                <span className="w-10 h-10 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
+                                    <CalendarClock className="w-4 h-4 text-surface-500" />
+                                </span>
+                                <div className="min-w-0">
+                                    <h4 className="text-sm font-semibold text-surface-900 dark:text-white">
+                                        Coming up
+                                    </h4>
+                                    <ul className="mt-1.5 space-y-1.5">
+                                        {upcoming.map((item) => (
+                                            <li key={`${item.type}-${item.id}`} className="text-sm text-surface-500">
+                                                {item.title}
+                                                {item.course_title ? ` · ${item.course_title}` : ''} —{' '}
+                                                {new Date(item.starts_at).toLocaleString(undefined, {
+                                                    dateStyle: 'medium',
+                                                    timeStyle: 'short',
+                                                })}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <Link
+                                        href={route('dashboard.calendar')}
+                                        className="inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline mt-2"
+                                    >
+                                        Open calendar
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+
+                        {certificates.length > 0 && (
+                            <div className="flex items-start gap-4">
+                                <span className="w-10 h-10 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
+                                    <Award className="w-4 h-4 text-surface-500" />
+                                </span>
+                                <div className="min-w-0">
+                                    <h4 className="text-sm font-semibold text-surface-900 dark:text-white">
+                                        Your certificates
+                                    </h4>
+                                    <p className="text-sm text-surface-500 mt-1.5">
+                                        You've earned {stats.certificates} certificate
+                                        {stats.certificates === 1 ? '' : 's'}.{' '}
                                         <Link
-                                            href={route('certificate.verify', certificate.certificate_code)}
-                                            className="block text-sm"
+                                            href={route('dashboard.certificates')}
+                                            className="text-primary-600 dark:text-primary-400 hover:underline"
                                         >
-                                            <span className="font-medium text-surface-900 dark:text-white">
-                                                {certificate.course?.title}
-                                            </span>
-                                            <span className="block text-xs text-surface-400 font-mono mt-0.5">
-                                                {certificate.certificate_code}
-                                            </span>
+                                            View them
                                         </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-surface-500">
-                                Finish a course to earn your first certificate.
-                            </p>
+                                        .
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {dueSoon.length === 0 && upcoming.length === 0 && certificates.length === 0 && (
+                            <div className="flex items-start gap-4">
+                                <span className="w-10 h-10 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
+                                    <BookOpen className="w-4 h-4 text-surface-500" />
+                                </span>
+                                <div>
+                                    <h4 className="text-sm font-semibold text-surface-900 dark:text-white">
+                                        Explore the catalog
+                                    </h4>
+                                    <p className="text-sm text-surface-500 mt-1.5">
+                                        Nothing is due right now.{' '}
+                                        <Link
+                                            href={route('dashboard.courses', { filter: 'all' })}
+                                            className="text-primary-600 dark:text-primary-400 hover:underline"
+                                        >
+                                            Browse all courses
+                                        </Link>{' '}
+                                        to pick up something new.
+                                    </p>
+                                </div>
+                            </div>
                         )}
                     </div>
-                </div>
+                </section>
             </div>
         </DashboardLayout>
     );

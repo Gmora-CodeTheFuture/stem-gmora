@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\Instructor\GradingController;
 use App\Http\Controllers\LearningController;
+use App\Http\Controllers\MyCoursesController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Models\Certificate;
@@ -55,7 +59,16 @@ Route::get('/verify/{code}', function (string $code) {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
-    Route::get('/dashboard/courses', [EnrollmentController::class, 'index'])->name('dashboard.courses');
+    Route::get('/dashboard/courses', [MyCoursesController::class, 'index'])->name('dashboard.courses');
+    Route::get('/dashboard/calendar', [CalendarController::class, 'index'])->name('dashboard.calendar');
+    Route::get('/dashboard/certificates', [CertificateController::class, 'index'])->name('dashboard.certificates');
+
+    // Notifications (replaces the old Messages tab)
+    Route::get('/dashboard/notifications', [NotificationController::class, 'index'])->name('dashboard.notifications');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])
+        ->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.read-all');
 
     // Enrollment
     Route::post('/courses/{course:slug}/enroll', [EnrollmentController::class, 'store'])->name('enroll.store');
@@ -100,6 +113,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('instructor.grade-submission');
             Route::patch('/quiz-attempts/{attempt}', [GradingController::class, 'gradeAttempt'])
                 ->name('instructor.grade-attempt');
+
+            // Calendar authoring — instructors publish to their own courses,
+            // admins may also publish platform-wide.
+            Route::post('/events', [CalendarController::class, 'store'])->name('events.store');
+            Route::patch('/events/{event}', [CalendarController::class, 'update'])->name('events.update');
+            Route::delete('/events/{event}', [CalendarController::class, 'destroy'])->name('events.destroy');
         });
 
     // Profile

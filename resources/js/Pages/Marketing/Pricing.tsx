@@ -58,12 +58,12 @@ export default function Pricing() {
         <MarketingLayout>
             <Head title="Pricing — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-14 bg-gradient-to-b from-primary-950 to-surface-950">
+            <section className="pt-28 md:pt-36 pb-14 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide text-center max-w-2xl">
-                    <h1 className="text-3xl md:text-5xl font-extrabold font-display text-white mb-4">
-                        Simple, <span className="text-gradient">honest pricing</span>
+                    <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-4">
+                        Simple, <span className="text-primary-600 dark:text-primary-400">honest pricing</span>
                     </h1>
-                    <p className="text-surface-300">
+                    <p className="text-surface-500 dark:text-surface-400">
                         Pay per course, keep it for life. Regional pricing is applied automatically at checkout.
                     </p>
                 </div>
@@ -82,11 +82,11 @@ export default function Pricing() {
                                 <span className="badge-primary self-start mb-3">Most popular</span>
                             )}
 
-                            <h2 className="text-lg font-bold font-display text-surface-900 dark:text-white">
+                            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
                                 {tier.name}
                             </h2>
                             <div className="mt-2 mb-1">
-                                <span className="text-3xl font-bold font-display text-surface-900 dark:text-white">
+                                <span className="text-3xl font-semibold text-surface-900 dark:text-white">
                                     {tier.price}
                                 </span>
                                 {tier.cadence && (

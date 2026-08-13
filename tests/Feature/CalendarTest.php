@@ -1,0 +1,190 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Assignment;
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Event;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class CalendarTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private Course $course;
+
+    private User $student;
+
+    private User $instructor;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->instructor = User::factory()->instructor()->create();
+        $this->course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
+        $this->student = User::factory()->create();
+
+        Enrollment::factory()->create([
+            'user_id' => $this->student->id,
+            'course_id' => $this->course->id,
+        ]);
+    }
+
+    public function test_student_sees_events_for_their_course_and_platform_wide_ones(): void
+    {
+        Event::factory()->create([
+            'course_id' => $this->course->id,
+            'title' => 'My Course Event',
+            'created_by' => $this->instructor->id,
+        ]);
+
+        Event::factory()->create([
+            'course_id' => null,
+            'title' => 'Platform Wide Event',
+            'created_by' => $this->instructor->id,
+        ]);
+
+        $otherCourse = Course::factory()->create();
+        Event::factory()->create([
+            'course_id' => $otherCourse->id,
+            'title' => 'Someone Elses Event',
+            'created_by' => $this->instructor->id,
+        ]);
+
+        $this->actingAs($this->student)
+            ->get(route('dashboard.calendar', ['month' => now()->format('Y-m')]))
+            ->assertOk()
+            ->assertSee('My Course Event')
+            ->assertSee('Platform Wide Event')
+            ->assertDontSee('Someone Elses Event');
+    }
+
+    public function test_unpublished_events_are_hidden(): void
+    {
+        Event::factory()->unpublished()->create([
+            'course_id' => $this->course->id,
+            'title' => 'Draft Event',
+            'created_by' => $this->instructor->id,
+        ]);
+
+        $this->actingAs($this->student)
+            ->get(route('dashboard.calendar'))
+            ->assertOk()
+            ->assertDontSee('Draft Event');
+    }
+
+    public function test_assignment_deadlines_appear_on_the_calendar(): void
+    {
+        Assignment::create([
+            'course_id' => $this->course->id,
+            'title' => 'Final Project',
+            'deadline_at' => now()->addDays(4),
+            'max_marks' => 100,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($this->student)
+            ->get(route('dashboard.calendar'))
+            ->assertOk()
+            ->assertSee('Final Project due');
+    }
+
+    public function test_instructor_can_publish_an_event_to_their_own_course(): void
+    {
+        $this->actingAs($this->instructor)
+            ->post(route('events.store'), [
+                'course_id' => $this->course->id,
+                'title' => 'Extra revision class',
+                'type' => Event::TYPE_CLASS,
+                'starts_at' => now()->addDays(5)->format('Y-m-d H:i:s'),
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('events', [
+            'course_id' => $this->course->id,
+            'title' => 'Extra revision class',
+            'created_by' => $this->instructor->id,
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'event.created']);
+    }
+
+    public function test_instructor_cannot_publish_to_another_instructors_course(): void
+    {
+        $otherCourse = Course::factory()->create();
+
+        $this->actingAs($this->instructor)
+            ->post(route('events.store'), [
+                'course_id' => $otherCourse->id,
+                'title' => 'Hijacked class',
+                'type' => Event::TYPE_CLASS,
+                'starts_at' => now()->addDay()->format('Y-m-d H:i:s'),
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('events', 0);
+    }
+
+    public function test_only_admins_can_publish_platform_wide(): void
+    {
+        $payload = [
+            'course_id' => null,
+            'title' => 'Everyone announcement',
+            'type' => Event::TYPE_ANNOUNCEMENT,
+            'starts_at' => now()->addDay()->format('Y-m-d H:i:s'),
+        ];
+
+        $this->actingAs($this->instructor)
+            ->post(route('events.store'), $payload)
+            ->assertForbidden();
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->post(route('events.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('events', ['title' => 'Everyone announcement', 'course_id' => null]);
+    }
+
+    public function test_students_cannot_create_events(): void
+    {
+        $this->actingAs($this->student)
+            ->post(route('events.store'), [
+                'course_id' => $this->course->id,
+                'title' => 'Student event',
+                'type' => Event::TYPE_CLASS,
+                'starts_at' => now()->addDay()->format('Y-m-d H:i:s'),
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_end_time_must_follow_the_start(): void
+    {
+        $this->actingAs($this->instructor)
+            ->post(route('events.store'), [
+                'course_id' => $this->course->id,
+                'title' => 'Backwards event',
+                'type' => Event::TYPE_CLASS,
+                'starts_at' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'ends_at' => now()->addDay()->format('Y-m-d H:i:s'),
+            ])
+            ->assertSessionHasErrors('ends_at');
+    }
+
+    public function test_instructor_can_delete_their_event(): void
+    {
+        $event = Event::factory()->create([
+            'course_id' => $this->course->id,
+            'created_by' => $this->instructor->id,
+        ]);
+
+        $this->actingAs($this->instructor)
+            ->delete(route('events.destroy', $event))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSoftDeleted($event);
+    }
+}

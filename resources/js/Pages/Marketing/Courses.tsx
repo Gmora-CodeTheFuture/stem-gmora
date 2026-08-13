@@ -42,12 +42,12 @@ export default function Courses({ courses, categories, filters }: Props) {
         <MarketingLayout>
             <Head title="Courses — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-10 bg-gradient-to-b from-primary-950 to-surface-950">
+            <section className="pt-28 md:pt-36 pb-10 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide text-center">
-                    <h1 className="text-3xl md:text-5xl font-extrabold font-display text-white mb-4">
-                        Explore the <span className="text-gradient">Course Catalog</span>
+                    <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-4">
+                        Explore the <span className="text-primary-600 dark:text-primary-400">Course Catalog</span>
                     </h1>
-                    <p className="text-surface-300 max-w-2xl mx-auto">
+                    <p className="text-surface-500 dark:text-surface-400 max-w-2xl mx-auto">
                         Project-driven STEM courses with hands-on builds, live labs, and verified certificates.
                     </p>
 
@@ -59,7 +59,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Search courses…"
                             aria-label="Search courses"
-                            className="input pl-12 bg-white/10 border-white/20 text-white placeholder:text-surface-400"
+                            className="input pl-12"
                         />
                     </div>
                 </div>
@@ -91,8 +91,8 @@ export default function Courses({ courses, categories, filters }: Props) {
                                 onClick={() => applyFilter('difficulty', level)}
                                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium capitalize border transition-colors ${
                                     filters.difficulty === level
-                                        ? 'bg-accent-600 border-accent-600 text-white'
-                                        : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-accent-400'
+                                        ? 'bg-surface-900 border-surface-900 text-white dark:bg-white dark:border-white dark:text-surface-900'
+                                        : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-surface-400'
                                 }`}
                             >
                                 {level}
@@ -116,7 +116,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                                     transition={{ delay: Math.min(i * 0.05, 0.3) }}
                                 >
                                     <Link href={route('courses.show', course.slug)} className="card-interactive block h-full overflow-hidden">
-                                        <div className="aspect-video bg-gradient-to-br from-primary-600 via-violet-600 to-accent-500 flex items-center justify-center">
+                                        <div className="aspect-video bg-primary-50 dark:bg-surface-800 flex items-center justify-center">
                                             {course.thumbnail_url ? (
                                                 <img
                                                     src={course.thumbnail_url}
@@ -124,7 +124,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <BookOpen className="w-10 h-10 text-white/80" />
+                                                <BookOpen className="w-10 h-10 text-primary-400 dark:text-surface-600" />
                                             )}
                                         </div>
 
@@ -134,7 +134,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                                                 <span className="badge-accent capitalize">{course.difficulty}</span>
                                             </div>
 
-                                            <h3 className="font-semibold font-display text-surface-900 dark:text-white leading-snug mb-1.5">
+                                            <h3 className="font-semibold text-surface-900 dark:text-white leading-snug mb-1.5">
                                                 {course.title}
                                             </h3>
                                             <p className="text-sm text-surface-500 line-clamp-2">{course.subtitle}</p>

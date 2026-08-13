@@ -84,7 +84,7 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
                         <div className="text-xs uppercase tracking-wider text-primary-500 font-semibold mb-1.5">
                             {assignment.course?.title}
                         </div>
-                        <h1 className="text-2xl font-bold font-display text-surface-900 dark:text-white">
+                        <h1 className="text-2xl font-semibold text-surface-900 dark:text-white">
                             {assignment.title}
                         </h1>
 
@@ -269,7 +269,7 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
                                 <div className="mt-5 pt-5 border-t border-surface-100 dark:border-surface-800">
                                     <div className="flex items-center gap-2">
                                         <CheckCircle2 className="w-5 h-5 text-accent-500" />
-                                        <span className="text-xl font-bold font-display text-surface-900 dark:text-white">
+                                        <span className="text-xl font-semibold text-surface-900 dark:text-white">
                                             {submission.marks_awarded}
                                             <span className="text-sm text-surface-400 font-normal">
                                                 {' '}

@@ -1,233 +1,283 @@
-import { Link, usePage, router } from '@inertiajs/react';
-import { PropsWithChildren, useState, useEffect, ReactNode } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link, router, usePage } from '@inertiajs/react';
+import { FormEventHandler, ReactNode, useEffect, useRef, useState } from 'react';
 import {
-    GraduationCap, LayoutDashboard, BookOpen, ClipboardCheck,
-    Award, Settings, Bell, ChevronDown, LogOut,
-    Menu, X, Moon, Sun, User, ChevronRight
+    Award, Bell, BookOpen, Calendar, ClipboardCheck, GraduationCap, Home,
+    LogOut, Menu, Moon, Search, Settings, Sun, X,
 } from 'lucide-react';
 import { PageProps } from '@/types';
 
 interface DashboardLayoutProps {
+    /** Page title, rendered by the page itself when it needs one. */
     header?: ReactNode;
     children: ReactNode;
 }
 
+const GRADING_ROLES = ['instructor', 'teaching_assistant', 'course_manager', 'platform_admin', 'super_admin'];
+const SIDEBAR_KEY = 'sidebar:open';
+
 export default function DashboardLayout({ header, children }: DashboardLayoutProps) {
     const { auth, flash, notifications_count } = usePage<PageProps>().props;
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Collapsed state persists, so the sidebar stays how the user left it.
+    const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isDark, setIsDark] = useState(false);
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [dismissed, setDismissed] = useState(false);
+    const [query, setQuery] = useState('');
+
+    const searchRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
         setIsDark(document.documentElement.classList.contains('dark'));
+        setSidebarOpen(localStorage.getItem(SIDEBAR_KEY) !== 'false');
     }, []);
 
-    const toggleTheme = () => {
-        setIsDark(!isDark);
-        document.documentElement.classList.toggle('dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    useEffect(() => {
+        if (searchOpen) searchRef.current?.focus();
+    }, [searchOpen]);
+
+    // Escape closes whichever overlay is open.
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setSearchOpen(false);
+                setMenuOpen(false);
+            }
+        };
+
+        window.addEventListener('keydown', onKey);
+
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
+    const toggleSidebar = () => {
+        setSidebarOpen((open) => {
+            localStorage.setItem(SIDEBAR_KEY, String(!open));
+
+            return !open;
+        });
     };
 
-    // Staff roles get the grading queue; Certificates and Calendar arrive with
-    // their own milestones, so they are not linked until those routes exist.
-    const canGrade = ['instructor', 'teaching_assistant', 'course_manager', 'platform_admin', 'super_admin']
-        .includes(auth?.user?.role?.name ?? '');
+    const toggleTheme = () => {
+        const next = !isDark;
+        setIsDark(next);
+        document.documentElement.classList.toggle('dark', next);
+        localStorage.setItem('theme', next ? 'dark' : 'light');
+    };
+
+    const search: FormEventHandler = (e) => {
+        e.preventDefault();
+        setSearchOpen(false);
+        router.get(route('dashboard.courses'), { search: query, filter: 'all' });
+    };
+
+    const canGrade = GRADING_ROLES.includes(auth?.user?.role?.name ?? '');
+    const unread = notifications_count ?? 0;
 
     const navigation = [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
-        { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
-        ...(canGrade ? [{ name: 'Grading', href: '/instructor/grading', icon: Award }] : []),
-        { name: 'Settings', href: '/profile', icon: Settings },
+        { name: 'Home', href: '/dashboard', icon: Home, exact: true },
+        { name: 'Courses', href: '/dashboard/courses', icon: BookOpen },
+        { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unread },
     ];
 
-    const currentPath = window.location.pathname;
+    const yourWork = [
+        { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
+        { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
+        ...(canGrade ? [{ name: 'Grading', href: '/instructor/grading', icon: GraduationCap }] : []),
+    ];
+
+    const path = typeof window === 'undefined' ? '' : window.location.pathname;
+    const isActive = (href: string, exact = false) =>
+        exact ? path === href : path === href || path.startsWith(href + '/');
+
+    const message = flash?.success || flash?.error || flash?.warning || flash?.info;
+    const tone = flash?.error ? 'error' : flash?.warning ? 'warning' : flash?.success ? 'success' : 'info';
+
+    const navLink = (item: { name: string; href: string; icon: typeof Home; exact?: boolean; badge?: number }) => (
+        <Link
+            key={item.name}
+            href={item.href}
+            aria-current={isActive(item.href, item.exact) ? 'page' : undefined}
+            className={`flex items-center gap-3 mx-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                isActive(item.href, item.exact)
+                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300'
+                    : 'text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800'
+            }`}
+        >
+            <item.icon className="w-[18px] h-[18px] shrink-0" />
+            <span className="flex-1 truncate">{item.name}</span>
+            {!!item.badge && item.badge > 0 && (
+                <span className="px-1.5 py-0.5 rounded-md text-[11px] font-semibold bg-primary-600 text-white">
+                    {item.badge > 99 ? '99+' : item.badge}
+                </span>
+            )}
+        </Link>
+    );
 
     return (
         <div className="min-h-screen bg-surface-50 dark:bg-surface-950">
-            {/* ── Mobile Sidebar Overlay ─────────────────────── */}
-            <AnimatePresence>
-                {sidebarOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-                        onClick={() => setSidebarOpen(false)}
-                    />
-                )}
-            </AnimatePresence>
+            {/* ── Brand + sidebar toggle (top-left, no bar) ───── */}
+            <div className="fixed top-0 left-0 z-50 h-[72px] flex items-center gap-3 px-4">
+                <button
+                    onClick={toggleSidebar}
+                    className="btn-icon"
+                    aria-label={sidebarOpen ? 'Hide menu' : 'Show menu'}
+                    aria-expanded={sidebarOpen}
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
 
-            {/* ── Sidebar ───────────────────────────────────── */}
-            <aside
-                className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transform transition-transform duration-300 ease-out lg:translate-x-0 ${
-                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
-            >
-                <div className="flex flex-col h-full">
-                    {/* Logo */}
-                    <div className="flex items-center justify-between h-16 px-5 border-b border-surface-200 dark:border-surface-800">
-                        <Link href="/" className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-violet-600 flex items-center justify-center">
-                                <GraduationCap className="w-4.5 h-4.5 text-white" />
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-base font-bold font-display text-surface-900 dark:text-white leading-tight">Gmora</span>
-                                <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-primary-500">STEM</span>
-                            </div>
-                        </Link>
-                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-surface-500">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
+                <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-primary-900 dark:text-primary-300">
+                    gmora
+                </Link>
+            </div>
 
-                    {/* Navigation */}
-                    <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
-                        {navigation.map((item) => {
-                            const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
-                            return (
+            {/* ── Island (top-right): search + profile only ───── */}
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-1 p-1 rounded-full bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800 shadow-card">
+                <button onClick={() => setSearchOpen(true)} className="btn-icon" aria-label="Search">
+                    <Search className="w-[18px] h-[18px]" />
+                </button>
+
+                <div className="relative">
+                    <button
+                        onClick={() => setMenuOpen((open) => !open)}
+                        className="w-9 h-9 rounded-full bg-primary-600 text-white text-sm font-medium flex items-center justify-center"
+                        aria-label="Account menu"
+                        aria-expanded={menuOpen}
+                    >
+                        {auth?.user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </button>
+
+                    {menuOpen && (
+                        <>
+                            <div className="fixed inset-0 -z-10" onClick={() => setMenuOpen(false)} aria-hidden />
+                            <div className="absolute right-0 mt-2 w-60 card p-2">
+                                <div className="px-3 py-2.5 mb-1 border-b border-surface-100 dark:border-surface-800">
+                                    <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
+                                        {auth?.user?.full_name}
+                                    </p>
+                                    <p className="text-xs text-surface-500 truncate">{auth?.user?.email}</p>
+                                </div>
+
                                 <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                        isActive
-                                            ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 shadow-sm'
-                                            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200'
-                                    }`}
+                                    href="/profile"
+                                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
                                 >
-                                    <item.icon className={`w-5 h-5 ${isActive ? 'text-primary-600 dark:text-primary-400' : ''}`} />
-                                    {item.name}
-                                    {isActive && <ChevronRight className="w-4 h-4 ml-auto text-primary-400" />}
+                                    <Settings className="w-4 h-4" />
+                                    Settings
                                 </Link>
-                            );
-                        })}
-                    </nav>
 
-                    {/* User section */}
-                    <div className="p-3 border-t border-surface-200 dark:border-surface-800">
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-violet-500 flex items-center justify-center text-white font-semibold text-sm">
-                                {auth?.user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                                <button
+                                    onClick={toggleTheme}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                >
+                                    {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                                    {isDark ? 'Light mode' : 'Dark mode'}
+                                </button>
+
+                                <button
+                                    onClick={() => router.post(route('logout'))}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    Sign out
+                                </button>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
-                                    {auth?.user?.full_name || 'User'}
-                                </p>
-                                <p className="text-xs text-surface-500 truncate">
-                                    {auth?.user?.role?.display_name || 'Student'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Search overlay ──────────────────────────────── */}
+            {searchOpen && (
+                <div
+                    className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-start justify-center pt-[18vh] px-4"
+                    onClick={() => setSearchOpen(false)}
+                >
+                    <form
+                        onSubmit={search}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-xl card p-2 flex items-center gap-2"
+                    >
+                        <Search className="w-5 h-5 text-surface-400 ml-3 shrink-0" />
+                        <input
+                            ref={searchRef}
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search courses…"
+                            aria-label="Search courses"
+                            className="flex-1 bg-transparent border-0 py-2.5 text-sm text-surface-900 dark:text-surface-100 placeholder:text-surface-400 focus:ring-0"
+                        />
+                        <button type="submit" className="btn-primary py-2 px-4">
+                            Search
+                        </button>
+                    </form>
+                </div>
+            )}
+
+            {/* Mobile scrim */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+                    onClick={toggleSidebar}
+                    aria-hidden
+                />
+            )}
+
+            {/* ── Sidebar ─────────────────────────────────────── */}
+            <aside
+                className={`fixed top-[72px] left-0 z-40 h-[calc(100vh-72px)] w-[248px] flex flex-col
+                    bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800
+                    transition-transform duration-200 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            >
+                <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin">
+                    <div className="space-y-1">{navigation.map(navLink)}</div>
+
+                    <p className="px-6 pt-6 pb-2 text-xs font-semibold text-surface-500">Your Work</p>
+
+                    <div className="space-y-1">{yourWork.map(navLink)}</div>
+                </nav>
+
+                <div className="p-3 border-t border-surface-200 dark:border-surface-800">
+                    <Link
+                        href={route('courses.index')}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                    >
+                        <BookOpen className="w-[18px] h-[18px]" />
+                        Browse catalog
+                    </Link>
                 </div>
             </aside>
 
-            {/* ── Main Content ──────────────────────────────── */}
-            <div className="lg:ml-64">
-                {/* Top Bar */}
-                <header className="sticky top-0 z-30 h-16 bg-white/90 dark:bg-surface-900/90 backdrop-blur-xl border-b border-surface-200 dark:border-surface-800">
-                    <div className="flex items-center justify-between h-full px-4 md:px-6">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setSidebarOpen(true)}
-                                className="lg:hidden p-2 rounded-lg text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
-                            >
-                                <Menu className="w-5 h-5" />
-                            </button>
-                            {header && <div className="text-lg font-semibold font-display text-surface-900 dark:text-white">{header}</div>}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={toggleTheme}
-                                className="p-2.5 rounded-xl text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200"
-                            >
-                                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                            </button>
-
-                            {/* Notifications */}
-                            <button className="relative p-2.5 rounded-xl text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200">
-                                <Bell className="w-5 h-5" />
-                                {(notifications_count ?? 0) > 0 && (
-                                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-surface-900" />
-                                )}
-                            </button>
-
-                            {/* User Menu */}
-                            <div className="relative">
-                                <button
-                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200"
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-violet-500 flex items-center justify-center text-white font-semibold text-xs">
-                                        {auth?.user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                                    </div>
-                                    <ChevronDown className="w-4 h-4 text-surface-500" />
-                                </button>
-
-                                <AnimatePresence>
-                                    {userMenuOpen && (
-                                        <motion.div
-                                            initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                                            exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                                            className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 shadow-xl py-2"
-                                        >
-                                            <div className="px-4 py-2 border-b border-surface-100 dark:border-surface-700">
-                                                <p className="text-sm font-medium text-surface-900 dark:text-white">{auth?.user?.full_name}</p>
-                                                <p className="text-xs text-surface-500">{auth?.user?.email}</p>
-                                            </div>
-                                            <Link
-                                                href="/dashboard/settings"
-                                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700"
-                                                onClick={() => setUserMenuOpen(false)}
-                                            >
-                                                <User className="w-4 h-4" /> Profile & Settings
-                                            </Link>
-                                            <Link
-                                                href="/logout"
-                                                method="post"
-                                                as="button"
-                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                                onClick={() => setUserMenuOpen(false)}
-                                            >
-                                                <LogOut className="w-4 h-4" /> Sign Out
-                                            </Link>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Flash Messages */}
-                <AnimatePresence>
-                    {flash?.success && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="mx-4 md:mx-6 mt-4 px-4 py-3 rounded-xl bg-accent-50 dark:bg-accent-950/30 border border-accent-200 dark:border-accent-800 text-accent-700 dark:text-accent-300 text-sm"
-                        >
-                            {flash.success}
-                        </motion.div>
+            {/* ── Content ─────────────────────────────────────── */}
+            <div className={`transition-[padding] duration-200 ${sidebarOpen ? 'lg:pl-[248px]' : 'pl-0'}`}>
+                <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-[88px] pb-16">
+                    {header && (
+                        <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-6">{header}</h1>
                     )}
-                    {flash?.error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="mx-4 md:mx-6 mt-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm"
-                        >
-                            {flash.error}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
-                {/* Page Content */}
-                <div className="p-4 md:p-6">
+                    {message && !dismissed && (
+                        <div
+                            role="status"
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl mb-6 text-sm border ${
+                                tone === 'error'
+                                    ? 'bg-red-50 text-red-700 border-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900'
+                                    : tone === 'warning'
+                                      ? 'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900'
+                                      : tone === 'success'
+                                        ? 'bg-accent-50 text-accent-700 border-accent-100 dark:bg-accent-950/40 dark:text-accent-300 dark:border-accent-900'
+                                        : 'bg-primary-50 text-primary-700 border-primary-100 dark:bg-primary-950/40 dark:text-primary-300 dark:border-primary-900'
+                            }`}
+                        >
+                            <span className="flex-1">{message}</span>
+                            <button onClick={() => setDismissed(true)} aria-label="Dismiss">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+
                     {children}
                 </div>
             </div>

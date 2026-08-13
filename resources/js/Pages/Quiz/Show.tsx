@@ -62,7 +62,7 @@ export default function QuizShow({ quiz, attempts, attemptsRemaining, activeAtte
                         <HelpCircle className="w-6 h-6 text-primary-500" />
                     </div>
 
-                    <h1 className="text-2xl font-bold font-display text-surface-900 dark:text-white">{quiz.title}</h1>
+                    <h1 className="text-2xl font-semibold text-surface-900 dark:text-white">{quiz.title}</h1>
                     {quiz.description && <p className="text-surface-500 mt-2 leading-relaxed">{quiz.description}</p>}
 
                     <dl className="grid sm:grid-cols-3 gap-4 mt-7 pt-7 border-t border-surface-100 dark:border-surface-800">
@@ -129,7 +129,7 @@ export default function QuizShow({ quiz, attempts, attemptsRemaining, activeAtte
                                     <div className="text-xs uppercase tracking-wider text-surface-400 font-semibold">
                                         Best score
                                     </div>
-                                    <div className="text-2xl font-bold font-display text-surface-900 dark:text-white mt-1">
+                                    <div className="text-2xl font-semibold text-surface-900 dark:text-white mt-1">
                                         {Number(best.score ?? 0).toFixed(0)}%
                                     </div>
                                 </div>

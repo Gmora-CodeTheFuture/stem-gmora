@@ -13,19 +13,19 @@ export default function VerifyCertificate({ code, certificate }: Props) {
         <MarketingLayout>
             <Head title="Verify certificate — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-20 min-h-[70vh] bg-gradient-to-b from-primary-950 to-surface-950">
+            <section className="pt-28 md:pt-36 pb-20 min-h-[70vh] bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide max-w-xl">
-                    <div className="glass-card p-8 text-center">
+                    <div className="card p-8 text-center">
                         {certificate ? (
                             <>
                                 <div className="w-16 h-16 rounded-2xl bg-accent-500/15 flex items-center justify-center mx-auto mb-5">
                                     <ShieldCheck className="w-8 h-8 text-accent-400" />
                                 </div>
 
-                                <h1 className="text-2xl font-bold font-display text-white mb-1">
+                                <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-1">
                                     Certificate verified
                                 </h1>
-                                <p className="text-surface-400 text-sm mb-8">
+                                <p className="text-surface-500 text-sm mb-8">
                                     This certificate was issued by Gmora STEM and has not been revoked.
                                 </p>
 
@@ -34,7 +34,7 @@ export default function VerifyCertificate({ code, certificate }: Props) {
                                         <dt className="text-xs uppercase tracking-wider text-surface-400 font-semibold">
                                             Awarded to
                                         </dt>
-                                        <dd className="text-white font-medium mt-0.5">
+                                        <dd className="text-surface-900 dark:text-white font-medium mt-0.5">
                                             {certificate.user?.full_name}
                                         </dd>
                                     </div>
@@ -42,7 +42,7 @@ export default function VerifyCertificate({ code, certificate }: Props) {
                                         <dt className="text-xs uppercase tracking-wider text-surface-400 font-semibold">
                                             Course
                                         </dt>
-                                        <dd className="text-white font-medium mt-0.5">
+                                        <dd className="text-surface-900 dark:text-white font-medium mt-0.5">
                                             {certificate.course?.title}
                                         </dd>
                                     </div>
@@ -50,7 +50,7 @@ export default function VerifyCertificate({ code, certificate }: Props) {
                                         <dt className="text-xs uppercase tracking-wider text-surface-400 font-semibold">
                                             Issued
                                         </dt>
-                                        <dd className="text-white font-medium mt-0.5">
+                                        <dd className="text-surface-900 dark:text-white font-medium mt-0.5">
                                             {new Date(certificate.issued_at).toLocaleDateString(undefined, {
                                                 dateStyle: 'long',
                                             })}
@@ -60,7 +60,7 @@ export default function VerifyCertificate({ code, certificate }: Props) {
                                         <dt className="text-xs uppercase tracking-wider text-surface-400 font-semibold">
                                             Certificate ID
                                         </dt>
-                                        <dd className="text-white font-mono text-sm mt-0.5">
+                                        <dd className="text-surface-900 dark:text-white font-mono text-sm mt-0.5">
                                             {certificate.certificate_code}
                                         </dd>
                                     </div>
@@ -82,10 +82,10 @@ export default function VerifyCertificate({ code, certificate }: Props) {
                                     <ShieldX className="w-8 h-8 text-red-400" />
                                 </div>
 
-                                <h1 className="text-2xl font-bold font-display text-white mb-2">
+                                <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-2">
                                     No certificate found
                                 </h1>
-                                <p className="text-surface-400 text-sm">
+                                <p className="text-surface-500 text-sm">
                                     We have no record of the certificate ID{' '}
                                     <span className="font-mono text-surface-200">{code}</span>. Check the code and
                                     try again.

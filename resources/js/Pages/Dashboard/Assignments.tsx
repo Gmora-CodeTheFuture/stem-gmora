@@ -34,7 +34,7 @@ function statusBadge(row: AssignmentRow) {
     }
 
     if (row.submission?.status === 'returned') {
-        return <span className="badge-violet">Returned for changes</span>;
+        return <span className="badge-muted">Returned for changes</span>;
     }
 
     if (row.submission) {

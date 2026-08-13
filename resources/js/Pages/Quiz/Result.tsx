@@ -74,7 +74,7 @@ export default function QuizResult({ quiz, attempt, questions, attemptsRemaining
                         }`}
                     >
                         <span
-                            className={`text-2xl font-bold font-display ${
+                            className={`text-2xl font-semibold ${
                                 attempt.passed
                                     ? 'text-accent-600 dark:text-accent-400'
                                     : 'text-red-600 dark:text-red-400'
@@ -85,7 +85,7 @@ export default function QuizResult({ quiz, attempt, questions, attemptsRemaining
                     </div>
 
                     <div className="flex-1 min-w-[220px]">
-                        <h1 className="text-xl font-bold font-display text-surface-900 dark:text-white">
+                        <h1 className="text-xl font-semibold text-surface-900 dark:text-white">
                             {attempt.passed ? 'Passed' : 'Not passed yet'}
                         </h1>
                         <p className="text-surface-500 mt-1">

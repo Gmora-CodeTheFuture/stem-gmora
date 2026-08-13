@@ -1,19 +1,20 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
+import { GraduationCap } from 'lucide-react';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
-                </Link>
-            </div>
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-surface-50 dark:bg-surface-950">
+            <Link href="/" className="flex items-center gap-2.5 mb-8">
+                <span className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
+                    <GraduationCap className="w-5 h-5 text-white" />
+                </span>
+                <span className="text-xl font-semibold text-surface-900 dark:text-white">Gmora</span>
+            </Link>
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
-                {children}
-            </div>
+            <div className="w-full sm:max-w-md card p-7">{children}</div>
+
+            <p className="text-xs text-surface-400 mt-6">Learn. Build. Innovate.</p>
         </div>
     );
 }

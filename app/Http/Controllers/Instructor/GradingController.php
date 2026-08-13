@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\QuizAttempt;
 use App\Models\Submission;
+use App\Notifications\SubmissionGraded;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -102,6 +103,8 @@ class GradingController extends Controller
             'marks_awarded' => $validated['marks_awarded'],
             'status' => $validated['status'],
         ], $request->user()->id);
+
+        $submission->user?->notify(new SubmissionGraded($submission->fresh('assignment')));
 
         return back()->with('success', 'Grade recorded.');
     }

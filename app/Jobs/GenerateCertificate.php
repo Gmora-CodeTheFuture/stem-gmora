@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\Enrollment;
+use App\Notifications\CertificateIssued;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
@@ -48,6 +49,8 @@ class GenerateCertificate implements ShouldQueue
                 ['course_id' => $enrollment->course_id],
                 $enrollment->user_id,
             );
+
+            $enrollment->user?->notify(new CertificateIssued($certificate->load('course')));
         }
     }
 

@@ -49,7 +49,7 @@ export default function CourseDetail({ course, enrollment }: Props) {
             <Head title={`${course.title} — Gmora STEM`} />
 
             {/* ── Hero ─────────────────────────────────────────── */}
-            <section className="pt-28 md:pt-36 pb-14 bg-gradient-to-b from-primary-950 to-surface-950">
+            <section className="pt-28 md:pt-36 pb-14 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide grid lg:grid-cols-[1fr_360px] gap-10 items-start">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
@@ -57,12 +57,12 @@ export default function CourseDetail({ course, enrollment }: Props) {
                             <span className="badge-accent capitalize">{course.difficulty}</span>
                         </div>
 
-                        <h1 className="text-3xl md:text-5xl font-extrabold font-display text-white leading-tight mb-4">
+                        <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white leading-tight mb-4">
                             {course.title}
                         </h1>
-                        <p className="text-lg text-surface-300 max-w-2xl">{course.subtitle}</p>
+                        <p className="text-lg text-surface-500 dark:text-surface-400 max-w-2xl">{course.subtitle}</p>
 
-                        <div className="flex flex-wrap items-center gap-5 mt-6 text-sm text-surface-400">
+                        <div className="flex flex-wrap items-center gap-5 mt-6 text-sm text-surface-500">
                             <span className="inline-flex items-center gap-1.5">
                                 <BarChart3 className="w-4 h-4" />
                                 {course.total_lessons} lessons
@@ -83,11 +83,11 @@ export default function CourseDetail({ course, enrollment }: Props) {
                     </div>
 
                     {/* Enrollment card */}
-                    <div className="glass-card p-6 lg:sticky lg:top-24">
-                        <div className="text-3xl font-bold font-display text-white mb-1">
+                    <div className="card p-6 lg:sticky lg:top-24">
+                        <div className="text-3xl font-semibold text-surface-900 dark:text-white mb-1">
                             {isFree ? 'Free' : `${course.currency} ${course.price}`}
                         </div>
-                        <p className="text-sm text-surface-400 mb-5">
+                        <p className="text-sm text-surface-500 mb-5">
                             Lifetime access · learn at your own pace
                         </p>
 
@@ -108,7 +108,7 @@ export default function CourseDetail({ course, enrollment }: Props) {
                             </p>
                         )}
 
-                        <ul className="mt-6 space-y-2.5 text-sm text-surface-300">
+                        <ul className="mt-6 space-y-2.5 text-sm text-surface-600 dark:text-surface-300">
                             {[
                                 'Hands-on project work',
                                 'Live labs with the instructor',
@@ -128,14 +128,14 @@ export default function CourseDetail({ course, enrollment }: Props) {
             <section className="section pt-14">
                 <div className="container-wide grid lg:grid-cols-[1fr_320px] gap-10 items-start">
                     <div className="min-w-0">
-                        <h2 className="text-xl font-bold font-display text-surface-900 dark:text-white mb-3">
+                        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-3">
                             About this course
                         </h2>
                         <div className="text-surface-600 dark:text-surface-300 leading-relaxed whitespace-pre-line mb-10">
                             {course.description}
                         </div>
 
-                        <h2 className="text-xl font-bold font-display text-surface-900 dark:text-white mb-4">
+                        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-4">
                             Curriculum
                         </h2>
 
@@ -201,7 +201,7 @@ export default function CourseDetail({ course, enrollment }: Props) {
                             Your instructor
                         </h3>
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-violet-600 flex items-center justify-center text-white font-semibold">
+                            <div className="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
                                 {course.instructor?.full_name?.charAt(0) ?? '?'}
                             </div>
                             <div>

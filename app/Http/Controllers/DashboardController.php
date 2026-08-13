@@ -2,14 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Assignment;
 use App\Models\Certificate;
 use App\Models\Enrollment;
+use App\Models\Event;
 use App\Models\LiveSession;
 use App\Models\Progress;
+use App\Models\Submission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * The student home: a real summary of their own work — no placeholder figures.
+ * Every number below is derived from the student's own rows.
+ */
 class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
@@ -25,57 +34,190 @@ class DashboardController extends Controller
             ])
             ->get();
 
+        $enrollmentIds = $enrollments->pluck('id');
+        $courseIds = $enrollments->pluck('course_id');
+
         $totalLessons = $enrollments->sum(fn ($e) => $e->course?->total_lessons ?? 0);
         $completedLessons = $enrollments->sum('completed_lessons_count');
 
-        // Resume point: the most recently touched in-progress lesson.
-        $resume = Progress::query()
-            ->whereIn('enrollment_id', $enrollments->pluck('id'))
-            ->where('status', '!=', Progress::STATUS_COMPLETED)
-            ->with(['lesson:id,module_id,title,type', 'enrollment.course:id,title,slug'])
-            ->latest('updated_at')
-            ->first();
-
-        $nextLive = LiveSession::query()
-            ->where('scheduled_start', '>=', now())
-            ->whereHas('lesson.module', fn ($q) => $q->whereIn(
-                'course_id', $enrollments->pluck('course_id')
-            ))
-            ->orderBy('scheduled_start')
-            ->first();
-
         return Inertia::render('Dashboard', [
             'stats' => [
-                'enrolled_courses' => $enrollments->count(),
+                'courses' => $enrollments->count(),
+                'lessons_completed' => $completedLessons,
+                'certificates' => Certificate::where('user_id', $user->id)->count(),
+                'submissions' => Submission::where('user_id', $user->id)->count(),
                 'hours_learned' => round($enrollments->sum(
                     fn ($e) => ($e->course?->duration_minutes ?? 0) * $this->ratio($e)
                 ) / 60, 1),
-                'certificates' => Certificate::where('user_id', $user->id)->count(),
                 'progress_percentage' => $totalLessons > 0
-                    ? round($completedLessons / $totalLessons * 100)
+                    ? (int) round($completedLessons / $totalLessons * 100)
                     : 0,
             ],
+            'streak' => $this->streak($enrollmentIds),
+            'activity' => $this->activity($enrollmentIds),
             'enrollments' => $enrollments->map(fn ($e) => [
                 'id' => $e->id,
                 'course' => $e->course,
                 'status' => $e->status,
                 'completed_lessons_count' => $e->completed_lessons_count,
-                'percentage' => round($this->ratio($e) * 100),
-            ])->values(),
-            'resume' => $resume ? [
-                'lesson_id' => $resume->lesson_id,
-                'lesson_title' => $resume->lesson?->title,
-                'course_title' => $resume->enrollment?->course?->title,
-                'course_slug' => $resume->enrollment?->course?->slug,
-                'watch_percentage' => (float) $resume->watch_percentage,
-            ] : null,
-            'nextLive' => $nextLive?->only(['id', 'title', 'scheduled_start', 'duration_minutes']),
+                'percentage' => (int) round($this->ratio($e) * 100),
+            ])->sortByDesc('percentage')->values(),
+            'resume' => $this->resume($enrollmentIds),
+            'upcoming' => $this->upcoming($courseIds->all()),
+            'dueSoon' => $this->dueSoon($courseIds, $user->id),
             'certificates' => Certificate::where('user_id', $user->id)
                 ->with('course:id,title,slug')
                 ->latest('issued_at')
                 ->take(3)
                 ->get(),
         ]);
+    }
+
+    /**
+     * Current and longest run of consecutive days with a completed lesson.
+     *
+     * @return array{current: int, longest: int}
+     */
+    private function streak(Collection $enrollmentIds): array
+    {
+        $days = Progress::whereIn('enrollment_id', $enrollmentIds)
+            ->where('status', Progress::STATUS_COMPLETED)
+            ->whereNotNull('completed_at')
+            ->pluck('completed_at')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->unique()
+            ->sort()
+            ->values();
+
+        if ($days->isEmpty()) {
+            return ['current' => 0, 'longest' => 0];
+        }
+
+        $longest = 1;
+        $run = 1;
+
+        foreach ($days->slice(1) as $index => $day) {
+            $previous = Carbon::parse($days[$index]);
+
+            $run = Carbon::parse($day)->diffInDays($previous) === 1 ? $run + 1 : 1;
+            $longest = max($longest, $run);
+        }
+
+        // The current streak only counts if it reaches today or yesterday.
+        $lastDay = Carbon::parse($days->last());
+        $current = $lastDay->diffInDays(now()->startOfDay()) <= 1 ? $run : 0;
+
+        return ['current' => $current, 'longest' => $longest];
+    }
+
+    /**
+     * Lessons completed per day over the last 28 days, for the activity grid.
+     *
+     * @return array<int, array{date: string, count: int}>
+     */
+    private function activity(Collection $enrollmentIds): array
+    {
+        $counts = Progress::whereIn('enrollment_id', $enrollmentIds)
+            ->where('status', Progress::STATUS_COMPLETED)
+            ->where('completed_at', '>=', now()->subDays(27)->startOfDay())
+            ->pluck('completed_at')
+            ->groupBy(fn ($date) => Carbon::parse($date)->toDateString())
+            ->map->count();
+
+        return collect(range(27, 0))
+            ->map(function (int $daysAgo) use ($counts) {
+                $date = now()->subDays($daysAgo)->toDateString();
+
+                return ['date' => $date, 'count' => $counts->get($date, 0)];
+            })
+            ->all();
+    }
+
+    /** @return array<string, mixed>|null */
+    private function resume(Collection $enrollmentIds): ?array
+    {
+        $progress = Progress::whereIn('enrollment_id', $enrollmentIds)
+            ->where('status', '!=', Progress::STATUS_COMPLETED)
+            ->with(['lesson:id,module_id,title,type', 'enrollment.course:id,title,slug,thumbnail_url'])
+            ->latest('updated_at')
+            ->first();
+
+        if (! $progress) {
+            return null;
+        }
+
+        return [
+            'lesson_id' => $progress->lesson_id,
+            'lesson_title' => $progress->lesson?->title,
+            'course_title' => $progress->enrollment?->course?->title,
+            'course_slug' => $progress->enrollment?->course?->slug,
+            'thumbnail_url' => $progress->enrollment?->course?->thumbnail_url,
+            'watch_percentage' => (float) $progress->watch_percentage,
+            'updated_at' => $progress->updated_at->toIso8601String(),
+        ];
+    }
+
+    /**
+     * The next few calendar items — staff events and scheduled live classes.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function upcoming(array $courseIds): array
+    {
+        $events = Event::visibleTo($courseIds)
+            ->where('starts_at', '>=', now())
+            ->with('course:id,title')
+            ->orderBy('starts_at')
+            ->take(4)
+            ->get()
+            ->map(fn (Event $event) => [
+                'id' => $event->id,
+                'title' => $event->title,
+                'type' => $event->type,
+                'starts_at' => $event->starts_at->toIso8601String(),
+                'course_title' => $event->course?->title,
+            ]);
+
+        $sessions = $courseIds === [] ? collect() : LiveSession::where('scheduled_start', '>=', now())
+            ->whereHas('lesson.module', fn ($q) => $q->whereIn('course_id', $courseIds))
+            ->with('lesson.module.course:id,title')
+            ->orderBy('scheduled_start')
+            ->take(4)
+            ->get()
+            ->map(fn (LiveSession $session) => [
+                'id' => $session->id,
+                'title' => $session->title,
+                'type' => Event::TYPE_CLASS,
+                'starts_at' => $session->scheduled_start->toIso8601String(),
+                'course_title' => $session->lesson?->module?->course?->title,
+            ]);
+
+        return $events->concat($sessions)->sortBy('starts_at')->take(4)->values()->all();
+    }
+
+    /**
+     * Published assignments still open, that this student has not submitted.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function dueSoon(Collection $courseIds, string $userId): array
+    {
+        return Assignment::whereIn('course_id', $courseIds)
+            ->where('is_published', true)
+            ->whereNotNull('deadline_at')
+            ->where('deadline_at', '>=', now())
+            ->whereDoesntHave('submissions', fn ($q) => $q->where('user_id', $userId))
+            ->with('course:id,title')
+            ->orderBy('deadline_at')
+            ->take(3)
+            ->get()
+            ->map(fn (Assignment $assignment) => [
+                'id' => $assignment->id,
+                'title' => $assignment->title,
+                'deadline_at' => $assignment->deadline_at->toIso8601String(),
+                'course_title' => $assignment->course?->title,
+            ])
+            ->all();
     }
 
     private function ratio(Enrollment $enrollment): float

@@ -64,9 +64,9 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                 </Link>
 
                 <div className="flex items-center gap-3">
-                    <div className="w-40 h-2 rounded-full bg-surface-200 dark:bg-surface-800 overflow-hidden">
+                    <div className="w-40 progress-track">
                         <div
-                            className="h-full rounded-full bg-gradient-to-r from-primary-500 to-accent-500 transition-[width] duration-500"
+                            className="progress-fill"
                             style={{ width: `${completionPercentage}%` }}
                         />
                     </div>
@@ -96,7 +96,7 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                     )}
 
                     <div className="card p-6 mt-5">
-                        <h1 className="text-xl md:text-2xl font-bold font-display text-surface-900 dark:text-white">
+                        <h1 className="text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
                             {currentLesson.title}
                         </h1>
                         {currentLesson.description && (
@@ -183,8 +183,8 @@ function LivePanel({ lesson }: { lesson: Lesson }) {
 
     return (
         <div className="card p-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-violet-50 dark:bg-violet-950/50 flex items-center justify-center mx-auto mb-4">
-                <Radio className="w-7 h-7 text-violet-500" />
+            <div className="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-950 flex items-center justify-center mx-auto mb-4">
+                <Radio className="w-7 h-7 text-primary-600 dark:text-primary-400" />
             </div>
             <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Live class</h2>
             {start && (

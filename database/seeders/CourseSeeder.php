@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Assignment;
 use App\Models\Course;
+use App\Models\Event;
 use App\Models\Lesson;
 use App\Models\LiveSession;
 use App\Models\Question;
@@ -121,6 +122,7 @@ class CourseSeeder extends Seeder
         ]);
 
         $this->seedAssignment($course);
+        $this->seedEvents($course, $instructor);
 
         $this->command?->info("Seeded course: {$course->title} ({$totalLessons} lessons).");
     }
@@ -144,6 +146,36 @@ class CourseSeeder extends Seeder
                 'is_published' => true,
             ]
         );
+    }
+
+    /** A couple of calendar entries so the student calendar has content. */
+    private function seedEvents(Course $course, User $instructor): void
+    {
+        $events = [
+            [
+                'title' => 'Office hours: bring your questions',
+                'type' => Event::TYPE_CLASS,
+                'starts_at' => now()->addDays(2)->setTime(17, 30),
+                'ends_at' => now()->addDays(2)->setTime(18, 30),
+                'location' => 'Online',
+                'description' => 'Drop in with anything from this week — no agenda.',
+            ],
+            [
+                'title' => 'Workshop: evaluating your model honestly',
+                'type' => Event::TYPE_WORKSHOP,
+                'starts_at' => now()->addDays(9)->setTime(18, 0),
+                'ends_at' => now()->addDays(9)->setTime(19, 30),
+                'location' => 'Online',
+                'description' => 'Held-out splits, confusion matrices, and what accuracy hides.',
+            ],
+        ];
+
+        foreach ($events as $event) {
+            Event::updateOrCreate(
+                ['course_id' => $course->id, 'title' => $event['title']],
+                [...$event, 'created_by' => $instructor->id, 'is_published' => true],
+            );
+        }
     }
 
     private function seedLiveSession(Lesson $lesson): void
