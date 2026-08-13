@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useState } from 'react';
 import {
     ArrowLeft, CheckCircle2, ChevronDown, Circle, FileText,
-    HelpCircle, PlayCircle, Radio, Video,
+    HelpCircle, PlayCircle, Radio, Video, PanelRight
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SecureVideoPlayer from '@/Components/SecureVideoPlayer';
@@ -31,6 +31,7 @@ function formatDuration(seconds: number): string {
 
 export default function LearnShow({ course, modules, currentLesson, completionPercentage }: LearnPageProps) {
     const [openModules, setOpenModules] = useState<string[]>(modules.map((m) => m.id));
+    const [curriculumOpen, setCurriculumOpen] = useState(true);
 
     const toggleModule = (id: string) =>
         setOpenModules((open) => (open.includes(id) ? open.filter((m) => m !== id) : [...open, id]));
@@ -46,15 +47,38 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
         [currentLesson.id],
     );
 
-    const markComplete = () => reportProgress(100, true);
+    const allLessons = modules.flatMap((m) => m.lessons ?? []);
+    const currentIndex = allLessons.findIndex((l) => l.id === currentLesson.id);
+    const prevLessonId = currentIndex > 0 ? allLessons[currentIndex - 1].id : null;
+    const nextLessonId = currentIndex !== -1 && currentIndex + 1 < allLessons.length ? allLessons[currentIndex + 1].id : null;
+
+    const [showCongrats, setShowCongrats] = useState(false);
+
+    const markComplete = () => {
+        router.patch(
+            route('learn.progress', currentLesson.id),
+            { watch_percentage: 100, completed: true },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    if (nextLessonId) {
+                        router.visit(route('learn.lesson', [course.slug, nextLessonId]));
+                    } else {
+                        setShowCongrats(true);
+                    }
+                },
+            }
+        );
+    };
 
     const isComplete = currentLesson.progress?.status === 'completed';
 
     return (
-        <DashboardLayout header={course.title}>
+        <DashboardLayout header={course.title} noScroll={true}>
             <Head title={`${currentLesson.title} — ${course.title}`} />
 
-            <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+            <div className="mb-6 flex items-center justify-between gap-4 flex-wrap shrink-0">
                 <Link
                     href={route('dashboard.courses')}
                     className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
@@ -70,40 +94,65 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             style={{ width: `${completionPercentage}%` }}
                         />
                     </div>
-                    <span className="text-sm font-semibold text-surface-600 dark:text-surface-300">
+                    <span className="text-sm font-semibold text-surface-600 dark:text-surface-300 mr-2">
                         {completionPercentage}% complete
                     </span>
+                    <button
+                        onClick={() => setCurriculumOpen(!curriculumOpen)}
+                        className={`p-2 rounded-lg transition-colors ${
+                            curriculumOpen 
+                                ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400' 
+                                : 'text-surface-500 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100 dark:hover:bg-surface-800'
+                        }`}
+                        title="Toggle curriculum sidebar"
+                        aria-label="Toggle curriculum sidebar"
+                    >
+                        <PanelRight className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
+            <div className={`grid gap-6 h-full min-h-0 transition-all duration-300 ${curriculumOpen ? 'lg:grid-cols-[1fr_340px]' : 'lg:grid-cols-1 max-w-5xl mx-auto w-full'}`}>
                 {/* ── Player / lesson body ─────────────────────── */}
-                <div className="min-w-0">
-                    {currentLesson.type === 'youtube' && currentLesson.has_video ? (
-                        <SecureVideoPlayer
-                            key={currentLesson.id}
-                            lessonId={currentLesson.id}
-                            title={currentLesson.title}
-                            initialPercentage={Number(currentLesson.progress?.watch_percentage ?? 0)}
-                            onProgress={reportProgress}
-                        />
-                    ) : currentLesson.type === 'live' ? (
-                        <LivePanel lesson={currentLesson} />
-                    ) : currentLesson.type === 'quiz' ? (
-                        <QuizPanel lesson={currentLesson} />
-                    ) : (
-                        <PlaceholderPanel lesson={currentLesson} />
-                    )}
-
-                    <div className="card p-6 mt-5">
-                        <h1 className="text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
-                            {currentLesson.title}
-                        </h1>
-                        {currentLesson.description && (
-                            <p className="text-surface-500 mt-2 leading-relaxed">{currentLesson.description}</p>
+                <div className="min-w-0 flex flex-col h-full pb-2">
+                    <div className="shrink-0">
+                        {currentLesson.type === 'youtube' && currentLesson.has_video ? (
+                            <SecureVideoPlayer
+                                key={currentLesson.id}
+                                lessonId={currentLesson.id}
+                                title={currentLesson.title}
+                                initialPercentage={Number(currentLesson.progress?.watch_percentage ?? 0)}
+                                onProgress={reportProgress}
+                            />
+                        ) : currentLesson.type === 'live' ? (
+                            <LivePanel lesson={currentLesson} />
+                        ) : currentLesson.type === 'quiz' ? (
+                            <QuizPanel lesson={currentLesson} />
+                        ) : (
+                            <PlaceholderPanel lesson={currentLesson} />
                         )}
+                    </div>
 
-                        <div className="flex items-center gap-3 mt-5 pt-5 border-t border-surface-200 dark:border-surface-800">
+                    <div className="card p-5 lg:p-6 mt-4 lg:mt-5 flex-1 min-h-0 overflow-y-auto scrollbar-thin flex flex-col">
+                        <div className="shrink-0">
+                            <h1 className="text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
+                                {currentLesson.title}
+                            </h1>
+                            {currentLesson.description && (
+                                <p className="text-surface-500 mt-2 leading-relaxed">{currentLesson.description}</p>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-3 mt-auto pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0">
+                            {prevLessonId && (
+                                <Link
+                                    href={route('learn.lesson', [course.slug, prevLessonId])}
+                                    className="btn-secondary"
+                                >
+                                    Previous lesson
+                                </Link>
+                            )}
+                            
                             <button
                                 onClick={markComplete}
                                 disabled={isComplete}
@@ -117,61 +166,89 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             </span>
                         </div>
                     </div>
+
                 </div>
 
                 {/* ── Curriculum sidebar ───────────────────────── */}
-                <aside className="card p-2 lg:sticky lg:top-24 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin">
-                    {modules.map((module) => (
-                        <div key={module.id} className="mb-1">
-                            <button
-                                onClick={() => toggleModule(module.id)}
-                                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
-                            >
-                                <span className="text-sm font-semibold text-surface-900 dark:text-white">
-                                    {module.title}
-                                </span>
-                                <ChevronDown
-                                    className={`w-4 h-4 text-surface-400 shrink-0 transition-transform ${
-                                        openModules.includes(module.id) ? 'rotate-180' : ''
-                                    }`}
-                                />
-                            </button>
+                {curriculumOpen && (
+                    <aside className="card p-2 flex flex-col h-full overflow-hidden fade-in">
+                        <div className="overflow-y-auto scrollbar-thin flex-1 pr-1">
+                            {modules.map((module) => (
+                                <div key={module.id} className="mb-1">
+                                    <button
+                                        onClick={() => toggleModule(module.id)}
+                                        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
+                                    >
+                                        <span className="text-sm font-semibold text-surface-900 dark:text-white">
+                                            {module.title}
+                                        </span>
+                                        <ChevronDown
+                                            className={`w-4 h-4 text-surface-400 shrink-0 transition-transform ${
+                                                openModules.includes(module.id) ? 'rotate-180' : ''
+                                            }`}
+                                        />
+                                    </button>
 
-                            {openModules.includes(module.id) && (
-                                <ul className="mt-0.5 space-y-0.5">
-                                    {(module.lessons ?? []).map((lesson) => {
-                                        const Icon = typeIcon[lesson.type] ?? PlayCircle;
-                                        const active = lesson.id === currentLesson.id;
-                                        const done = lesson.progress?.status === 'completed';
+                                    {openModules.includes(module.id) && (
+                                        <ul className="mt-0.5 space-y-0.5">
+                                            {(module.lessons ?? []).map((lesson) => {
+                                                const Icon = typeIcon[lesson.type] ?? PlayCircle;
+                                                const active = lesson.id === currentLesson.id;
+                                                const done = lesson.progress?.status === 'completed';
 
-                                        return (
-                                            <li key={lesson.id}>
-                                                <Link
-                                                    href={route('learn.lesson', [course.slug, lesson.id])}
-                                                    preserveScroll
-                                                    className={`flex items-start gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                        active
-                                                            ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium'
-                                                            : 'text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800'
-                                                    }`}
-                                                >
-                                                    {done ? (
-                                                        <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-accent-500" />
-                                                    ) : (
-                                                        <Circle className="w-4 h-4 mt-0.5 shrink-0 text-surface-300 dark:text-surface-600" />
-                                                    )}
-                                                    <span className="flex-1 leading-snug">{lesson.title}</span>
-                                                    <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-surface-400" />
-                                                </Link>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            )}
+                                                return (
+                                                    <li key={lesson.id}>
+                                                        <Link
+                                                            href={route('learn.lesson', [course.slug, lesson.id])}
+                                                            preserveScroll
+                                                            className={`flex items-start gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                                active
+                                                                    ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium'
+                                                                    : 'text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800'
+                                                            }`}
+                                                        >
+                                                            {done ? (
+                                                                <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-accent-500" />
+                                                            ) : (
+                                                                <Circle className="w-4 h-4 mt-0.5 shrink-0 text-surface-300 dark:text-surface-600" />
+                                                            )}
+                                                            <span className="flex-1 leading-snug">{lesson.title}</span>
+                                                            <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-surface-400" />
+                                                        </Link>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </aside>
+                    </aside>
+                )}
             </div>
+
+            {/* Congratulations Modal */}
+            {showCongrats && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
+                    <div className="card p-8 max-w-sm w-full text-center scale-in shadow-2xl relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent pointer-events-none" />
+                        <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center mx-auto mb-5">
+                            <CheckCircle2 className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-surface-900 dark:text-white mb-2 relative">
+                            Congratulations!
+                        </h2>
+                        <p className="text-surface-500 dark:text-surface-400 mb-6 relative">
+                            You've completed <strong>{course.title}</strong>. Outstanding work!
+                        </p>
+                        <div className="flex gap-3 relative">
+                            <Link href={route('dashboard.courses')} className="btn-secondary flex-1">
+                                Go to dashboard
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 }
