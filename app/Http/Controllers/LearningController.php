@@ -30,6 +30,7 @@ class LearningController extends Controller
             'modules' => fn ($q) => $q->where('is_published', true),
             'modules.lessons' => fn ($q) => $q->where('is_published', true),
             'modules.lessons.liveSession',
+            'modules.lessons.quiz:id,lesson_id,title,is_published',
         ]);
 
         $progress = $enrollment->progress()->get()->keyBy('lesson_id');
@@ -61,6 +62,7 @@ class LearningController extends Controller
                 'live_session' => $current->liveSession?->only([
                     'id', 'title', 'scheduled_start', 'duration_minutes', 'zoom_join_url',
                 ]),
+                'quiz' => $current->quiz?->is_published ? $current->quiz->only(['id', 'title']) : null,
                 'progress' => $progress->get($current->id)?->only(['status', 'watch_percentage']),
             ],
             'completionPercentage' => $this->completionPercentage($enrollment, $allLessons->count()),

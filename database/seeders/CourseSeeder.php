@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\LiveSession;
@@ -119,7 +120,30 @@ class CourseSeeder extends Seeder
             'total_lessons' => $totalLessons,
         ]);
 
+        $this->seedAssignment($course);
+
         $this->command?->info("Seeded course: {$course->title} ({$totalLessons} lessons).");
+    }
+
+    private function seedAssignment(Course $course): void
+    {
+        Assignment::updateOrCreate(
+            ['course_id' => $course->id, 'title' => 'Final Project: Train and Evaluate a Classifier'],
+            [
+                'description' => "Pick a small public dataset, train a classifier, and evaluate it honestly.\n\nSubmit a GitHub repository containing your notebook, a short README explaining your approach, and your evaluation results — including what your model gets wrong.",
+                'deadline_at' => now()->addWeeks(3),
+                'rubric' => [
+                    'criteria' => [
+                        ['name' => 'Approach and reasoning', 'max_marks' => 30, 'description' => 'Choice of model and features is explained and justified.'],
+                        ['name' => 'Implementation', 'max_marks' => 30, 'description' => 'Code runs end to end and is readable.'],
+                        ['name' => 'Evaluation honesty', 'max_marks' => 25, 'description' => 'Uses a held-out split; reports failure modes, not just accuracy.'],
+                        ['name' => 'Write-up', 'max_marks' => 15, 'description' => 'README communicates the work clearly.'],
+                    ],
+                ],
+                'max_marks' => 100,
+                'is_published' => true,
+            ]
+        );
     }
 
     private function seedLiveSession(Lesson $lesson): void
@@ -186,6 +210,21 @@ class CourseSeeder extends Seeder
                 ],
                 'correct_answer' => [1],
                 'explanation' => 'Touching the test set during tuning leaks information and inflates your reported score.',
+            ],
+            [
+                'type' => 'fill_blank',
+                'body' => 'The algorithm that adjusts weights by following the negative slope of the loss is called ______ descent.',
+                'options' => [],
+                'correct_answer' => ['gradient'],
+                'explanation' => 'Gradient descent steps downhill on the loss surface.',
+            ],
+            [
+                // Manually graded — routes the attempt to the instructor queue.
+                'type' => 'essay',
+                'body' => 'Describe one situation where a high-accuracy model would still be the wrong choice, and explain why.',
+                'options' => [],
+                'correct_answer' => null,
+                'explanation' => 'Graded by your instructor.',
             ],
         ];
 

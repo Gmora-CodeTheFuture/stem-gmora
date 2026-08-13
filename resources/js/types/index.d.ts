@@ -75,6 +75,7 @@ export interface Lesson {
      * whether a video exists. The ID itself arrives with a video ticket.
      */
     has_video?: boolean;
+    quiz?: { id: string; title: string } | null;
     progress?: Pick<Progress, 'status' | 'watch_percentage'> | null;
 }
 
@@ -140,16 +141,31 @@ export interface Quiz {
     questions?: Question[];
 }
 
+export type QuestionType = 'mcq' | 'true_false' | 'fill_blank' | 'code' | 'matching' | 'ordering' | 'essay';
+
+/**
+ * The shape a client actually receives (Question::forStudent). The answer key
+ * and the `is_correct` flags on options are stripped until results are shown.
+ */
 export interface Question {
     id: string;
-    quiz_id: string;
-    type: 'mcq' | 'true_false' | 'fill_blank' | 'code' | 'matching' | 'ordering' | 'essay';
+    type: QuestionType;
     body: string;
-    options?: Array<{ text: string; is_correct?: boolean }>;
     points: number;
     order_index: number;
+    options: Array<{ index: number; text: string }>;
+    /** Present only on the results page. */
+    correct_answer?: unknown;
     explanation?: string;
 }
+
+/** A question as rendered on the results page. */
+export interface GradedQuestion extends Question {
+    given_answer: unknown;
+    is_correct: boolean | null;
+}
+
+export type QuizAnswer = number[] | string | Record<string, string>;
 
 export interface QuizAttempt {
     id: string;

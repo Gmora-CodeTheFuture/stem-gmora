@@ -89,6 +89,8 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                         />
                     ) : currentLesson.type === 'live' ? (
                         <LivePanel lesson={currentLesson} />
+                    ) : currentLesson.type === 'quiz' ? (
+                        <QuizPanel lesson={currentLesson} />
                     ) : (
                         <PlaceholderPanel lesson={currentLesson} />
                     )}
@@ -207,23 +209,40 @@ function LivePanel({ lesson }: { lesson: Lesson }) {
     );
 }
 
-function PlaceholderPanel({ lesson }: { lesson: Lesson }) {
-    const copy =
-        lesson.type === 'quiz'
-            ? 'The quiz player lands in the assessment milestone.'
-            : 'Downloadable resources land in the storage milestone.';
+function QuizPanel({ lesson }: { lesson: Lesson }) {
+    return (
+        <div className="card p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-950/50 flex items-center justify-center mx-auto mb-4">
+                <HelpCircle className="w-7 h-7 text-primary-500" />
+            </div>
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                {lesson.quiz?.title ?? lesson.title}
+            </h2>
 
+            {lesson.quiz ? (
+                <>
+                    <p className="text-surface-500 mt-2">
+                        Check what you've picked up before moving on. Passing marks this lesson complete.
+                    </p>
+                    <Link href={route('quiz.show', lesson.quiz.id)} className="btn-primary mt-5">
+                        Open quiz
+                    </Link>
+                </>
+            ) : (
+                <p className="text-surface-500 mt-2">This quiz hasn't been published yet.</p>
+            )}
+        </div>
+    );
+}
+
+function PlaceholderPanel({ lesson }: { lesson: Lesson }) {
     return (
         <div className="card p-8 text-center">
             <div className="w-14 h-14 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mx-auto mb-4">
-                {lesson.type === 'quiz' ? (
-                    <HelpCircle className="w-7 h-7 text-primary-500" />
-                ) : (
-                    <FileText className="w-7 h-7 text-primary-500" />
-                )}
+                <FileText className="w-7 h-7 text-primary-500" />
             </div>
             <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{lesson.title}</h2>
-            <p className="text-surface-500 mt-2">{copy}</p>
+            <p className="text-surface-500 mt-2">Downloadable resources land in the storage milestone.</p>
         </div>
     );
 }

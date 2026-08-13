@@ -1,10 +1,13 @@
 <?php
 
+use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\Instructor\GradingController;
 use App\Http\Controllers\LearningController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuizController;
 use App\Models\Certificate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -58,13 +61,46 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/courses/{course:slug}/enroll', [EnrollmentController::class, 'store'])->name('enroll.store');
     Route::delete('/enrollments/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enroll.destroy');
 
+    Route::get('/dashboard/assignments', [AssignmentController::class, 'index'])->name('dashboard.assignments');
+
     // Learning — every route below is enrollment-gated (Plan §7.2)
     Route::middleware('enrolled')->group(function () {
         Route::patch('/learn/lessons/{lesson}/progress', [LearningController::class, 'updateProgress'])
             ->name('learn.progress');
         Route::get('/learn/{course:slug}', [LearningController::class, 'show'])->name('learn.show');
         Route::get('/learn/{course:slug}/{lesson}', [LearningController::class, 'show'])->name('learn.lesson');
+
+        // Quizzes
+        Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('quiz.show');
+        Route::post('/quizzes/{quiz}/attempts', [QuizController::class, 'start'])->name('quiz.start');
+        Route::get('/quiz-attempts/{attempt}', [QuizController::class, 'attempt'])->name('quiz.attempt');
+        Route::patch('/quiz-attempts/{attempt}', [QuizController::class, 'save'])->name('quiz.save');
+        Route::post('/quiz-attempts/{attempt}/submit', [QuizController::class, 'submit'])->name('quiz.submit');
+        Route::get('/quiz-attempts/{attempt}/result', [QuizController::class, 'result'])->name('quiz.result');
+
+        // Assignments
+        Route::get('/assignments/{assignment}', [AssignmentController::class, 'show'])->name('assignments.show');
+        Route::post('/assignments/{assignment}/submissions', [AssignmentController::class, 'store'])
+            ->name('assignments.submit');
     });
+
+    Route::get('/submissions/{submission}/file', [GradingController::class, 'download'])
+        ->name('submissions.download');
+
+    /*
+    |----------------------------------------------------------------------
+    | Instructor
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role:instructor,teaching_assistant,course_manager,platform_admin,super_admin')
+        ->prefix('instructor')
+        ->group(function () {
+            Route::get('/grading', [GradingController::class, 'index'])->name('instructor.grading');
+            Route::patch('/submissions/{submission}', [GradingController::class, 'grade'])
+                ->name('instructor.grade-submission');
+            Route::patch('/quiz-attempts/{attempt}', [GradingController::class, 'gradeAttempt'])
+                ->name('instructor.grade-attempt');
+        });
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

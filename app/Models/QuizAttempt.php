@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 class QuizAttempt extends Model
 {
@@ -27,6 +28,12 @@ class QuizAttempt extends Model
         ];
     }
 
+    public const STATUS_IN_PROGRESS = 'in_progress';
+
+    public const STATUS_SUBMITTED = 'submitted';
+
+    public const STATUS_GRADED = 'graded';
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -35,5 +42,25 @@ class QuizAttempt extends Model
     public function quiz(): BelongsTo
     {
         return $this->belongsTo(Quiz::class);
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this->status === self::STATUS_IN_PROGRESS;
+    }
+
+    /**
+     * A timed quiz's deadline, or null when the quiz is untimed.
+     */
+    public function deadline(): ?Carbon
+    {
+        $limit = $this->quiz->time_limit_seconds;
+
+        return $limit ? $this->started_at->copy()->addSeconds($limit) : null;
+    }
+
+    public function hasExpired(): bool
+    {
+        return $this->deadline()?->isPast() ?? false;
     }
 }

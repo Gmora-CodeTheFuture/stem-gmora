@@ -3,7 +3,7 @@ import { PropsWithChildren, useState, useEffect, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     GraduationCap, LayoutDashboard, BookOpen, ClipboardCheck,
-    Award, Calendar, Settings, Bell, ChevronDown, LogOut,
+    Award, Settings, Bell, ChevronDown, LogOut,
     Menu, X, Moon, Sun, User, ChevronRight
 } from 'lucide-react';
 import { PageProps } from '@/types';
@@ -29,13 +29,17 @@ export default function DashboardLayout({ header, children }: DashboardLayoutPro
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
     };
 
+    // Staff roles get the grading queue; Certificates and Calendar arrive with
+    // their own milestones, so they are not linked until those routes exist.
+    const canGrade = ['instructor', 'teaching_assistant', 'course_manager', 'platform_admin', 'super_admin']
+        .includes(auth?.user?.role?.name ?? '');
+
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
         { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
-        { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
-        { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
-        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+        ...(canGrade ? [{ name: 'Grading', href: '/instructor/grading', icon: Award }] : []),
+        { name: 'Settings', href: '/profile', icon: Settings },
     ];
 
     const currentPath = window.location.pathname;

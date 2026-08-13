@@ -16,6 +16,16 @@ class Question extends Model
         'points', 'order_index', 'explanation',
     ];
 
+    /**
+     * The answer key never leaves the server while an attempt is live.
+     * `options` still carries `is_correct` flags for MCQ, so questions are
+     * additionally projected through Question::forStudent() before they are
+     * sent to a client.
+     */
+    protected $hidden = [
+        'correct_answer',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -41,5 +51,41 @@ class Question extends Model
     public function quiz(): BelongsTo
     {
         return $this->belongsTo(Quiz::class);
+    }
+
+    /** Auto-gradable types; the rest go to an instructor. */
+    public function isAutoGradable(): bool
+    {
+        return ! in_array($this->type, [self::TYPE_ESSAY, self::TYPE_CODE], true);
+    }
+
+    /**
+     * Public-safe projection. Strips the answer key and the `is_correct`
+     * flags baked into MCQ options; the explanation is only attached once
+     * the attempt has been graded.
+     */
+    public function forStudent(bool $revealAnswers = false): array
+    {
+        $payload = [
+            'id' => $this->id,
+            'type' => $this->type,
+            'body' => $this->body,
+            'points' => $this->points,
+            'order_index' => $this->order_index,
+            'options' => collect($this->options ?? [])
+                ->map(fn ($option, $index) => [
+                    'index' => $index,
+                    'text' => is_array($option) ? ($option['text'] ?? '') : (string) $option,
+                ])
+                ->values()
+                ->all(),
+        ];
+
+        if ($revealAnswers) {
+            $payload['correct_answer'] = $this->correct_answer;
+            $payload['explanation'] = $this->explanation;
+        }
+
+        return $payload;
     }
 }

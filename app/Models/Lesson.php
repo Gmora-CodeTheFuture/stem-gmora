@@ -55,6 +55,11 @@ class Lesson extends Model
         return $this->hasOne(LiveSession::class);
     }
 
+    public function quiz(): HasOne
+    {
+        return $this->hasOne(Quiz::class);
+    }
+
     // ─── Helpers ────────────────────────────────────────────────────
 
     public function isVideo(): bool

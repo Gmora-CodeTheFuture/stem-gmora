@@ -2,8 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Assignment;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\Quiz;
+use App\Models\QuizAttempt;
+use App\Models\Submission;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -50,16 +55,28 @@ class EnsureEnrolled
         return $next($request);
     }
 
+    /**
+     * Walks whichever bound model the route carries back to its course.
+     */
     private function resolveCourseId(Request $request): ?string
     {
-        $lesson = $request->route('lesson');
+        foreach (['lesson', 'course', 'quiz', 'attempt', 'assignment', 'submission'] as $parameter) {
+            $model = $request->route($parameter);
 
-        if ($lesson instanceof Lesson) {
-            return $lesson->loadMissing('module')->module?->course_id;
+            $courseId = match (true) {
+                $model instanceof Course => $model->id,
+                $model instanceof Lesson => $model->loadMissing('module')->module?->course_id,
+                $model instanceof Quiz, $model instanceof Assignment => $model->course_id,
+                $model instanceof QuizAttempt => $model->loadMissing('quiz')->quiz?->course_id,
+                $model instanceof Submission => $model->loadMissing('assignment')->assignment?->course_id,
+                default => null,
+            };
+
+            if ($courseId !== null) {
+                return $courseId;
+            }
         }
 
-        $course = $request->route('course');
-
-        return $course?->id;
+        return null;
     }
 }
