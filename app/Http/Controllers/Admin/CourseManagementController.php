@@ -23,7 +23,7 @@ class CourseManagementController extends Controller
             ->withCount('enrollments');
 
         if ($search = $request->input('search')) {
-            $query->where('title', 'like', "%{$search}%");
+            $query->whereLike('title', "%{$search}%");
         }
 
         if ($status = $request->input('status')) {

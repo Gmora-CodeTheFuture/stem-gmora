@@ -25,8 +25,8 @@ class EnrollmentManagementController extends Controller
         ]);
 
         if ($search = $request->input('search')) {
-            $query->whereHas('user', fn ($q) => $q->where('full_name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%"));
+            $query->whereHas('user', fn ($q) => $q->whereLike('full_name', "%{$search}%")
+                ->orWhereLike('email', "%{$search}%"));
         }
 
         if ($status = $request->input('status')) {

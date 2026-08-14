@@ -11,6 +11,7 @@ use App\Models\Question;
 use App\Models\Quiz;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\CourseContentService;
 use Illuminate\Database\Seeder;
 
 /**
@@ -49,7 +50,10 @@ class CourseSeeder extends Seeder
             ]
         );
 
-        $course->modules()->delete();
+        // Soft-deleting a module leaves its lessons live, so re-seeding would
+        // pile up orphans and inflate every lesson count. Cascade properly.
+        $content = app(CourseContentService::class);
+        $course->modules()->each(fn ($module) => $content->deleteModule($module));
 
         $blueprint = [
             [
@@ -116,10 +120,8 @@ class CourseSeeder extends Seeder
             }
         }
 
-        $course->update([
-            'duration_minutes' => (int) round($totalSeconds / 60),
-            'total_lessons' => $totalLessons,
-        ]);
+        // Counters are derived from published content, never hand-set.
+        $content->syncCounters($course->refresh());
 
         $this->seedAssignment($course);
         $this->seedEvents($course, $instructor);

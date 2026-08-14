@@ -19,7 +19,7 @@ class PaymentManagementController extends Controller
         ]);
 
         if ($search = $request->input('search')) {
-            $query->whereHas('user', fn ($q) => $q->where('full_name', 'like', "%{$search}%"));
+            $query->whereHas('user', fn ($q) => $q->whereLike('full_name', "%{$search}%"));
         }
 
         if ($status = $request->input('status')) {

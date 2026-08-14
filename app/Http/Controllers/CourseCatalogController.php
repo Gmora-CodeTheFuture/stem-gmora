@@ -22,9 +22,9 @@ class CourseCatalogController extends Controller
             ->with('instructor:id,full_name,avatar_url')
             ->when($request->string('search')->toString(), function ($query, string $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                        ->orWhere('subtitle', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
+                    $q->whereLike('title', "%{$search}%")
+                        ->orWhereLike('subtitle', "%{$search}%")
+                        ->orWhereLike('description', "%{$search}%");
                 });
             })
             ->when($request->string('category')->toString(), fn ($q, $c) => $q->where('category', $c))

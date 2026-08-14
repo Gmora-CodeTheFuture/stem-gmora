@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Award, ExternalLink } from 'lucide-react';
+import { Award, Download, ExternalLink } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/types';
 
@@ -7,7 +7,7 @@ interface CertificateRow {
     id: string;
     certificate_code: string;
     issued_at: string;
-    pdf_url: string | null;
+    has_pdf: boolean;
     course: { id: string; title: string; slug: string; category: string } | null;
 }
 
@@ -55,13 +55,22 @@ export default function Certificates({ certificates }: Props) {
                                 {certificate.certificate_code}
                             </p>
 
-                            <Link
-                                href={route('certificate.verify', certificate.certificate_code)}
-                                className="btn-secondary w-full mt-4"
-                            >
-                                <ExternalLink className="w-4 h-4" />
-                                View / verify
-                            </Link>
+                            <div className="flex items-center gap-2 mt-4">
+                                <a
+                                    href={route('certificates.download', certificate.id)}
+                                    className="btn-primary flex-1"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Download PDF
+                                </a>
+                                <Link
+                                    href={route('certificate.verify', certificate.certificate_code)}
+                                    className="btn-secondary"
+                                    title="Public verification page"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                </Link>
+                            </div>
                         </article>
                     ))}
                 </div>

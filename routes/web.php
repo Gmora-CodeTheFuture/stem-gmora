@@ -83,6 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/courses', [MyCoursesController::class, 'index'])->name('dashboard.courses');
     Route::get('/dashboard/calendar', [CalendarController::class, 'index'])->name('dashboard.calendar');
     Route::get('/dashboard/certificates', [CertificateController::class, 'index'])->name('dashboard.certificates');
+    Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])
+        ->name('certificates.download');
 
     // Notifications (replaces the old Messages tab)
     Route::get('/dashboard/notifications', [NotificationController::class, 'index'])->name('dashboard.notifications');

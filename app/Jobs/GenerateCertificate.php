@@ -6,14 +6,15 @@ use App\Models\AuditLog;
 use App\Models\Certificate;
 use App\Models\Enrollment;
 use App\Notifications\CertificateIssued;
+use App\Services\CertificateRenderer;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
 
 /**
  * Queued on 100% course completion (Plan §8.8). Issues the certificate row and
- * its verification code; PDF rendering + R2 upload land in a later milestone,
- * so `pdf_url` stays null and the public /verify/{code} page reads the row.
+ * its verification code, then renders the PDF carrying a QR that points at the
+ * public /verify/{code} page.
  */
 class GenerateCertificate implements ShouldQueue
 {
@@ -40,6 +41,10 @@ class GenerateCertificate implements ShouldQueue
                 'issued_at' => now(),
             ]
         );
+
+        // Render the PDF whether the row is new or was issued before PDFs
+        // existed, so every certificate ends up with a downloadable file.
+        app(CertificateRenderer::class)->ensure($certificate);
 
         if ($certificate->wasRecentlyCreated) {
             AuditLog::record(

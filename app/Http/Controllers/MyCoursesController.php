@@ -48,9 +48,9 @@ class MyCoursesController extends Controller
         $catalog = Course::published()
             ->with('instructor:id,full_name')
             ->when($search !== '', fn ($q) => $q->where(fn ($inner) => $inner
-                ->where('title', 'like', "%{$search}%")
-                ->orWhere('subtitle', 'like', "%{$search}%")
-                ->orWhere('category', 'like', "%{$search}%")))
+                ->whereLike('title', "%{$search}%")
+                ->orWhereLike('subtitle', "%{$search}%")
+                ->orWhereLike('category', "%{$search}%")))
             ->when($category !== '', fn ($q) => $q->where('category', $category))
             ->orderByDesc('total_enrollments')
             ->get()
