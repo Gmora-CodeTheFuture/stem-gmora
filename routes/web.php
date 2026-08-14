@@ -5,8 +5,10 @@ use App\Http\Controllers\Admin\BadgeManagementController;
 use App\Http\Controllers\Admin\CourseManagementController;
 use App\Http\Controllers\Admin\EnrollmentManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
+use App\Http\Controllers\Admin\PostManagementController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CourseCatalogController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LearningController;
 use App\Http\Controllers\MyCoursesController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PresentationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SearchController;
@@ -56,6 +59,9 @@ Route::get('/about', function () {
 Route::get('/pricing', function () {
     return Inertia::render('Marketing/Pricing');
 })->name('pricing');
+
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/contact', function () {
     return Inertia::render('Marketing/Contact');
@@ -127,6 +133,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/learn/{course:slug}', [LearningController::class, 'show'])->name('learn.show');
         Route::get('/learn/{course:slug}/{lesson}', [LearningController::class, 'show'])->name('learn.lesson');
+
+        // Presentations — served in a new tab with sandboxed CSP
+        Route::get('/presentations/{lesson}/view', [PresentationController::class, 'show'])
+            ->name('presentation.show');
+        Route::get('/presentations/{lesson}/assets/{path}', [PresentationController::class, 'asset'])
+            ->where('path', '.*')
+            ->name('presentation.asset');
 
         // Quizzes
         Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('quiz.show');
@@ -215,6 +228,14 @@ Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
         // Payments
         Route::get('/payments', [PaymentManagementController::class, 'index'])->name('admin.payments.index');
 
+        // Blog
+        Route::get('/posts', [PostManagementController::class, 'index'])->name('admin.posts.index');
+        Route::get('/posts/create', [PostManagementController::class, 'create'])->name('admin.posts.create');
+        Route::post('/posts', [PostManagementController::class, 'store'])->name('admin.posts.store');
+        Route::get('/posts/{post}/edit', [PostManagementController::class, 'edit'])->name('admin.posts.edit');
+        Route::patch('/posts/{post}', [PostManagementController::class, 'update'])->name('admin.posts.update');
+        Route::delete('/posts/{post}', [PostManagementController::class, 'destroy'])->name('admin.posts.destroy');
+
         // Badges
         Route::get('/badges', [BadgeManagementController::class, 'index'])->name('admin.badges.index');
         Route::post('/badges', [BadgeManagementController::class, 'store'])->name('admin.badges.store');
@@ -252,6 +273,7 @@ Route::middleware(['auth', 'verified', 'role:instructor,course_manager,platform_
         Route::patch('/lessons/{lesson}', [LessonController::class, 'update'])->name('tutor.lessons.update');
         Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy'])->name('tutor.lessons.destroy');
         Route::post('/modules/{module}/lessons/reorder', [LessonController::class, 'reorder'])->name('tutor.lessons.reorder');
+        Route::post('/lessons/{lesson}/presentation', [PresentationController::class, 'upload'])->name('tutor.lessons.presentation.upload');
 
         // Students
         Route::get('/courses/{course}/students', [StudentController::class, 'index'])->name('tutor.students.index');

@@ -103,6 +103,9 @@ class CourseContentService
             Lesson::TYPE_QUIZ => $lesson->quiz()->where('is_published', true)->exists()
                 ? null
                 : 'Publish the quiz before publishing this lesson.',
+            Lesson::TYPE_HTML => $lesson->presentation()->exists()
+                ? null
+                : 'Upload the presentation .zip before publishing this lesson.',
             default => null,
         };
     }

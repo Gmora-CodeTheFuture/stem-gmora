@@ -69,7 +69,7 @@ export interface Lesson {
     module_id?: string;
     title: string;
     description?: string;
-    type: 'youtube' | 'live' | 'pdf' | 'quiz';
+    type: 'youtube' | 'live' | 'pdf' | 'quiz' | 'html';
     order_index: number;
     duration_seconds: number;
     is_free_preview?: boolean;
@@ -80,6 +80,7 @@ export interface Lesson {
      * whether a video exists. The ID itself arrives with a video ticket.
      */
     has_video?: boolean;
+    has_presentation?: boolean;
     quiz?: { id: string; title: string } | null;
     progress?: Pick<Progress, 'status' | 'watch_percentage'> | null;
 }

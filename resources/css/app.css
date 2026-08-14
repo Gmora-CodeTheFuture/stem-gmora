@@ -166,3 +166,54 @@
         @apply bg-surface-300 dark:bg-surface-700 rounded-full;
     }
 }
+
+@layer components {
+    /* Rendered markdown for blog posts. */
+    .prose-gmora {
+        @apply text-surface-700 dark:text-surface-200 leading-relaxed;
+    }
+
+    .prose-gmora > * + * {
+        @apply mt-5;
+    }
+
+    .prose-gmora h2 {
+        @apply text-xl font-semibold text-surface-900 dark:text-white mt-10;
+    }
+
+    .prose-gmora h3 {
+        @apply text-lg font-semibold text-surface-900 dark:text-white mt-8;
+    }
+
+    .prose-gmora a {
+        @apply text-primary-600 dark:text-primary-400 underline underline-offset-2;
+    }
+
+    .prose-gmora ul {
+        @apply list-disc pl-6 space-y-2;
+    }
+
+    .prose-gmora ol {
+        @apply list-decimal pl-6 space-y-2;
+    }
+
+    .prose-gmora blockquote {
+        @apply border-l-2 border-primary-500 pl-4 italic text-surface-500;
+    }
+
+    .prose-gmora code {
+        @apply font-mono text-sm bg-surface-100 dark:bg-surface-800 px-1.5 py-0.5 rounded;
+    }
+
+    .prose-gmora pre {
+        @apply bg-surface-900 dark:bg-surface-950 text-surface-100 p-4 rounded-2xl overflow-x-auto text-sm;
+    }
+
+    .prose-gmora pre code {
+        @apply bg-transparent p-0;
+    }
+
+    .prose-gmora img {
+        @apply rounded-2xl;
+    }
+}

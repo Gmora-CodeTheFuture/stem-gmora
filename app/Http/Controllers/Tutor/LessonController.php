@@ -23,7 +23,7 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'type' => ['required', 'in:youtube,live,pdf,quiz'],
+            'type' => ['required', 'in:youtube,live,pdf,quiz,html'],
             'content_ref' => ['nullable', 'string', 'max:500'],
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
             'is_free_preview' => ['boolean'],
@@ -51,7 +51,7 @@ class LessonController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'type' => ['required', 'in:youtube,live,pdf,quiz'],
+            'type' => ['required', 'in:youtube,live,pdf,quiz,html'],
             'content_ref' => ['nullable', 'string', 'max:500'],
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
             'is_free_preview' => ['boolean'],

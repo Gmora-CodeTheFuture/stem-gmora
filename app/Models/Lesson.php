@@ -44,6 +44,8 @@ class Lesson extends Model
 
     public const TYPE_QUIZ = 'quiz';
 
+    public const TYPE_HTML = 'html';
+
     // ─── Relationships ──────────────────────────────────────────────
 
     public function module(): BelongsTo
@@ -59,6 +61,11 @@ class Lesson extends Model
     public function quiz(): HasOne
     {
         return $this->hasOne(Quiz::class);
+    }
+
+    public function presentation(): HasOne
+    {
+        return $this->hasOne(Presentation::class);
     }
 
     // ─── Helpers ────────────────────────────────────────────────────

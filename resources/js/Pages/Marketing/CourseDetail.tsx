@@ -2,7 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import {
     Award, BarChart3, CheckCircle2, ChevronDown, Clock, FileText,
-    HelpCircle, Lock, PlayCircle, Radio, Users, Video,
+    Globe, HelpCircle, Lock, PlayCircle, Radio, Users, Video,
 } from 'lucide-react';
 import MarketingLayout from '@/Layouts/MarketingLayout';
 import { Course, Enrollment, PageProps } from '@/types';
@@ -12,7 +12,7 @@ interface Props {
     enrollment: Enrollment | null;
 }
 
-const typeIcon = { youtube: Video, live: Radio, pdf: FileText, quiz: HelpCircle } as const;
+const typeIcon = { youtube: Video, live: Radio, pdf: FileText, quiz: HelpCircle, html: Globe } as const;
 
 function formatDuration(seconds: number): string {
     if (!seconds) return '';

@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useState } from 'react';
 import {
     ArrowLeft, CheckCircle2, ChevronDown, Circle, FileText,
-    HelpCircle, MessageSquare, PlayCircle, Radio, Video, PanelRight
+    Globe, HelpCircle, MessageSquare, PlayCircle, Radio, Video, PanelRight
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SecureVideoPlayer from '@/Components/SecureVideoPlayer';
@@ -20,6 +20,7 @@ const typeIcon = {
     live: Radio,
     pdf: FileText,
     quiz: HelpCircle,
+    html: Globe,
 } as const;
 
 function formatDuration(seconds: number): string {
@@ -149,6 +150,8 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             <LivePanel lesson={currentLesson} />
                         ) : currentLesson.type === 'quiz' ? (
                             <QuizPanel lesson={currentLesson} />
+                        ) : currentLesson.type === 'html' ? (
+                            <PresentationPanel lesson={currentLesson} />
                         ) : (
                             <PlaceholderPanel lesson={currentLesson} />
                         )}
@@ -343,6 +346,38 @@ function QuizPanel({ lesson }: { lesson: Lesson }) {
                 </>
             ) : (
                 <p className="text-surface-500 mt-2">This quiz hasn't been published yet.</p>
+            )}
+        </div>
+    );
+}
+
+function PresentationPanel({ lesson }: { lesson: Lesson }) {
+    const handleLaunch = () => {
+        if (lesson.has_presentation) {
+            window.open(route('presentation.show', lesson.id), '_blank', 'noopener,noreferrer');
+        }
+    };
+
+    return (
+        <div className="card p-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 flex items-center justify-center mx-auto mb-4">
+                <Globe className="w-7 h-7 text-violet-600 dark:text-violet-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                Interactive Presentation
+            </h2>
+            <p className="text-surface-500 mt-2 max-w-md mx-auto">
+                This lesson contains an interactive HTML presentation. Click the button below to open it in a new tab and explore at your own pace.
+            </p>
+            {lesson.has_presentation ? (
+                <button onClick={handleLaunch} className="btn-primary mt-5 gap-2">
+                    <Globe className="w-4 h-4" />
+                    Launch Interactive Presentation
+                </button>
+            ) : (
+                <p className="text-sm text-surface-400 mt-5">
+                    The presentation hasn't been uploaded yet.
+                </p>
             )}
         </div>
     );

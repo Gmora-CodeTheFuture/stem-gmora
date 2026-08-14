@@ -33,6 +33,7 @@ class LearningController extends Controller
             'modules.lessons' => fn ($q) => $q->where('is_published', true),
             'modules.lessons.liveSession',
             'modules.lessons.quiz:id,lesson_id,title,is_published',
+            'modules.lessons.presentation:id,lesson_id,original_filename',
         ]);
 
         $progress = $enrollment->progress()->get()->keyBy('lesson_id');
@@ -42,6 +43,7 @@ class LearningController extends Controller
             'lessons' => $module->lessons->map(fn ($l) => [
                 ...$l->only(['id', 'title', 'description', 'type', 'order_index', 'duration_seconds']),
                 'has_video' => $l->isVideo() && $l->content_ref !== null,
+                'has_presentation' => $l->type === Lesson::TYPE_HTML && $l->presentation !== null,
                 'live_session' => $l->liveSession?->only([
                     'id', 'title', 'scheduled_start', 'duration_minutes', 'zoom_join_url',
                 ]),
@@ -68,6 +70,7 @@ class LearningController extends Controller
             'currentLesson' => [
                 ...$current->only(['id', 'title', 'description', 'type', 'duration_seconds']),
                 'has_video' => $current->isVideo() && $current->content_ref !== null,
+                'has_presentation' => $current->type === Lesson::TYPE_HTML && $current->presentation !== null,
                 'live_session' => $current->liveSession?->only([
                     'id', 'title', 'scheduled_start', 'duration_minutes', 'zoom_join_url',
                 ]),

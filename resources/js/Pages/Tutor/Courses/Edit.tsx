@@ -6,7 +6,7 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { PageProps, Course, Module, Lesson } from '@/types';
 import { FormEventHandler, useState } from 'react';
-import { Plus, GripVertical, Edit, Trash2, Video, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Plus, GripVertical, Edit, Trash2, Video, FileText, CheckCircle, Clock, Globe, Upload } from 'lucide-react';
 
 interface Props extends PageProps {
     course: Course;
@@ -51,6 +51,8 @@ export default function EditCourse({ course }: Props) {
     // Lesson Form State
     const [addingLessonTo, setAddingLessonTo] = useState<string | null>(null);
     const [lessonData, setLessonData] = useState({ title: '', type: 'youtube', content_ref: '', duration_seconds: 0, is_free_preview: false });
+    const [presentationFile, setPresentationFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     const addLesson: FormEventHandler = (e) => {
         e.preventDefault();
@@ -58,8 +60,24 @@ export default function EditCourse({ course }: Props) {
         router.post(`/tutor/modules/${addingLessonTo}/lessons`, lessonData, {
             onSuccess: () => {
                 setLessonData({ title: '', type: 'youtube', content_ref: '', duration_seconds: 0, is_free_preview: false });
+                setPresentationFile(null);
                 setAddingLessonTo(null);
             }
+        });
+    };
+
+    const uploadPresentation = (lessonId: string, file?: File) => {
+        const uploadFile = file || presentationFile;
+        if (!uploadFile) return;
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('presentation_file', uploadFile);
+        router.post(`/tutor/lessons/${lessonId}/presentation`, formData, {
+            forceFormData: true,
+            onFinish: () => {
+                setUploading(false);
+                setPresentationFile(null);
+            },
         });
     };
 
@@ -177,15 +195,31 @@ export default function EditCourse({ course }: Props) {
                                         <div key={lesson.id} className="flex items-center justify-between p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 group">
                                             <div className="flex items-center gap-3">
                                                 <GripVertical className="w-4 h-4 text-surface-400 cursor-move" />
-                                                {lesson.type === 'youtube' ? <Video className="w-4 h-4 text-blue-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
+                                                {lesson.type === 'youtube' ? <Video className="w-4 h-4 text-blue-500" /> : lesson.type === 'html' ? <Globe className="w-4 h-4 text-violet-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
                                                 <span className="text-sm font-medium text-surface-900 dark:text-white">{lesson.title}</span>
                                                 {lesson.is_free_preview && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">Free</span>}
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 {lesson.duration_seconds > 0 && <span className="text-xs text-surface-500 flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.round(lesson.duration_seconds / 60)}m</span>}
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => deleteLesson(lesson.id)} className="btn-icon text-red-500"><Trash2 className="w-4 h-4" /></button>
-                                                </div>
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        {lesson.type === 'html' && (
+                                                            <label className="btn-icon text-violet-500 cursor-pointer" title="Upload presentation .zip">
+                                                                <Upload className="w-4 h-4" />
+                                                                <input
+                                                                    type="file"
+                                                                    accept=".zip"
+                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) {
+                                                                            uploadPresentation(lesson.id, file);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                        )}
+                                                        <button onClick={() => deleteLesson(lesson.id)} className="btn-icon text-red-500"><Trash2 className="w-4 h-4" /></button>
+                                                    </div>
                                             </div>
                                         </div>
                                     ))}
@@ -203,13 +237,22 @@ export default function EditCourse({ course }: Props) {
                                                     <select value={lessonData.type} onChange={(e) => setLessonData({ ...lessonData, type: e.target.value })} className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 rounded-md">
                                                         <option value="youtube">YouTube Video</option>
                                                         <option value="pdf">PDF Document</option>
+                                                        <option value="html">HTML Presentation</option>
                                                     </select>
                                                 </div>
                                             </div>
+                                            {lessonData.type !== 'html' && (
                                             <div>
                                                 <InputLabel value={lessonData.type === 'youtube' ? 'YouTube Video ID' : 'PDF URL'} />
                                                 <TextInput className="mt-1 block w-full" value={lessonData.content_ref} onChange={(e) => setLessonData({ ...lessonData, content_ref: e.target.value })} placeholder={lessonData.type === 'youtube' ? 'e.g. dQw4w9WgXcQ' : 'https://...'} />
                                             </div>
+                                            )}
+                                            {lessonData.type === 'html' && (
+                                            <div className="mt-2 text-sm text-surface-500 dark:text-surface-400 bg-violet-50 dark:bg-violet-950/30 p-3 rounded-lg flex items-start gap-2">
+                                                <Globe className="w-4 h-4 mt-0.5 shrink-0 text-violet-500" />
+                                                <span>After adding this lesson, you can upload a <strong>.zip</strong> file containing your HTML presentation (with images, CSS, JS).</span>
+                                            </div>
+                                            )}
                                             <div className="flex items-center justify-between pt-2">
                                                 <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400">
                                                     <input type="checkbox" checked={lessonData.is_free_preview} onChange={(e) => setLessonData({ ...lessonData, is_free_preview: e.target.checked })} className="rounded text-primary-600 focus:ring-primary-500" />
