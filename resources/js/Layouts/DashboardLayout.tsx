@@ -92,7 +92,10 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
 
     const canGrade = GRADING_ROLES.includes(auth?.user?.role?.name ?? '');
     const isAdmin = ['platform_admin', 'super_admin'].includes(auth?.user?.role?.name ?? '');
-    const isTutor = ['instructor', 'course_manager'].includes(auth?.user?.role?.name ?? '');
+    // Admins author courses too — the platform's own first-party courses are
+    // built through the same tutor tooling, so they get the Teaching section
+    // alongside Administration.
+    const isTutor = isAdmin || ['instructor', 'course_manager'].includes(auth?.user?.role?.name ?? '');
     const isStudent = !isAdmin && !isTutor;
     const unread = notifications_count ?? 0;
 
@@ -108,12 +111,13 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
         { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
         { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
-        ...(canGrade ? [{ name: 'Grading', href: '/instructor/grading', icon: GraduationCap }] : []),
+        // Skipped when the Teaching section is shown — it carries Grading there.
+        ...(canGrade && !isTutor ? [{ name: 'Grading', href: '/instructor/grading', icon: GraduationCap }] : []),
     ];
 
     const tutorNav = isTutor ? [
         { name: 'Overview', href: '/tutor', icon: LayoutDashboard, exact: true },
-        { name: 'My Courses', href: '/tutor/courses', icon: PenSquare },
+        { name: isAdmin ? 'Course builder' : 'My Courses', href: '/tutor/courses', icon: PenSquare },
         { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
     ] : [];
 

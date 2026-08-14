@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Course;
 use App\Services\CourseContentService;
+use App\Services\CourseReadiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -14,7 +15,10 @@ use Inertia\Response;
 
 class CourseBuilderController extends Controller
 {
-    public function __construct(private readonly CourseContentService $content) {}
+    public function __construct(
+        private readonly CourseContentService $content,
+        private readonly CourseReadiness $readiness,
+    ) {}
 
     /**
      * Only show courses owned by the authenticated tutor.
@@ -80,6 +84,10 @@ class CourseBuilderController extends Controller
 
         return Inertia::render('Tutor/Courses/Edit', [
             'course' => $course,
+            // The same checklist the review queue applies, shown while authoring
+            // so nobody discovers the blockers only at publish time.
+            'readiness' => $this->readiness->for($course),
+            'canPublishDirectly' => $request->user()->isAdmin(),
         ]);
     }
 
@@ -128,6 +136,16 @@ class CourseBuilderController extends Controller
         // Tutors can only submit for review or unpublish — only admins can directly publish
         if ($validated['status'] === 'published' && ! $request->user()->isAdmin()) {
             $validated['status'] = 'pending_review';
+        }
+
+        // An admin publishing their own course skips the review queue, so the
+        // readiness bar has to be enforced here too — otherwise a first-party
+        // course goes live with nothing published inside it.
+        if ($validated['status'] === Course::STATUS_PUBLISHED
+            && $course->status !== Course::STATUS_PUBLISHED
+            && $this->readiness->for($course)['blocking'] > 0) {
+            return Redirect::back()
+                ->with('error', 'This course is not ready to publish — check it has published lessons first.');
         }
 
         $previous = $course->status;

@@ -12,7 +12,10 @@ createInertiaApp({
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.tsx`,
-            import.meta.glob('./Pages/**/*.tsx'),
+            // Tests live next to the pages they cover; without excluding them
+            // here they are bundled into the production build along with the
+            // whole of @testing-library.
+            import.meta.glob(['./Pages/**/*.tsx', '!./Pages/**/*.test.tsx']),
         ),
     setup({ el, App, props }) {
         const root = createRoot(el);

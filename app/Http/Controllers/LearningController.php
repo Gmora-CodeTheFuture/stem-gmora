@@ -61,7 +61,15 @@ class LearningController extends Controller
             $current = $incomplete ?? $allLessons->last();
         }
 
-        abort_if($current === null, 404, 'This course has no published lessons yet.');
+        // An enrolled student is entitled to an explanation, not a 404: the
+        // instructor may still be drafting, or may have pulled a module back.
+        if ($current === null) {
+            return Inertia::render('Learn/Empty', [
+                'course' => $course->only(['id', 'title', 'slug']),
+                'instructor' => $course->instructor?->full_name,
+            ]);
+        }
+
         abort_unless($allLessons->contains('id', $current->id), 404);
 
         return Inertia::render('Learn/Show', [

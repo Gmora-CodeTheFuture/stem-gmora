@@ -28,6 +28,10 @@ class CourseReadiness
         $videoLessons = $publishedLessons->where('type', Lesson::TYPE_YOUTUBE);
         $missingVideo = $videoLessons->filter(fn (Lesson $lesson) => blank($lesson->content_ref));
 
+        // Quizzes and PDFs have no runtime to record.
+        $missingDuration = $publishedLessons->filter(fn (Lesson $lesson) => $lesson->duration_seconds <= 0
+            && ! in_array($lesson->type, [Lesson::TYPE_QUIZ, Lesson::TYPE_PDF], true));
+
         $checks = [
             [
                 'label' => 'Has published lessons',
@@ -60,9 +64,12 @@ class CourseReadiness
             ],
             [
                 'label' => 'Lesson duration recorded',
-                'passed' => $publishedLessons->every(fn (Lesson $lesson) => $lesson->duration_seconds > 0
-                    || in_array($lesson->type, [Lesson::TYPE_QUIZ, Lesson::TYPE_PDF], true)),
-                'detail' => round($course->duration_minutes / 60, 1).' hours total',
+                'passed' => $missingDuration->isEmpty(),
+                // Naming the lessons matters — "0 hours total" leaves the author
+                // hunting through every module for the one that is not filled in.
+                'detail' => $missingDuration->isEmpty()
+                    ? round($course->duration_minutes / 60, 1).' hours total'
+                    : $missingDuration->count().' with no duration: '.$missingDuration->pluck('title')->take(3)->implode(', '),
             ],
             [
                 // Requires the YouTube Data API, which is not connected yet.

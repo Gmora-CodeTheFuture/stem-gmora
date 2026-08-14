@@ -80,6 +80,8 @@ export interface Lesson {
      * whether a video exists. The ID itself arrives with a video ticket.
      */
     has_video?: boolean;
+    /** Only the course builder receives this, so the author can edit it. */
+    content_ref?: string | null;
     has_presentation?: boolean;
     quiz?: { id: string; title: string } | null;
     progress?: Pick<Progress, 'status' | 'watch_percentage'> | null;

@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\User;
 use App\Services\CourseContentService;
+use App\Services\CourseReadiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -15,7 +16,10 @@ use Inertia\Response;
 
 class CourseManagementController extends Controller
 {
-    public function __construct(private readonly CourseContentService $content) {}
+    public function __construct(
+        private readonly CourseContentService $content,
+        private readonly CourseReadiness $readiness,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -165,6 +169,16 @@ class CourseManagementController extends Controller
         $validated = $request->validate([
             'status' => ['required', 'in:draft,pending_review,published,archived'],
         ]);
+
+        // Publishing from this dropdown has to clear the same bar as the review
+        // queue. Without it a course with no published lessons goes live, and
+        // the first student to enrol lands on an empty course.
+        if ($validated['status'] === Course::STATUS_PUBLISHED
+            && $course->status !== Course::STATUS_PUBLISHED
+            && $this->readiness->for($course)['blocking'] > 0) {
+            return Redirect::back()
+                ->with('error', 'This course is not ready to publish — check it has published lessons first.');
+        }
 
         $previous = $course->status;
         $course->update($validated);
