@@ -51,8 +51,8 @@ class SecurityHeaders
         $connectSrc = "'self'";
 
         if (app()->environment('local')) {
-            $scriptSrc .= " 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*";
-            $connectSrc .= ' ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:*';
+            $scriptSrc .= " 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* http://[::1]:*";
+            $connectSrc .= ' ws://localhost:* ws://127.0.0.1:* ws://[::1]:* http://localhost:* http://127.0.0.1:* http://[::1]:*';
         }
 
         return implode('; ', [
