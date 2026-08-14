@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import {
-    CalendarDays, ChevronLeft, ChevronRight, Clock, ExternalLink,
+    CalendarDays, Check, ChevronLeft, ChevronRight, Clock, ExternalLink,
     MapPin, Plus, Trash2, X,
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
@@ -21,6 +21,14 @@ interface CalendarItem {
     url: string | null;
     course: { id: string; title: string; slug: string } | null;
     editable: boolean;
+    registration?: {
+        open: boolean;
+        registered: boolean;
+        going: number;
+        capacity: number | null;
+        spots_left: number | null;
+        full: boolean;
+    };
 }
 
 interface Props extends PageProps {
@@ -256,6 +264,47 @@ export default function Calendar({
                                         </p>
                                     )}
 
+                                    {item.registration && (item.registration.open || item.registration.registered) && (
+                                        <div className="flex items-center gap-3 mt-3">
+                                            {item.registration.registered ? (
+                                                <>
+                                                    <span className="badge-accent">
+                                                        <Check className="w-3 h-3" />
+                                                        You're going
+                                                    </span>
+                                                    <button
+                                                        onClick={() =>
+                                                            router.delete(route('events.unregister', item.id), {
+                                                                preserveScroll: true,
+                                                            })
+                                                        }
+                                                        className="text-xs text-surface-500 hover:text-red-500 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    onClick={() =>
+                                                        router.post(route('events.register', item.id), {}, {
+                                                            preserveScroll: true,
+                                                        })
+                                                    }
+                                                    className="btn-primary py-1.5 px-4 text-xs"
+                                                >
+                                                    Register
+                                                </button>
+                                            )}
+
+                                            <span className="text-xs text-surface-400">
+                                                {item.registration.going} going
+                                                {item.registration.capacity
+                                                    ? ` · ${item.registration.spots_left} of ${item.registration.capacity} left`
+                                                    : ''}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {item.url && (
                                         <a
                                             href={item.url}
@@ -303,6 +352,8 @@ function EventComposer({
         ends_at: '',
         location: '',
         join_url: '',
+        capacity: '',
+        registration_open: false as boolean,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -448,6 +499,37 @@ function EventComposer({
                                 <p className="text-xs text-red-500 mt-1">{form.errors.join_url}</p>
                             )}
                         </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="capacity" className="block text-sm font-medium mb-1.5">
+                                Capacity <span className="text-surface-400">(blank = unlimited)</span>
+                            </label>
+                            <input
+                                id="capacity"
+                                type="number"
+                                min="1"
+                                value={form.data.capacity}
+                                onChange={(e) => form.setData('capacity', e.target.value)}
+                                className="input"
+                            />
+                            {form.errors.capacity && (
+                                <p className="text-xs text-red-500 mt-1">{form.errors.capacity}</p>
+                            )}
+                        </div>
+
+                        <label className="flex items-center gap-2.5 sm:mt-7">
+                            <input
+                                type="checkbox"
+                                checked={form.data.registration_open}
+                                onChange={(e) => form.setData('registration_open', e.target.checked)}
+                                className="rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-surface-700 dark:text-surface-200">
+                                Let students register
+                            </span>
+                        </label>
                     </div>
 
                     <div>

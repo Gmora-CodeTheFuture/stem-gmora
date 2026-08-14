@@ -33,7 +33,11 @@ const roadmap = [
     { phase: 'Phase 4', title: 'Ecosystem', body: 'Multi-instructor marketplace, live at scale, mobile apps, and org dashboards.' },
 ];
 
-export default function About() {
+interface AboutContent {
+    intro: { title: string; highlight: string; subtitle: string };
+}
+
+export default function About({ content }: { content: AboutContent }) {
     return (
         <MarketingLayout>
             <Head title="About — Gmora STEM" />
@@ -41,12 +45,11 @@ export default function About() {
             <section className="pt-28 md:pt-36 pb-16 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide max-w-3xl text-center">
                     <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-5">
-                        Learn. Build. <span className="text-primary-600 dark:text-primary-400">Innovate.</span>
+                        {content.intro.title}{' '}
+                        <span className="text-primary-600 dark:text-primary-400">{content.intro.highlight}</span>
                     </h1>
                     <p className="text-lg text-surface-500 dark:text-surface-400 leading-relaxed">
-                        Gmora STEM exists to make hands-on STEM education accessible, project-driven, and
-                        AI-augmented — a platform built from day one to host many subjects, not a single
-                        video library.
+                        {content.intro.subtitle}
                     </p>
                 </div>
             </section>

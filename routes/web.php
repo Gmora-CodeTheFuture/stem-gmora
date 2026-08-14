@@ -2,10 +2,15 @@
 
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\BadgeManagementController;
+use App\Http\Controllers\Admin\ContentBlockController;
+use App\Http\Controllers\Admin\CourseApprovalController;
 use App\Http\Controllers\Admin\CourseManagementController;
 use App\Http\Controllers\Admin\EnrollmentManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
 use App\Http\Controllers\Admin\PostManagementController;
+use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\Admin\SecurityConsoleController;
+use App\Http\Controllers\Admin\SupportQueueController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\BlogController;
@@ -15,6 +20,7 @@ use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\Instructor\GradingController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LearningController;
@@ -25,12 +31,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SecurityController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\Tutor\CourseBuilderController;
 use App\Http\Controllers\Tutor\LessonController;
 use App\Http\Controllers\Tutor\ModuleController;
 use App\Http\Controllers\Tutor\StudentController;
 use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Models\Certificate;
+use App\Services\ContentBlocks;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -46,14 +54,14 @@ Route::get('/', function () {
         return redirect()->route('dashboard');
     }
 
-    return Inertia::render('Welcome');
+    return Inertia::render('Welcome', ['content' => ContentBlocks::forPage('home')]);
 })->name('home');
 
 Route::get('/courses', [CourseCatalogController::class, 'index'])->name('courses.index');
 Route::get('/courses/{slug}', [CourseCatalogController::class, 'show'])->name('courses.show');
 
 Route::get('/about', function () {
-    return Inertia::render('Marketing/About');
+    return Inertia::render('Marketing/About', ['content' => ContentBlocks::forPage('about')]);
 })->name('about');
 
 Route::get('/pricing', function () {
@@ -64,7 +72,7 @@ Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/contact', function () {
-    return Inertia::render('Marketing/Contact');
+    return Inertia::render('Marketing/Contact', ['content' => ContentBlocks::forPage('contact')]);
 })->name('contact');
 
 // Public User Portfolio
@@ -94,6 +102,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/certificates', [CertificateController::class, 'index'])->name('dashboard.certificates');
     Route::get('/dashboard/leaderboard', [LeaderboardController::class, 'index'])->name('dashboard.leaderboard');
     Route::get('/dashboard/search', [SearchController::class, 'index'])->name('dashboard.search');
+
+    // Support
+    Route::get('/support', [SupportController::class, 'index'])->name('support.index');
+    Route::post('/support', [SupportController::class, 'store'])->name('support.store');
+    Route::get('/support/{ticket}', [SupportController::class, 'show'])->name('support.show');
+    Route::post('/support/{ticket}/replies', [SupportController::class, 'reply'])->name('support.reply');
+    Route::patch('/support/{ticket}/close', [SupportController::class, 'close'])->name('support.close');
+
+    // Event sign-up
+    Route::post('/events/{event}/register', [EventRegistrationController::class, 'store'])
+        ->name('events.register');
+    Route::delete('/events/{event}/register', [EventRegistrationController::class, 'destroy'])
+        ->name('events.unregister');
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])
         ->name('certificates.download');
 
@@ -210,6 +231,13 @@ Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
         Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('admin.users.reset-password');
 
+        // Review queue
+        Route::get('/approvals', [CourseApprovalController::class, 'index'])->name('admin.approvals.index');
+        Route::patch('/approvals/{course}/approve', [CourseApprovalController::class, 'approve'])
+            ->name('admin.approvals.approve');
+        Route::patch('/approvals/{course}/reject', [CourseApprovalController::class, 'reject'])
+            ->name('admin.approvals.reject');
+
         // Courses
         Route::get('/courses', [CourseManagementController::class, 'index'])->name('admin.courses.index');
         Route::get('/courses/create', [CourseManagementController::class, 'create'])->name('admin.courses.create');
@@ -227,6 +255,24 @@ Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
 
         // Payments
         Route::get('/payments', [PaymentManagementController::class, 'index'])->name('admin.payments.index');
+
+        // Support queue
+        Route::get('/support', [SupportQueueController::class, 'index'])->name('admin.support.index');
+        Route::patch('/support/{ticket}', [SupportQueueController::class, 'update'])->name('admin.support.update');
+
+        // Reports
+        Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports.index');
+
+        // Website copy
+        Route::get('/content', [ContentBlockController::class, 'index'])->name('admin.content.index');
+        Route::patch('/content/{sectionKey}', [ContentBlockController::class, 'update'])->name('admin.content.update');
+        Route::delete('/content/{sectionKey}', [ContentBlockController::class, 'destroy'])
+            ->name('admin.content.destroy');
+
+        // Security console — audit log and video-token monitor
+        Route::get('/security', [SecurityConsoleController::class, 'index'])->name('admin.security.index');
+        Route::get('/security/users/{user}', [SecurityConsoleController::class, 'user'])
+            ->name('admin.security.user');
 
         // Blog
         Route::get('/posts', [PostManagementController::class, 'index'])->name('admin.posts.index');

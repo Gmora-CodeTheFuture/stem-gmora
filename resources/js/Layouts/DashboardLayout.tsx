@@ -2,8 +2,8 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, ReactNode, useEffect, useRef, useState } from 'react';
 import {
     Award, Bell, BookOpen, Calendar, ClipboardCheck, GraduationCap, Home,
-    LogOut, Menu, Moon, Search, Settings, Sun, X,
-    LayoutDashboard, Users, CreditCard, Trophy, Wrench, PenSquare, UserCheck,
+    LifeBuoy, LogOut, Menu, Moon, Search, Settings, Sun, X,
+    LayoutDashboard, Users, CreditCard, Trophy, Wrench, PenSquare, UserCheck, ShieldCheck, BarChart3,
 } from 'lucide-react';
 import { PageProps } from '@/types';
 
@@ -104,6 +104,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     ];
 
     const yourWork = [
+        { name: 'Support', href: '/support', icon: LifeBuoy },
         { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
         { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
         { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
@@ -123,6 +124,12 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Enrollments', href: '/admin/enrollments', icon: UserCheck },
         { name: 'Payments', href: '/admin/payments', icon: CreditCard },
         { name: 'Badges', href: '/admin/badges', icon: Trophy },
+        { name: 'Approvals', href: '/admin/approvals', icon: ClipboardCheck },
+        { name: 'Blog', href: '/admin/posts', icon: PenSquare },
+        { name: 'Website copy', href: '/admin/content', icon: Wrench },
+        { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
+        { name: 'Support queue', href: '/admin/support', icon: LifeBuoy },
+        { name: 'Security', href: '/admin/security', icon: ShieldCheck },
     ] : [];
 
     const path = typeof window === 'undefined' ? '' : window.location.pathname;

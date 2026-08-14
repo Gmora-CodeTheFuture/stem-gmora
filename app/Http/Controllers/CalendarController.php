@@ -57,7 +57,7 @@ class CalendarController extends Controller
             ->pluck('course_id')
             ->all();
 
-        $items = $this->events($courseIds, $from, $to)
+        $items = $this->events($courseIds, $from, $to, $user->id)
             ->concat($this->liveSessions($courseIds, $from, $to))
             ->concat($this->deadlines($courseIds, $from, $to))
             ->sortBy('starts_at')
@@ -135,6 +135,8 @@ class CalendarController extends Controller
             'location' => ['nullable', 'string', 'max:255'],
             'join_url' => ['nullable', 'url', 'max:255'],
             'is_published' => ['sometimes', 'boolean'],
+            'capacity' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'registration_open' => ['sometimes', 'boolean'],
         ]);
     }
 
@@ -173,11 +175,15 @@ class CalendarController extends Controller
     }
 
     /** @return Collection<int, array<string, mixed>> */
-    private function events(array $courseIds, Carbon $from, Carbon $to): Collection
+    private function events(array $courseIds, Carbon $from, Carbon $to, ?string $userId = null): Collection
     {
         return Event::visibleTo($courseIds)
             ->between($from, $to)
             ->with('course:id,title,slug')
+            ->withCount('registrations')
+            ->when($userId, fn ($q) => $q->withExists([
+                'registrations as viewer_registered' => fn ($inner) => $inner->where('user_id', $userId),
+            ]))
             ->get()
             ->map(fn (Event $event) => [
                 'id' => $event->id,
@@ -191,6 +197,14 @@ class CalendarController extends Controller
                 'url' => $event->join_url,
                 'course' => $event->course?->only(['id', 'title', 'slug']),
                 'editable' => true,
+                'registration' => [
+                    'open' => $event->acceptsRegistrations(),
+                    'registered' => (bool) ($event->viewer_registered ?? false),
+                    'going' => (int) ($event->registrations_count ?? 0),
+                    'capacity' => $event->capacity,
+                    'spots_left' => $event->spotsLeft(),
+                    'full' => $event->isFull(),
+                ],
             ]);
     }
 

@@ -131,6 +131,13 @@ class CourseBuilderController extends Controller
         }
 
         $previous = $course->status;
+
+        // Entering the queue records when, and clears the last review's notes.
+        if ($validated['status'] === Course::STATUS_PENDING_REVIEW) {
+            $validated['submitted_for_review_at'] = now();
+            $validated['review_notes'] = null;
+        }
+
         $course->update($validated);
         $this->content->syncCounters($course);
 

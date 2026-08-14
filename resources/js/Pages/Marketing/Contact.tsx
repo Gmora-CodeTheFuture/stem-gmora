@@ -3,7 +3,11 @@ import { FormEventHandler, useState } from 'react';
 import { Mail, MapPin, MessageSquare, Send } from 'lucide-react';
 import MarketingLayout from '@/Layouts/MarketingLayout';
 
-export default function Contact() {
+interface ContactContent {
+    details: { email: string; support_email: string; location: string };
+}
+
+export default function Contact({ content }: { content: ContactContent }) {
     const [sent, setSent] = useState(false);
 
     // The contact endpoint lands with the notifications milestone; until then
@@ -42,7 +46,7 @@ export default function Contact() {
                                 </h2>
                                 <p className="text-surface-500 mt-1.5 max-w-sm mx-auto text-sm">
                                     Email delivery is wired up in the notifications milestone. In the meantime,
-                                    reach us directly at hello@gmorastem.com.
+                                    reach us directly at {content.details.email}.
                                 </p>
                             </div>
                         ) : (
@@ -86,9 +90,9 @@ export default function Contact() {
 
                     <aside className="space-y-4">
                         {[
-                            { icon: Mail, label: 'Email', value: 'hello@gmorastem.com' },
-                            { icon: MessageSquare, label: 'Support', value: 'support@gmorastem.com' },
-                            { icon: MapPin, label: 'Based in', value: 'Colombo, Sri Lanka' },
+                            { icon: Mail, label: 'Email', value: content.details.email },
+                            { icon: MessageSquare, label: 'Support', value: content.details.support_email },
+                            { icon: MapPin, label: 'Based in', value: content.details.location },
                         ].map((item) => (
                             <div key={item.label} className="card p-5 flex items-start gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-950/50 flex items-center justify-center shrink-0">

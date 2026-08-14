@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
@@ -17,6 +18,7 @@ class Event extends Model
     protected $fillable = [
         'course_id', 'created_by', 'title', 'description', 'type',
         'starts_at', 'ends_at', 'location', 'join_url', 'is_published',
+        'capacity', 'registration_open',
     ];
 
     protected function casts(): array
@@ -25,6 +27,7 @@ class Event extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'is_published' => 'boolean',
+            'registration_open' => 'boolean',
         ];
     }
 
@@ -37,6 +40,35 @@ class Event extends Model
     public const TYPE_ANNOUNCEMENT = 'announcement';
 
     public const TYPES = [self::TYPE_CLASS, self::TYPE_WORKSHOP, self::TYPE_DEADLINE, self::TYPE_ANNOUNCEMENT];
+
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
+
+    /** Null capacity means unlimited; otherwise what is left. */
+    public function spotsLeft(): ?int
+    {
+        if ($this->capacity === null) {
+            return null;
+        }
+
+        return max($this->capacity - $this->registrations()->count(), 0);
+    }
+
+    public function isFull(): bool
+    {
+        return $this->spotsLeft() === 0;
+    }
+
+    /** Sign-up closes once the event has started. */
+    public function acceptsRegistrations(): bool
+    {
+        return $this->registration_open
+            && $this->is_published
+            && $this->starts_at->isFuture()
+            && ! $this->isFull();
+    }
 
     public function course(): BelongsTo
     {

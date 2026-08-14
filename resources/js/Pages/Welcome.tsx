@@ -21,13 +21,20 @@ const staggerContainer = {
     visible: { transition: { staggerChildren: 0.1 } },
 };
 
-export default function Welcome() {
-    const stats = [
-        { label: 'Active Students', value: '2,500+', icon: Users },
-        { label: 'Expert Courses', value: '50+', icon: BookOpen },
-        { label: 'Certificates Issued', value: '1,200+', icon: Award },
-        { label: 'Countries', value: '15+', icon: Globe },
-    ];
+interface HomeContent {
+    hero: { badge: string; title: string; highlight: string; subtitle: string; primary_cta: string; secondary_cta: string };
+    stats: { items: Array<{ value: string; label: string }> };
+    cta: { title: string; subtitle: string; button: string };
+}
+
+export default function Welcome({ content }: { content: HomeContent }) {
+    // Copy is editable in the admin CMS; icons stay in code.
+    const statIcons = [Users, BookOpen, Award, Globe];
+    const stats = (content.stats?.items ?? []).map((item, i) => ({
+        label: item.label,
+        value: item.value,
+        icon: statIcons[i % statIcons.length],
+    }));
 
     const categories = [
         { name: 'Artificial Intelligence', icon: Brain, count: 12 },
@@ -109,8 +116,7 @@ export default function Welcome() {
                             transition={{ duration: 0.5, delay: 0.2 }}
                             className="text-lg text-surface-600 dark:text-surface-400 max-w-2xl mx-auto mb-10 leading-relaxed font-medium"
                         >
-                            From AI fundamentals to robotics and cybersecurity — learn from expert instructors,
-                            earn verified certificates, and join a global community of innovators.
+                            {content.hero.subtitle}
                         </motion.p>
 
                         {/* CTAs */}
@@ -122,11 +128,11 @@ export default function Welcome() {
                         >
                             <Link href="/register" className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-surface-900 text-white font-bold hover:bg-surface-800 transition-colors">
                                 <Rocket className="w-5 h-5" />
-                                Start Learning for Free
+                                {content.hero.primary_cta}
                             </Link>
                             <Link href="/courses" className="flex items-center gap-2 px-8 py-3.5 rounded-full bg-white text-surface-900 font-bold border border-surface-300 hover:bg-surface-50 transition-colors">
                                 <BookOpen className="w-5 h-5" />
-                                Browse Courses
+                                {content.hero.secondary_cta}
                             </Link>
                         </motion.div>
 
@@ -247,11 +253,10 @@ export default function Welcome() {
 
                         <div className="relative z-10">
                             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                                Ready to Start Your STEM Journey?
+                                {content.cta.title}
                             </h2>
                             <p className="text-surface-300 text-lg max-w-2xl mx-auto mb-10 font-medium">
-                                Join thousands of students mastering AI, robotics, programming, and more.
-                                Your first course is just a click away.
+                                {content.cta.subtitle}
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                 <Link
@@ -259,7 +264,7 @@ export default function Welcome() {
                                     className="flex items-center gap-2 px-8 py-4 rounded-full bg-white text-surface-900 font-bold hover:bg-surface-100 transition-colors"
                                 >
                                     <GraduationCap className="w-5 h-5" />
-                                    Create Free Account
+                                    {content.cta.button}
                                 </Link>
                             </div>
                         </div>
