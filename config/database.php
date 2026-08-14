@@ -97,6 +97,21 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            /*
+             | Opening a TLS connection to a remote database costs seconds when
+             | the server is far away, and PHP does it once per request by
+             | default. Persistent connections let the worker reuse one.
+             */
+            'options' => array_filter([
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+                /*
+                 | Real prepared statements cost two round trips (PREPARE then
+                 | EXECUTE). Emulating them client-side sends one statement,
+                 | which halves latency on a distant database. PDO still quotes
+                 | every bound value, so parameters stay escaped.
+                 */
+                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES', false),
+            ]),
         ],
 
         'sqlsrv' => [

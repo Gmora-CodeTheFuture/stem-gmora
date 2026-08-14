@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BumpsContentVersion;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Enrollment extends Model
 {
-    use HasFactory, HasUuids, SoftDeletes;
+    use BumpsContentVersion, HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'user_id', 'course_id', 'status', 'enrolled_at', 'completed_at',

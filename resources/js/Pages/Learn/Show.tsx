@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useState } from 'react';
 import {
     ArrowLeft, CheckCircle2, ChevronDown, Circle, FileText,
-    HelpCircle, PlayCircle, Radio, Video, PanelRight
+    HelpCircle, MessageSquare, PlayCircle, Radio, Video, PanelRight
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SecureVideoPlayer from '@/Components/SecureVideoPlayer';
@@ -90,13 +90,23 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
             <Head title={`${currentLesson.title} — ${course.title}`} />
 
             <div className="mb-6 flex items-center justify-between gap-4 flex-wrap shrink-0">
-                <Link
-                    href={route('dashboard.courses')}
-                    className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    My Courses
-                </Link>
+                <div className="flex items-center gap-4">
+                    <Link
+                        href={route('dashboard.courses')}
+                        className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        My Courses
+                    </Link>
+
+                    <Link
+                        href={route('discussions.index', course.slug)}
+                        className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                        Discussions
+                    </Link>
+                </div>
 
                 <div className="flex items-center gap-3">
                     <div className="w-40 progress-track">

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BumpsContentVersion;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LiveSession extends Model
 {
-    use HasFactory, HasUuids;
+    use BumpsContentVersion, HasFactory, HasUuids;
 
     protected $fillable = [
         'lesson_id', 'title', 'scheduled_start', 'duration_minutes',

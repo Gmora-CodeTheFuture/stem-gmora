@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\AuditLog;
 use App\Models\Enrollment;
 use App\Models\Submission;
+use App\Services\DashboardCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -113,6 +114,8 @@ class AssignmentController extends Controller
             'graded_at' => null,
             'graded_by' => null,
         ])->save();
+
+        DashboardCache::forget($request->user()->id);
 
         AuditLog::record('submission.created', 'submission', $submission->id, [
             'assignment_id' => $assignment->id,

@@ -198,11 +198,11 @@ class GamificationTest extends TestCase
         $this->assertCount(1, $held);
         $this->assertSame($badge->id, $held->first()->id);
 
-        // And the student is told about it.
-        $this->assertSame(
-            'Badge earned: First Steps',
-            $this->student->fresh()->notifications()->first()->data['title'],
-        );
+        // And the student is told about it. Other notifications (a certificate,
+        // for instance) can land in the same second, so match on content.
+        $titles = $this->student->fresh()->notifications->pluck('data.title');
+
+        $this->assertContains('Badge earned: First Steps', $titles);
     }
 
     public function test_a_badge_is_never_awarded_twice(): void

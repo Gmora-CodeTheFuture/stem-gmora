@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use App\Models\Assignment;
 use App\Models\Course;
+use App\Models\Discussion;
+use App\Models\DiscussionReply;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Quiz;
@@ -34,6 +36,12 @@ class EnsureEnrolled
         $courseId = $this->resolveCourseId($request);
         abort_if($courseId === null, 404);
 
+        // Instructors own their course content, and admins oversee all of it;
+        // neither enrols in their own courses, but both must reach the pages.
+        if ($this->isCourseStaff($user, $courseId)) {
+            return $next($request);
+        }
+
         $enrollment = Enrollment::where('user_id', $user->id)
             ->where('course_id', $courseId)
             ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
@@ -55,12 +63,18 @@ class EnsureEnrolled
         return $next($request);
     }
 
+    private function isCourseStaff($user, string $courseId): bool
+    {
+        return $user->isAdmin()
+            || Course::whereKey($courseId)->where('instructor_id', $user->id)->exists();
+    }
+
     /**
      * Walks whichever bound model the route carries back to its course.
      */
     private function resolveCourseId(Request $request): ?string
     {
-        foreach (['lesson', 'course', 'quiz', 'attempt', 'assignment', 'submission'] as $parameter) {
+        foreach (['lesson', 'course', 'quiz', 'attempt', 'assignment', 'submission', 'discussion', 'reply'] as $parameter) {
             $model = $request->route($parameter);
 
             $courseId = match (true) {
@@ -69,6 +83,8 @@ class EnsureEnrolled
                 $model instanceof Quiz, $model instanceof Assignment => $model->course_id,
                 $model instanceof QuizAttempt => $model->loadMissing('quiz')->quiz?->course_id,
                 $model instanceof Submission => $model->loadMissing('assignment')->assignment?->course_id,
+                $model instanceof Discussion => $model->course_id,
+                $model instanceof DiscussionReply => $model->loadMissing('discussion')->discussion?->course_id,
                 default => null,
             };
 

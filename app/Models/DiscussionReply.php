@@ -10,36 +10,38 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Assignment extends Model
+class DiscussionReply extends Model
 {
     use BumpsContentVersion, HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
-        'course_id', 'lesson_id', 'title', 'description',
-        'deadline_at', 'rubric', 'max_marks', 'is_published',
+        'discussion_id', 'user_id', 'parent_id', 'body', 'is_instructor_answer',
     ];
 
     protected function casts(): array
     {
         return [
-            'deadline_at' => 'datetime',
-            'rubric' => 'array',
-            'is_published' => 'boolean',
+            'is_instructor_answer' => 'boolean',
         ];
     }
 
-    public function course(): BelongsTo
+    public function discussion(): BelongsTo
     {
-        return $this->belongsTo(Course::class);
+        return $this->belongsTo(Discussion::class);
     }
 
-    public function lesson(): BelongsTo
+    public function author(): BelongsTo
     {
-        return $this->belongsTo(Lesson::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function submissions(): HasMany
+    public function parent(): BelongsTo
     {
-        return $this->hasMany(Submission::class);
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 }

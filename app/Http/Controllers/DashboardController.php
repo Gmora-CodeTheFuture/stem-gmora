@@ -8,7 +8,7 @@ use App\Models\Enrollment;
 use App\Models\Event;
 use App\Models\LiveSession;
 use App\Models\Progress;
-use App\Models\Submission;
+use App\Services\DashboardCache;
 use App\Services\LevelingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -25,6 +25,20 @@ class DashboardController extends Controller
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
+
+        return Inertia::render('Dashboard', DashboardCache::remember(
+            $user->id,
+            fn () => $this->payload($request),
+        ));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(Request $request): array
+    {
+        // One query for the user's own aggregates instead of three.
+        $user = $request->user()->loadCount(['certificates', 'submissions'])->load('stat');
 
         $enrollments = Enrollment::query()
             ->where('user_id', $user->id)
@@ -44,12 +58,12 @@ class DashboardController extends Controller
         $userStat = $user->stat()->first();
         $leveling = app(LevelingService::class);
 
-        return Inertia::render('Dashboard', [
+        return [
             'stats' => [
                 'courses' => $enrollments->count(),
                 'lessons_completed' => $completedLessons,
-                'certificates' => Certificate::where('user_id', $user->id)->count(),
-                'submissions' => Submission::where('user_id', $user->id)->count(),
+                'certificates' => $user->certificates_count,
+                'submissions' => $user->submissions_count,
                 'hours_learned' => round($enrollments->sum(
                     fn ($e) => ($e->course?->duration_minutes ?? 0) * $this->ratio($e)
                 ) / 60, 1),
@@ -70,24 +84,26 @@ class DashboardController extends Controller
                     'name' => $badge->name,
                     'description' => $badge->description,
                     'earned_at' => $badge->pivot->earned_at,
-                ])->values(),
+                ])->values()->toArray(),
             'activity' => $this->activity($enrollmentIds),
             'enrollments' => $enrollments->map(fn ($e) => [
                 'id' => $e->id,
-                'course' => $e->course,
+                'course' => $e->course?->toArray(),
                 'status' => $e->status,
                 'completed_lessons_count' => $e->completed_lessons_count,
                 'percentage' => (int) round($this->ratio($e) * 100),
-            ])->sortByDesc('percentage')->values(),
+            ])->sortByDesc('percentage')->values()->toArray(),
             'resume' => $this->resume($enrollmentIds),
             'upcoming' => $this->upcoming($courseIds->all()),
             'dueSoon' => $this->dueSoon($courseIds, $user->id),
+            // ->toArray() so the cached payload holds no Eloquent objects.
             'certificates' => Certificate::where('user_id', $user->id)
                 ->with('course:id,title,slug')
                 ->latest('issued_at')
                 ->take(3)
-                ->get(),
-        ]);
+                ->get()
+                ->toArray(),
+        ];
     }
 
     /**

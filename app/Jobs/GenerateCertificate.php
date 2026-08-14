@@ -7,6 +7,7 @@ use App\Models\Certificate;
 use App\Models\Enrollment;
 use App\Notifications\CertificateIssued;
 use App\Services\CertificateRenderer;
+use App\Services\DashboardCache;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
@@ -56,6 +57,7 @@ class GenerateCertificate implements ShouldQueue
             );
 
             $enrollment->user?->notify(new CertificateIssued($certificate->load('course')));
+            DashboardCache::forget($enrollment->user_id);
         }
     }
 

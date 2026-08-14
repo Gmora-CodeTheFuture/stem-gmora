@@ -8,6 +8,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Progress;
+use App\Services\DashboardCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -116,6 +117,8 @@ class LearningController extends Controller
         }
 
         $this->rollUpCourseCompletion($enrollment);
+
+        DashboardCache::forget($request->user()->id);
 
         return back();
     }

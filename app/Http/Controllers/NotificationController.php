@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -38,6 +39,7 @@ class NotificationController extends Controller
     public function markRead(Request $request, string $notification): RedirectResponse
     {
         $request->user()->notifications()->where('id', $notification)->first()?->markAsRead();
+        HandleInertiaRequests::forgetUnreadCount($request->user()->id);
 
         return back();
     }
@@ -45,6 +47,7 @@ class NotificationController extends Controller
     public function markAllRead(Request $request): RedirectResponse
     {
         $request->user()->unreadNotifications->markAsRead();
+        HandleInertiaRequests::forgetUnreadCount($request->user()->id);
 
         return back()->with('success', 'All notifications marked as read.');
     }

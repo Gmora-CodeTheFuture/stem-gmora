@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Progress;
+use App\Services\ContentVersion;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,6 +18,22 @@ use Inertia\Response;
 class MyCoursesController extends Controller
 {
     public function index(Request $request): Response
+    {
+        $user = $request->user();
+        $filters = $request->only('search', 'filter', 'category');
+
+        // Keyed by content version, so publishing or enrolling retires it.
+        $key = 'courses:'.$user->id.':'.ContentVersion::current().':'.md5(serialize($filters));
+
+        return Inertia::render('Dashboard/Courses', Cache::remember(
+            $key,
+            now()->addMinutes(10),
+            fn () => $this->payload($request),
+        ));
+    }
+
+    /** @return array<string, mixed> */
+    private function payload(Request $request): array
     {
         $user = $request->user();
         $search = trim($request->string('search')->toString());
@@ -57,10 +75,10 @@ class MyCoursesController extends Controller
             ->map(fn (Course $course) => $this->presentCourse($course, in_array($course->id, $enrolledIds, true)))
             ->values();
 
-        return Inertia::render('Dashboard/Courses', [
-            'enrolled' => $enrolled,
-            'catalog' => $catalog,
-            'categories' => Course::published()->distinct()->orderBy('category')->pluck('category'),
+        return [
+            'enrolled' => $enrolled->toArray(),
+            'catalog' => $catalog->toArray(),
+            'categories' => Course::published()->distinct()->orderBy('category')->pluck('category')->all(),
             'filters' => [
                 'search' => $search,
                 'filter' => $filter,
@@ -70,7 +88,7 @@ class MyCoursesController extends Controller
                 'enrolled' => count($enrolledIds),
                 'all' => Course::published()->count(),
             ],
-        ]);
+        ];
     }
 
     /** @return array<string, mixed> */

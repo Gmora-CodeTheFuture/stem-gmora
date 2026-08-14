@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Auth\CachedUserProvider;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,6 +60,16 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    protected static function booted(): void
+    {
+        // Any change to the account — profile, role, 2FA, password — drops the
+        // cached copy the auth guard reads.
+        $forget = fn (self $user) => CachedUserProvider::forget($user->id);
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
+
     // ─── Relationships ──────────────────────────────────────────────
 
     public function role(): BelongsTo
@@ -113,14 +124,27 @@ class User extends Authenticatable implements MustVerifyEmail
 
     // ─── Role Helpers ───────────────────────────────────────────────
 
+    /**
+     * Role checks run on every request through the RBAC middleware, so they
+     * resolve from the cached role table rather than a join.
+     */
+    public function roleName(): ?string
+    {
+        if ($this->relationLoaded('role')) {
+            return $this->getRelation('role')?->name;
+        }
+
+        return Role::findCached($this->role_id)?->name;
+    }
+
     public function hasRole(string $roleName): bool
     {
-        return $this->role->name === $roleName;
+        return $this->roleName() === $roleName;
     }
 
     public function hasAnyRole(array $roleNames): bool
     {
-        return in_array($this->role->name, $roleNames);
+        return in_array($this->roleName(), $roleNames, true);
     }
 
     public function isAdmin(): bool

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Services\DashboardCache;
 use App\Services\VideoAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,6 +48,7 @@ class EnrollmentController extends Controller
         ])->save();
 
         $course->increment('total_enrollments');
+        DashboardCache::forget($user->id);
 
         AuditLog::record('enrollment.created', 'enrollment', $enrollment->id, [
             'course_id' => $course->id,
@@ -67,6 +69,7 @@ class EnrollmentController extends Controller
         abort_unless($enrollment->user_id === $request->user()->id, 403);
 
         $enrollment->update(['status' => Enrollment::STATUS_REFUNDED]);
+        DashboardCache::forget($enrollment->user_id);
         $revoked = $this->videoAccess->revokeAllForEnrollment($enrollment->id);
 
         AuditLog::record('enrollment.revoked', 'enrollment', $enrollment->id, [

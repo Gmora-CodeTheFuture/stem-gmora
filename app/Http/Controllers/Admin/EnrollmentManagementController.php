@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Services\DashboardCache;
 use App\Services\VideoAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,6 +70,7 @@ class EnrollmentManagementController extends Controller
         ])->save();
 
         $this->syncEnrollmentCount($enrollment->course_id);
+        DashboardCache::forget($enrollment->user_id);
 
         AuditLog::record('enrollment.granted', 'enrollment', $enrollment->id, [
             'user_id' => $enrollment->user_id,
@@ -95,6 +97,7 @@ class EnrollmentManagementController extends Controller
         }
 
         $this->syncEnrollmentCount($enrollment->course_id);
+        DashboardCache::forget($enrollment->user_id);
 
         AuditLog::record('enrollment.status_changed', 'enrollment', $enrollment->id, [
             'from' => $previous,

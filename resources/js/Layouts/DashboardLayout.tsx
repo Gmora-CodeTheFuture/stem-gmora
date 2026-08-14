@@ -87,7 +87,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     const search: FormEventHandler = (e) => {
         e.preventDefault();
         setSearchOpen(false);
-        router.get(route('dashboard.courses'), { search: query, filter: 'all' });
+        router.get(route('dashboard.search'), { q: query });
     };
 
     const canGrade = GRADING_ROLES.includes(auth?.user?.role?.name ?? '');
@@ -106,6 +106,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     const yourWork = [
         { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
         { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
+        { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
         ...(canGrade ? [{ name: 'Grading', href: '/instructor/grading', icon: GraduationCap }] : []),
     ];
 
@@ -306,7 +307,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                                     ref={searchRef}
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Search courses…"
+                                    placeholder="Search courses, lessons, discussions…"
                                     className="flex-1 bg-transparent border-0 text-sm py-1.5 px-2 focus:ring-0 min-w-0 dark:text-white placeholder:text-surface-400"
                                 />
                                 <button type="button" onClick={() => setSearchOpen(false)} className="p-1 mr-1 text-surface-400 hover:text-surface-600 shrink-0">

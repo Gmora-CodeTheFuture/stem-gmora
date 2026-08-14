@@ -2,9 +2,15 @@
 
 namespace App\Providers;
 
+use App\Auth\CachedUserProvider;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Lesson;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -26,7 +32,20 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // Serves the signed-in user from cache; see CachedUserProvider.
+        Auth::provider('eloquent-cached', fn ($app, array $config) => new CachedUserProvider(
+            $app['hash'],
+            $config['model'],
+        ));
+
         $this->configureRateLimiting();
+
+        // Keep the unread badge honest whenever anything notifies a user.
+        Event::listen(NotificationSent::class, function (NotificationSent $event) {
+            if ($event->notifiable instanceof User) {
+                HandleInertiaRequests::forgetUnreadCount($event->notifiable->id);
+            }
+        });
     }
 
     /**

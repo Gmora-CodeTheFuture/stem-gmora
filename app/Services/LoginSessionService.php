@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\LoginSession;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -20,9 +21,16 @@ class LoginSessionService
 {
     public function __construct(private readonly VideoAccessService $videoAccess) {}
 
+    public static function cacheKey(string $sessionId): string
+    {
+        return "login_session:{$sessionId}";
+    }
+
     /** Record (or refresh) the session the request is running in. */
     public function record(Request $request, User $user): LoginSession
     {
+        Cache::forget(self::cacheKey($request->session()->getId()));
+
         return LoginSession::updateOrCreate(
             ['session_id' => $request->session()->getId()],
             [
@@ -58,6 +66,7 @@ class LoginSessionService
 
         if ($session->session_id) {
             DB::table('sessions')->where('id', $session->session_id)->delete();
+            Cache::forget(self::cacheKey($session->session_id));
         }
 
         $this->videoAccess->revokeAllForUser($user->id);
@@ -86,8 +95,10 @@ class LoginSessionService
 
     public function revokeCurrent(Request $request): void
     {
-        LoginSession::where('session_id', $request->session()->getId())
-            ->update(['revoked_at' => now()]);
+        $sessionId = $request->session()->getId();
+
+        LoginSession::where('session_id', $sessionId)->update(['revoked_at' => now()]);
+        Cache::forget(self::cacheKey($sessionId));
     }
 
     /** A readable label from the user agent — no third-party parser needed. */

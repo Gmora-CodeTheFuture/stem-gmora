@@ -8,10 +8,12 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Event;
 use App\Models\LiveSession;
+use App\Services\ContentVersion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,6 +27,20 @@ use Inertia\Response;
 class CalendarController extends Controller
 {
     public function index(Request $request): Response
+    {
+        $month = $request->string('month')->toString() ?: now()->format('Y-m');
+
+        $key = 'calendar:'.$request->user()->id.':'.ContentVersion::current().':'.$month;
+
+        return Inertia::render('Dashboard/Calendar', Cache::remember(
+            $key,
+            now()->addMinutes(10),
+            fn () => $this->payload($request),
+        ));
+    }
+
+    /** @return array<string, mixed> */
+    private function payload(Request $request): array
     {
         $user = $request->user();
 
@@ -47,18 +63,18 @@ class CalendarController extends Controller
             ->sortBy('starts_at')
             ->values();
 
-        return Inertia::render('Dashboard/Calendar', [
+        return [
             'month' => $month->format('Y-m'),
             'monthLabel' => $month->format('F Y'),
             'rangeStart' => $from->toDateString(),
             'rangeEnd' => $to->toDateString(),
-            'items' => $items,
+            'items' => $items->toArray(),
             'canManage' => $this->canManage($request),
             // Courses this user may attach an event to.
             'manageableCourses' => $this->canManage($request)
-                ? $this->manageableCourses($request)->map->only(['id', 'title'])->values()
+                ? $this->manageableCourses($request)->map->only(['id', 'title'])->values()->all()
                 : [],
-        ]);
+        ];
     }
 
     /** Publish an event. Staff only — enforced by the route's role middleware. */

@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\ExperienceEarned;
+use App\Services\DashboardCache;
 use App\Services\LevelingService;
 
 class AwardExperience
@@ -23,5 +24,8 @@ class AwardExperience
     public function handle(ExperienceEarned $event): void
     {
         $this->levelingService->addExperience($event->user, $event->xpAmount, $event->source);
+
+        // Level, XP, streak and badges all surface on the dashboard.
+        DashboardCache::forget($event->user->id);
     }
 }

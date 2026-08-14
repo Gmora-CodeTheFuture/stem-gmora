@@ -11,13 +11,16 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CourseCatalogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\Instructor\GradingController;
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LearningController;
 use App\Http\Controllers\MyCoursesController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\Tutor\CourseBuilderController;
 use App\Http\Controllers\Tutor\LessonController;
@@ -83,6 +86,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/courses', [MyCoursesController::class, 'index'])->name('dashboard.courses');
     Route::get('/dashboard/calendar', [CalendarController::class, 'index'])->name('dashboard.calendar');
     Route::get('/dashboard/certificates', [CertificateController::class, 'index'])->name('dashboard.certificates');
+    Route::get('/dashboard/leaderboard', [LeaderboardController::class, 'index'])->name('dashboard.leaderboard');
+    Route::get('/dashboard/search', [SearchController::class, 'index'])->name('dashboard.search');
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])
         ->name('certificates.download');
 
@@ -103,6 +108,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('enrolled')->group(function () {
         Route::patch('/learn/lessons/{lesson}/progress', [LearningController::class, 'updateProgress'])
             ->name('learn.progress');
+        // Discussions — course and lesson boards
+        Route::get('/learn/{course:slug}/discussions', [DiscussionController::class, 'index'])
+            ->name('discussions.index');
+        Route::post('/learn/{course:slug}/discussions', [DiscussionController::class, 'store'])
+            ->name('discussions.store');
+        Route::get('/discussions/{discussion}', [DiscussionController::class, 'show'])->name('discussions.show');
+        Route::post('/discussions/{discussion}/replies', [DiscussionController::class, 'reply'])
+            ->name('discussions.reply');
+        Route::patch('/discussions/{discussion}/solve', [DiscussionController::class, 'solve'])
+            ->name('discussions.solve');
+        Route::patch('/discussions/{discussion}/pin', [DiscussionController::class, 'pin'])
+            ->name('discussions.pin');
+        Route::delete('/discussions/{discussion}', [DiscussionController::class, 'destroy'])
+            ->name('discussions.destroy');
+        Route::delete('/discussion-replies/{reply}', [DiscussionController::class, 'destroyReply'])
+            ->name('discussions.reply.destroy');
+
         Route::get('/learn/{course:slug}', [LearningController::class, 'show'])->name('learn.show');
         Route::get('/learn/{course:slug}/{lesson}', [LearningController::class, 'show'])->name('learn.lesson');
 
