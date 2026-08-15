@@ -190,8 +190,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     </button>
 
                     {sidebarOpen && (
-                        <Link href="/dashboard" className="text-2xl font-bold tracking-tight text-primary-900 dark:text-primary-300 overflow-hidden whitespace-nowrap fade-in">
-                            gmora
+                        <Link href="/dashboard" className="overflow-hidden whitespace-nowrap fade-in">
+                            <img src="/logo.png" alt="Gmora STEM" className="h-8 w-auto object-contain" />
                         </Link>
                     )}
                 </div>

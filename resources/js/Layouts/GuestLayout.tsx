@@ -14,10 +14,7 @@ export default function Guest({ children }: PropsWithChildren) {
                 <div className="relative z-10">
                     {/* Header/Logo */}
                     <div className="flex items-center gap-2 mb-12">
-                        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
-                            <div className="w-3 h-3 bg-white rounded-full"></div>
-                        </div>
-                        <span className="font-bold tracking-widest text-sm uppercase">Gmora</span>
+                        <img src="/logo.png" alt="Gmora STEM" className="h-10 w-auto object-contain" />
                     </div>
 
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 text-[10px] font-bold tracking-wider mb-6 bg-white/5 uppercase">

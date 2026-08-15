@@ -35,7 +35,7 @@ export default function MarketingLayout({
                     {/* Left: Logo and Links */}
                     <div className="flex items-center gap-8 h-full">
                         <Link href="/" className="flex items-center">
-                            <span className="text-2xl font-bold tracking-tighter text-[#1E3A8A]">gmora</span>
+                            <img src="/logo.png" alt="Gmora STEM" className="h-8 w-auto object-contain" />
                         </Link>
                         
                         <div className={`items-center h-full ${nav ? 'hidden lg:flex' : 'hidden'}`}>
@@ -152,8 +152,8 @@ export default function MarketingLayout({
             <footer className="bg-surface-900 text-white py-12 border-t-4 border-primary-500 mt-20">
                 <div className="max-w-[1440px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="col-span-2 md:col-span-1">
-                        <Link href="/" className="flex items-center mb-4">
-                            <span className="text-2xl font-bold tracking-tighter text-[#1E3A8A]">gmora</span>
+                        <Link href="/" className="flex items-center mb-6">
+                            <img src="/logo.png" alt="Gmora STEM" className="h-8 w-auto object-contain" />
                         </Link>
                         <p className="text-sm text-surface-400">
                             The World's STEM Education Platform. Learn, build, and innovate with us.
