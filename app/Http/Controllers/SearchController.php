@@ -27,7 +27,7 @@ class SearchController extends Controller
 {
     private const PER_TYPE = 8;
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|\Illuminate\Http\JsonResponse
     {
         $query = trim($request->string('q')->toString());
         $user = $request->user();
