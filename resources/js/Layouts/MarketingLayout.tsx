@@ -8,11 +8,14 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
     const { auth } = usePage<PageProps>().props;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+    // Every entry must resolve — Programs, Mentorship and Community sat here
+    // pointing at routes that were never built, so the main navigation of the
+    // public site served three 404s.
     const navLinks = [
         { name: 'Courses', href: '/courses' },
-        { name: 'Programs', href: '/programs' },
-        { name: 'Mentorship', href: '/mentorship' },
-        { name: 'Community', href: '/community' },
+        { name: 'Pricing', href: '/pricing' },
+        { name: 'Blog', href: '/blog' },
+        { name: 'About', href: '/about' },
     ];
 
     return (
@@ -147,27 +150,29 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
                             The World's STEM Education Platform. Learn, build, and innovate with us.
                         </p>
                     </div>
+                    {/* Only destinations that exist. Careers, Terms and Privacy
+                        were placeholders pointing at "#" — they belong here once
+                        the pages are written, not before. */}
                     <div>
                         <h4 className="font-bold mb-4">Platform</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="#" className="hover:text-white">Courses</Link></li>
-                            <li><Link href="#" className="hover:text-white">Mentorship</Link></li>
-                            <li><Link href="#" className="hover:text-white">Certificates</Link></li>
+                            <li><Link href="/courses" className="hover:text-white">Courses</Link></li>
+                            <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
+                            <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-bold mb-4">Company</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="#" className="hover:text-white">About</Link></li>
-                            <li><Link href="#" className="hover:text-white">Careers</Link></li>
-                            <li><Link href="#" className="hover:text-white">Contact</Link></li>
+                            <li><Link href="/about" className="hover:text-white">About</Link></li>
+                            <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-bold mb-4">Legal</h4>
+                        <h4 className="font-bold mb-4">Learners</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="#" className="hover:text-white">Terms</Link></li>
-                            <li><Link href="#" className="hover:text-white">Privacy</Link></li>
+                            <li><Link href="/login" className="hover:text-white">Sign in</Link></li>
+                            <li><Link href="/register" className="hover:text-white">Create an account</Link></li>
                         </ul>
                     </div>
                 </div>

@@ -2,7 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import {
     CalendarDays, Check, ChevronLeft, ChevronRight, Clock, ExternalLink,
-    MapPin, Plus, Trash2, X,
+    MapPin, Pencil, Plus, Trash2, X,
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/types';
@@ -21,6 +21,8 @@ interface CalendarItem {
     url: string | null;
     course: { id: string; title: string; slug: string } | null;
     editable: boolean;
+    registration_open?: boolean;
+    capacity?: number | null;
     registration?: {
         open: boolean;
         registered: boolean;
@@ -62,6 +64,7 @@ export default function Calendar({
 }: Props) {
     const [selected, setSelected] = useState<string>(new Date().toISOString().slice(0, 10));
     const [composerOpen, setComposerOpen] = useState(false);
+    const [editing, setEditing] = useState<CalendarItem | null>(null);
 
     // Build the visible grid from the server-provided range.
     const days = useMemo(() => {
@@ -213,15 +216,24 @@ export default function Calendar({
                                         <span className={`badge ${TYPE_STYLES[item.type]} capitalize`}>{item.type}</span>
 
                                         {item.editable && canManage && (
-                                            <button
-                                                onClick={() => router.delete(route('events.destroy', item.id), {
-                                                    preserveScroll: true,
-                                                })}
-                                                className="ml-auto text-surface-400 hover:text-red-500 transition-colors"
-                                                aria-label={`Delete ${item.title}`}
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            <span className="ml-auto flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setEditing(item)}
+                                                    className="text-surface-400 hover:text-primary-600 transition-colors"
+                                                    aria-label={`Edit ${item.title}`}
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => router.delete(route('events.destroy', item.id), {
+                                                        preserveScroll: true,
+                                                    })}
+                                                    className="text-surface-400 hover:text-red-500 transition-colors"
+                                                    aria-label={`Delete ${item.title}`}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </span>
                                         )}
                                     </div>
 
@@ -323,42 +335,62 @@ export default function Calendar({
                 </aside>
             </div>
 
-            {composerOpen && (
+            {(composerOpen || editing) && (
                 <EventComposer
                     courses={manageableCourses}
                     defaultDate={selected}
-                    onClose={() => setComposerOpen(false)}
+                    event={editing}
+                    onClose={() => {
+                        setComposerOpen(false);
+                        setEditing(null);
+                    }}
                 />
             )}
         </DashboardLayout>
     );
 }
 
+/** `datetime-local` wants `YYYY-MM-DDTHH:MM` — an ISO string with the rest cut. */
+const forInput = (iso: string | null) => (iso ? iso.slice(0, 16) : '');
+
 function EventComposer({
     courses,
     defaultDate,
+    event,
     onClose,
 }: {
     courses: Array<{ id: string; title: string }>;
     defaultDate: string;
+    event?: CalendarItem | null;
     onClose: () => void;
 }) {
+    const editing = Boolean(event);
+
     const form = useForm({
-        course_id: courses[0]?.id ?? '',
-        title: '',
-        description: '',
-        type: 'class' as EventType,
-        starts_at: `${defaultDate}T18:00`,
-        ends_at: '',
-        location: '',
-        join_url: '',
-        capacity: '',
-        registration_open: false as boolean,
+        course_id: event ? (event.course?.id ?? '') : (courses[0]?.id ?? ''),
+        title: event?.title ?? '',
+        description: event?.description ?? '',
+        type: (event?.type ?? 'class') as EventType,
+        starts_at: event ? forInput(event.starts_at) : `${defaultDate}T18:00`,
+        ends_at: event ? forInput(event.ends_at) : '',
+        location: event?.location ?? '',
+        join_url: event?.url ?? '',
+        capacity: event?.capacity != null ? String(event.capacity) : '',
+        registration_open: (event?.registration_open ?? false) as boolean,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        form.post(route('events.store'), { preserveScroll: true, onSuccess: onClose });
+
+        const options = { preserveScroll: true, onSuccess: onClose };
+
+        if (event) {
+            form.patch(route('events.update', event.id), options);
+
+            return;
+        }
+
+        form.post(route('events.store'), options);
     };
 
     return (
@@ -372,7 +404,9 @@ function EventComposer({
                 className="w-full max-w-lg card p-6 mb-10"
             >
                 <div className="flex items-center justify-between mb-5">
-                    <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Add to calendar</h2>
+                    <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                        {editing ? 'Edit event' : 'Add to calendar'}
+                    </h2>
                     <button type="button" onClick={onClose} className="btn-icon" aria-label="Close">
                         <X className="w-4 h-4" />
                     </button>
@@ -548,7 +582,9 @@ function EventComposer({
 
                 <div className="flex items-center gap-3 mt-6">
                     <button type="submit" disabled={form.processing} className="btn-primary">
-                        {form.processing ? 'Publishing…' : 'Publish to calendar'}
+                        {form.processing
+                            ? (editing ? 'Saving…' : 'Publishing…')
+                            : (editing ? 'Save changes' : 'Publish to calendar')}
                     </button>
                     <button type="button" onClick={onClose} className="btn-ghost">
                         Cancel

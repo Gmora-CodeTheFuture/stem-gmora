@@ -47,7 +47,7 @@ class UserFactory extends Factory
     }
 
     /**
-     * Privileged roles are required to hold 2FA, so factory-made staff satisfy
+     * Admins are required to hold 2FA, so factory-made staff satisfy
      * that by default — otherwise every staff test would be bounced to setup.
      * Use withoutTwoFactor() to build staff that still need to enrol.
      */
@@ -55,12 +55,7 @@ class UserFactory extends Factory
     {
         $factory = $this->state(fn () => ['role_id' => $this->roleId($roleName)]);
 
-        return in_array($roleName, [
-            Role::INSTRUCTOR,
-            Role::COURSE_MANAGER,
-            Role::PLATFORM_ADMIN,
-            Role::SUPER_ADMIN,
-        ], true) ? $factory->withTwoFactor() : $factory;
+        return $roleName === Role::ADMIN ? $factory->withTwoFactor() : $factory;
     }
 
     public function withTwoFactor(): static
@@ -81,14 +76,9 @@ class UserFactory extends Factory
         ]);
     }
 
-    public function instructor(): static
-    {
-        return $this->role(Role::INSTRUCTOR);
-    }
-
     public function admin(): static
     {
-        return $this->role(Role::PLATFORM_ADMIN);
+        return $this->role(Role::ADMIN);
     }
 
     private function roleId(string $roleName): string

@@ -100,7 +100,7 @@ export default function AdminDashboard({ stats, signups, recentUsers, recentCour
                 <div className="card p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-sm font-semibold text-surface-900 dark:text-white">Recent Courses</h2>
-                        <Link href="/admin/courses" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">View all →</Link>
+                        <Link href="/tutor/courses" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">View all →</Link>
                     </div>
                     <div className="space-y-3">
                         {recentCourses.map((course) => (

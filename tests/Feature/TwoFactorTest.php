@@ -122,10 +122,10 @@ class TwoFactorTest extends TestCase
 
     public function test_staff_are_pushed_to_set_up_two_factor(): void
     {
-        $instructor = User::factory()->instructor()->withoutTwoFactor()->create();
+        $instructor = User::factory()->admin()->withoutTwoFactor()->create();
 
         $this->actingAs($instructor)
-            ->get(route('tutor.dashboard'))
+            ->get(route('tutor.courses.index'))
             ->assertRedirect(route('two-factor.setup'));
 
         // They can still reach the setup screen and their own settings.
@@ -140,7 +140,7 @@ class TwoFactorTest extends TestCase
 
     public function test_staff_cannot_disable_required_two_factor(): void
     {
-        $instructor = User::factory()->instructor()->create();
+        $instructor = User::factory()->admin()->create();
 
         $this->actingAs($instructor)
             ->delete(route('two-factor.disable'), ['password' => 'password'])

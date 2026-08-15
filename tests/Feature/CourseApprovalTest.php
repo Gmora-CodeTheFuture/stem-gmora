@@ -24,7 +24,7 @@ class CourseApprovalTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->admin()->create();
-        $this->instructor = User::factory()->instructor()->create();
+        $this->instructor = User::factory()->admin()->create();
     }
 
     /** A course that passes every automated check. */
@@ -52,7 +52,7 @@ class CourseApprovalTest extends TestCase
 
     public function test_only_admins_can_open_the_queue(): void
     {
-        $this->actingAs($this->instructor)->get(route('admin.approvals.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('admin.approvals.index'))->assertForbidden();
         $this->actingAs($this->admin)->get(route('admin.approvals.index'))->assertOk();
     }
 

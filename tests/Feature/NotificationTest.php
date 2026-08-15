@@ -18,7 +18,7 @@ class NotificationTest extends TestCase
 
     public function test_grading_notifies_the_student(): void
     {
-        $instructor = User::factory()->instructor()->create();
+        $instructor = User::factory()->admin()->create();
         $course = Course::factory()->create(['instructor_id' => $instructor->id]);
         $student = User::factory()->create();
         Enrollment::factory()->create(['user_id' => $student->id, 'course_id' => $course->id]);

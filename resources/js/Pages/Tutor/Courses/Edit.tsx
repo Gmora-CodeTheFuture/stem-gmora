@@ -163,6 +163,64 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
         );
     };
 
+    // Reordering. The grip handles have always been there but nothing was
+    // wired to them, so the order a course was authored in was the order it
+    // shipped in. Drag for mice, arrow keys on the focused handle for everyone
+    // else — a drag-only control is unusable from a keyboard.
+    const [dragging, setDragging] = useState<{ kind: 'module' | 'lesson'; id: string; scope?: string } | null>(null);
+
+    const moduleIds = () => (course.modules ?? []).map((m: Module) => m.id);
+    const lessonIds = (moduleId: string) =>
+        ((course.modules ?? []).find((m: Module) => m.id === moduleId)?.lessons ?? []).map((l: Lesson) => l.id);
+
+    const commitModules = (order: string[]) =>
+        router.post(`/tutor/courses/${course.id}/modules/reorder`, { order }, { preserveScroll: true });
+
+    const commitLessons = (moduleId: string, order: string[]) =>
+        router.post(`/tutor/modules/${moduleId}/lessons/reorder`, { order }, { preserveScroll: true });
+
+    /** Pull `id` out of the list and drop it back in at `to`. */
+    const resequence = (ids: string[], id: string, to: number) => {
+        const next = ids.filter((candidate) => candidate !== id);
+        next.splice(to, 0, id);
+        return next;
+    };
+
+    const nudgeModule = (id: string, delta: number) => {
+        const ids = moduleIds();
+        const to = ids.indexOf(id) + delta;
+        if (to < 0 || to >= ids.length) return;
+        commitModules(resequence(ids, id, to));
+    };
+
+    const nudgeLesson = (moduleId: string, id: string, delta: number) => {
+        const ids = lessonIds(moduleId);
+        const to = ids.indexOf(id) + delta;
+        if (to < 0 || to >= ids.length) return;
+        commitLessons(moduleId, resequence(ids, id, to));
+    };
+
+    const dropOnModule = (targetId: string) => {
+        if (dragging?.kind !== 'module' || dragging.id === targetId) return;
+        const ids = moduleIds();
+        commitModules(resequence(ids, dragging.id, ids.indexOf(targetId)));
+        setDragging(null);
+    };
+
+    const dropOnLesson = (moduleId: string, targetId: string) => {
+        // Lessons only reorder within their own module.
+        if (dragging?.kind !== 'lesson' || dragging.scope !== moduleId || dragging.id === targetId) return;
+        const ids = lessonIds(moduleId);
+        commitLessons(moduleId, resequence(ids, dragging.id, ids.indexOf(targetId)));
+        setDragging(null);
+    };
+
+    const gripKeys = (move: (delta: number) => void) => (e: React.KeyboardEvent) => {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+        e.preventDefault();
+        move(e.key === 'ArrowUp' ? -1 : 1);
+    };
+
     const setStatus = (status: string) => {
         router.patch(`/tutor/courses/${course.id}/status`, { status }, { preserveScroll: true });
     };
@@ -321,10 +379,26 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                 {activeTab === 'curriculum' && (
                     <div className="space-y-6">
                         {course.modules?.map((module: Module) => (
-                            <div key={module.id} className="card overflow-hidden">
+                            <div
+                                key={module.id}
+                                className={`card overflow-hidden transition-opacity ${dragging?.kind === 'module' && dragging.id === module.id ? 'opacity-50' : ''}`}
+                                onDragOver={(e) => dragging?.kind === 'module' && e.preventDefault()}
+                                onDrop={() => dropOnModule(module.id)}
+                            >
                                 <div className="bg-surface-50 dark:bg-surface-900/50 p-4 border-b border-surface-200 dark:border-surface-800 flex items-center justify-between">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <GripVertical className="w-5 h-5 text-surface-400 cursor-move" />
+                                        <button
+                                            type="button"
+                                            draggable
+                                            onDragStart={() => setDragging({ kind: 'module', id: module.id })}
+                                            onDragEnd={() => setDragging(null)}
+                                            onKeyDown={gripKeys((delta) => nudgeModule(module.id, delta))}
+                                            className="cursor-move text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            title="Drag to reorder, or focus and use the arrow keys"
+                                            aria-label={`Reorder module ${module.title}`}
+                                        >
+                                            <GripVertical className="w-5 h-5" />
+                                        </button>
                                         {editingModule?.id === module.id ? (
                                             <form onSubmit={saveModule} className="flex items-center gap-2 flex-1">
                                                 <TextInput className="flex-1" value={editingModule.title} onChange={(e) => setEditingModule({ ...editingModule, title: e.target.value })} required autoFocus />
@@ -407,9 +481,25 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                             </div>
                                         </form>
                                     ) : (
-                                        <div key={lesson.id} className="flex items-center justify-between p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 group">
+                                        <div
+                                            key={lesson.id}
+                                            className={`flex items-center justify-between p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 group transition-opacity ${dragging?.kind === 'lesson' && dragging.id === lesson.id ? 'opacity-50' : ''}`}
+                                            onDragOver={(e) => dragging?.kind === 'lesson' && dragging.scope === module.id && e.preventDefault()}
+                                            onDrop={() => dropOnLesson(module.id, lesson.id)}
+                                        >
                                             <div className="flex items-center gap-3">
-                                                <GripVertical className="w-4 h-4 text-surface-400 cursor-move" />
+                                                <button
+                                                    type="button"
+                                                    draggable
+                                                    onDragStart={() => setDragging({ kind: 'lesson', id: lesson.id, scope: module.id })}
+                                                    onDragEnd={() => setDragging(null)}
+                                                    onKeyDown={gripKeys((delta) => nudgeLesson(module.id, lesson.id, delta))}
+                                                    className="cursor-move text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    title="Drag to reorder, or focus and use the arrow keys"
+                                                    aria-label={`Reorder lesson ${lesson.title}`}
+                                                >
+                                                    <GripVertical className="w-4 h-4" />
+                                                </button>
                                                 {lesson.type === 'youtube' ? <Video className="w-4 h-4 text-blue-500" /> : lesson.type === 'html' ? <Globe className="w-4 h-4 text-violet-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
                                                 <span className="text-sm font-medium text-surface-900 dark:text-white">{lesson.title}</span>
                                                 {lesson.is_free_preview && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">Free</span>}

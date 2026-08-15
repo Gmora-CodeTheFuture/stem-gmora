@@ -21,18 +21,26 @@ class CourseBuilderController extends Controller
     ) {}
 
     /**
-     * Only show courses owned by the authenticated tutor.
+     * Every course, in one place. Admins are peers who all author the
+     * platform's courses, so there is no useful line between "mine" and "all" —
+     * this replaced the separate admin course console.
      */
     public function index(Request $request): Response
     {
-        $courses = $request->user()
-            ->courses()
+        $courses = Course::query()
+            ->with('instructor:id,full_name')
             ->withCount('enrollments')
+            ->when($request->string('search')->toString(), fn ($q, $search) => $q->whereLike('title', "%{$search}%"))
+            ->when($request->string('status')->toString(), fn ($q, $status) => $q->where('status', $status))
+            ->when($request->string('category')->toString(), fn ($q, $category) => $q->where('category', $category))
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('Tutor/Courses/Index', [
             'courses' => $courses,
+            'categories' => Course::select('category')->distinct()->orderBy('category')->pluck('category'),
+            'filters' => $request->only(['search', 'status', 'category']),
         ]);
     }
 

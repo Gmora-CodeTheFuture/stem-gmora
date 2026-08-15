@@ -10,9 +10,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Gmora publishes its own courses, not only tutors' — so an admin has to be
- * able to drive the course builder from an empty draft to a live course
- * without going through the review queue they themselves staff.
+ * Courses are authored by admins, so the builder has to carry a course from an
+ * empty draft all the way to live without the review queue in between.
  */
 class AdminAuthorsCourseTest extends TestCase
 {
@@ -45,7 +44,6 @@ class AdminAuthorsCourseTest extends TestCase
     public function test_an_admin_can_open_the_builder(): void
     {
         $this->actingAs($this->admin)->get(route('tutor.courses.index'))->assertOk();
-        $this->actingAs($this->admin)->get(route('tutor.dashboard'))->assertOk();
     }
 
     public function test_a_course_an_admin_creates_is_owned_by_them_and_starts_as_a_draft(): void
@@ -136,27 +134,6 @@ class AdminAuthorsCourseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('Learn/Show')
                 ->where('currentLesson.title', 'What a robot is'));
-    }
-
-    public function test_a_tutor_still_has_to_go_through_review(): void
-    {
-        $tutor = User::factory()->instructor()->create();
-
-        $course = Course::factory()->draft()->create(['instructor_id' => $tutor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id, 'is_published' => true]);
-        Lesson::factory()->create([
-            'module_id' => $module->id,
-            'is_published' => true,
-            'content_ref' => 'aircAruvnKk',
-            'duration_seconds' => 600,
-        ]);
-        $course->update(['description' => str_repeat('A genuinely useful description. ', 5)]);
-
-        $this->actingAs($tutor)
-            ->patch(route('tutor.courses.status', $course), ['status' => Course::STATUS_PUBLISHED]);
-
-        // Downgraded to the queue rather than going live.
-        $this->assertSame(Course::STATUS_PENDING_REVIEW, $course->refresh()->status);
     }
 
     public function test_a_lesson_can_be_edited_after_it_is_created(): void

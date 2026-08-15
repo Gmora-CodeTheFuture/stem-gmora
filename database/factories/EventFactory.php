@@ -15,7 +15,7 @@ class EventFactory extends Factory
     {
         return [
             'course_id' => null,
-            'created_by' => User::factory()->instructor(),
+            'created_by' => User::factory()->admin(),
             'title' => fake()->sentence(4),
             'description' => fake()->sentence(),
             'type' => Event::TYPE_CLASS,

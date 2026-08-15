@@ -65,20 +65,13 @@ class Role extends Model
         return $this->hasMany(User::class);
     }
 
-    // Role constants
-    public const VISITOR = 'visitor';
-
+    /**
+     * Two roles, and that is the whole model. Everyone either learns here or
+     * runs the place; courses are authored by admins, so the tiers that used to
+     * sit between them (instructor, teaching assistant, course manager) only
+     * ever added permission checks nobody exercised.
+     */
     public const STUDENT = 'student';
 
-    public const INSTRUCTOR = 'instructor';
-
-    public const TEACHING_ASSISTANT = 'teaching_assistant';
-
-    public const COURSE_MANAGER = 'course_manager';
-
-    public const PLATFORM_ADMIN = 'platform_admin';
-
-    public const SUPER_ADMIN = 'super_admin';
-
-    public const ORGANIZATION_ADMIN = 'organization_admin';
+    public const ADMIN = 'admin';
 }

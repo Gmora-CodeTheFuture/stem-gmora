@@ -14,7 +14,6 @@ interface DashboardLayoutProps {
     noScroll?: boolean;
 }
 
-const GRADING_ROLES = ['instructor', 'teaching_assistant', 'course_manager', 'platform_admin', 'super_admin'];
 const SIDEBAR_KEY = 'sidebar:open';
 
 export default function DashboardLayout({ header, children, noScroll = false }: DashboardLayoutProps) {
@@ -90,13 +89,10 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         router.get(route('dashboard.search'), { q: query });
     };
 
-    const canGrade = GRADING_ROLES.includes(auth?.user?.role?.name ?? '');
-    const isAdmin = ['platform_admin', 'super_admin'].includes(auth?.user?.role?.name ?? '');
-    // Admins author courses too — the platform's own first-party courses are
-    // built through the same tutor tooling, so they get the Teaching section
-    // alongside Administration.
-    const isTutor = isAdmin || ['instructor', 'course_manager'].includes(auth?.user?.role?.name ?? '');
-    const isStudent = !isAdmin && !isTutor;
+    const isAdmin = auth?.user?.role?.name === 'admin';
+    // Two roles: you either learn here or you run the place. Authoring and
+    // administration are the same job now, so they share one list.
+    const isStudent = !isAdmin;
     const unread = notifications_count ?? 0;
 
     const navigation = [
@@ -111,28 +107,23 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
         { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
         { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
-        // Skipped when the Teaching section is shown — it carries Grading there.
-        ...(canGrade && !isTutor ? [{ name: 'Grading', href: '/instructor/grading', icon: GraduationCap }] : []),
     ];
 
-    const tutorNav = isTutor ? [
-        { name: 'Overview', href: '/tutor', icon: LayoutDashboard, exact: true },
-        { name: isAdmin ? 'Course builder' : 'My Courses', href: '/tutor/courses', icon: PenSquare },
-        { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
-    ] : [];
-
+    // Ordered by how the work actually flows: build it, review it, then the
+    // people and the platform around it.
     const adminNav = isAdmin ? [
         { name: 'Overview', href: '/admin', icon: LayoutDashboard, exact: true },
-        { name: 'Users', href: '/admin/users', icon: Users },
-        { name: 'All Courses', href: '/admin/courses', icon: BookOpen },
-        { name: 'Enrollments', href: '/admin/enrollments', icon: UserCheck },
-        { name: 'Payments', href: '/admin/payments', icon: CreditCard },
-        { name: 'Badges', href: '/admin/badges', icon: Trophy },
+        { name: 'Courses', href: '/tutor/courses', icon: BookOpen },
+        { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
         { name: 'Approvals', href: '/admin/approvals', icon: ClipboardCheck },
+        { name: 'Users', href: '/admin/users', icon: Users },
+        { name: 'Enrollments', href: '/admin/enrollments', icon: UserCheck },
+        { name: 'Support queue', href: '/admin/support', icon: LifeBuoy },
+        { name: 'Badges', href: '/admin/badges', icon: Trophy },
         { name: 'Blog', href: '/admin/posts', icon: PenSquare },
         { name: 'Website copy', href: '/admin/content', icon: Wrench },
+        { name: 'Payments', href: '/admin/payments', icon: CreditCard },
         { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
-        { name: 'Support queue', href: '/admin/support', icon: LifeBuoy },
         { name: 'Security', href: '/admin/security', icon: ShieldCheck },
     ] : [];
 
@@ -220,20 +211,6 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                             </div>
 
                             <div className="space-y-1">{yourWork.map(navLink)}</div>
-                        </>
-                    )}
-
-                    {/* Tutor section */}
-                    {isTutor && tutorNav.length > 0 && (
-                        <>
-                            <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
-                                {sidebarOpen ? (
-                                    <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Teaching</p>
-                                ) : (
-                                    <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
-                                )}
-                            </div>
-                            <div className="space-y-1">{tutorNav.map(navLink)}</div>
                         </>
                     )}
 

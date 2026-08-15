@@ -17,7 +17,7 @@ class CourseFactory extends Factory
         $title = fake()->unique()->sentence(3);
 
         return [
-            'instructor_id' => User::factory()->instructor(),
+            'instructor_id' => User::factory()->admin(),
             'title' => $title,
             'slug' => Str::slug($title).'-'.Str::lower(Str::random(5)),
             'subtitle' => fake()->sentence(),

@@ -28,7 +28,7 @@ class AssignmentTest extends TestCase
     {
         parent::setUp();
 
-        $this->instructor = User::factory()->instructor()->create();
+        $this->instructor = User::factory()->admin()->create();
         $this->course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
         $this->student = User::factory()->create();
 
@@ -169,16 +169,14 @@ class AssignmentTest extends TestCase
         $this->assertDatabaseHas('audit_logs', ['action' => 'submission.graded']);
     }
 
-    public function test_instructor_cannot_grade_another_instructors_course(): void
+    public function test_a_student_cannot_grade_a_submission(): void
     {
         $this->actingAs($this->student)->post(route('assignments.submit', $this->assignment), [
             'type' => 'repo',
             'repo_url' => 'https://github.com/student/v1',
         ]);
 
-        $outsider = User::factory()->instructor()->create();
-
-        $this->actingAs($outsider)
+        $this->actingAs(User::factory()->create())
             ->patch(route('instructor.grade-submission', Submission::firstOrFail()), [
                 'marks_awarded' => 10,
                 'status' => 'graded',
@@ -188,8 +186,8 @@ class AssignmentTest extends TestCase
 
     public function test_students_cannot_reach_the_grading_queue(): void
     {
-        $this->actingAs($this->student)->get(route('instructor.grading'))->assertForbidden();
-        $this->actingAs($this->instructor)->get(route('instructor.grading'))->assertOk();
+        $this->actingAs($this->student)->get(route('tutor.grading'))->assertForbidden();
+        $this->actingAs($this->instructor)->get(route('tutor.grading'))->assertOk();
     }
 
     public function test_marks_cannot_exceed_the_assignment_maximum(): void

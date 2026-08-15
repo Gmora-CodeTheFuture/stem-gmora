@@ -30,7 +30,7 @@ class ReportsTest extends TestCase
     public function test_only_admins_can_open_reports(): void
     {
         $this->actingAs(User::factory()->create())->get(route('admin.reports.index'))->assertForbidden();
-        $this->actingAs(User::factory()->instructor()->create())->get(route('admin.reports.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('admin.reports.index'))->assertForbidden();
         $this->actingAs($this->admin)->get(route('admin.reports.index'))->assertOk();
     }
 

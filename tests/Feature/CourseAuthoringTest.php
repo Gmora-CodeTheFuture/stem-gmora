@@ -23,7 +23,7 @@ class CourseAuthoringTest extends TestCase
     {
         parent::setUp();
 
-        $this->instructor = User::factory()->instructor()->create();
+        $this->instructor = User::factory()->admin()->create();
     }
 
     /** @return array<string, mixed> */
@@ -183,34 +183,35 @@ class CourseAuthoringTest extends TestCase
         $this->assertSame(0, $course->refresh()->total_lessons);
     }
 
-    public function test_a_tutor_cannot_touch_another_tutors_course(): void
+    public function test_a_student_cannot_touch_the_builder(): void
     {
         $course = Course::factory()->create();
         $module = Module::factory()->create(['course_id' => $course->id]);
         $lesson = Lesson::factory()->create(['module_id' => $module->id]);
 
-        $this->actingAs($this->instructor)
+        $student = User::factory()->create();
+
+        $this->actingAs($student)
             ->patch(route('tutor.lessons.update', $lesson), ['title' => 'Hijacked', 'type' => 'youtube'])
             ->assertForbidden();
 
-        $this->actingAs($this->instructor)
+        $this->actingAs($student)
             ->delete(route('tutor.modules.destroy', $module))
             ->assertForbidden();
 
-        $this->actingAs($this->instructor)
+        $this->actingAs($student)
             ->get(route('tutor.courses.edit', $course))
             ->assertForbidden();
     }
 
-    public function test_a_tutor_cannot_publish_a_course_directly(): void
+    public function test_an_admin_may_author_a_course_they_do_not_own(): void
     {
-        $course = Course::factory()->draft()->create(['instructor_id' => $this->instructor->id]);
+        // Admins are peers, so a second admin can pick up someone else's draft.
+        $course = Course::factory()->draft()->create();
 
         $this->actingAs($this->instructor)
-            ->patch(route('tutor.courses.status', $course), ['status' => 'published']);
-
-        // Tutors submit for review; only admins publish (Plan §8.9).
-        $this->assertSame(Course::STATUS_PENDING_REVIEW, $course->refresh()->status);
+            ->get(route('tutor.courses.edit', $course))
+            ->assertOk();
     }
 
     public function test_deleting_a_course_takes_its_modules_and_lessons_with_it(): void

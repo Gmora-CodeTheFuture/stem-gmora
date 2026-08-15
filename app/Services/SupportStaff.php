@@ -13,10 +13,7 @@ use Illuminate\Support\Collection;
 class SupportStaff
 {
     public const ROLES = [
-        Role::TEACHING_ASSISTANT,
-        Role::COURSE_MANAGER,
-        Role::PLATFORM_ADMIN,
-        Role::SUPER_ADMIN,
+        Role::ADMIN,
     ];
 
     public static function includes(?User $user): bool

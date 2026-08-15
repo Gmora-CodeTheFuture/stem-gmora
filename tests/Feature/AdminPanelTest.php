@@ -16,22 +16,22 @@ class AdminPanelTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $superAdmin;
+    private User $admin;
 
-    private User $platformAdmin;
+    private User $secondAdmin;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->superAdmin = User::factory()->role(Role::SUPER_ADMIN)->create();
-        $this->platformAdmin = User::factory()->role(Role::PLATFORM_ADMIN)->create();
+        $this->admin = User::factory()->admin()->create();
+        $this->secondAdmin = User::factory()->admin()->create();
     }
 
     public function test_students_cannot_reach_the_admin_panel(): void
     {
         $this->actingAs(User::factory()->create())->get(route('admin.dashboard'))->assertForbidden();
-        $this->actingAs(User::factory()->instructor()->create())->get(route('admin.users.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('admin.users.index'))->assertForbidden();
     }
 
     public function test_admin_pages_render(): void
@@ -41,60 +41,68 @@ class AdminPanelTest extends TestCase
         foreach ([
             route('admin.dashboard'),
             route('admin.users.index'),
-            route('admin.users.show', $this->platformAdmin),
-            route('admin.users.edit', $this->platformAdmin),
-            route('admin.courses.index'),
-            route('admin.courses.create'),
-            route('admin.courses.show', $course),
-            route('admin.courses.edit', $course),
+            route('admin.users.show', $this->secondAdmin),
+            route('admin.users.edit', $this->secondAdmin),
+            route('tutor.courses.index'),
+            route('tutor.courses.create'),
+            route('tutor.courses.edit', $course),
             route('admin.enrollments.index'),
             route('admin.payments.index'),
             route('admin.badges.index'),
         ] as $url) {
-            $this->actingAs($this->superAdmin)->get($url)->assertOk();
+            $this->actingAs($this->admin)->get($url)->assertOk();
         }
     }
 
     public function test_an_admin_cannot_delete_their_own_account(): void
     {
-        $this->actingAs($this->superAdmin)
-            ->delete(route('admin.users.destroy', $this->superAdmin))
+        $this->actingAs($this->admin)
+            ->delete(route('admin.users.destroy', $this->admin))
             ->assertSessionHas('error');
 
-        $this->assertNotNull(User::find($this->superAdmin->id));
+        $this->assertNotNull(User::find($this->admin->id));
     }
 
-    public function test_the_last_super_admin_cannot_be_deleted(): void
+    public function test_the_last_admin_cannot_be_deleted(): void
     {
-        // superAdmin is the only one; platformAdmin tries to remove them.
-        $this->actingAs($this->platformAdmin)
-            ->delete(route('admin.users.destroy', $this->superAdmin))
-            ->assertForbidden();
+        // Leave exactly one admin standing, then try to remove them.
+        $this->secondAdmin->delete();
 
-        $this->assertNotNull(User::find($this->superAdmin->id));
+        $survivor = User::factory()->admin()->create();
+
+        $this->actingAs($survivor)
+            ->delete(route('admin.users.destroy', $this->admin))
+            ->assertSessionHasNoErrors();
+
+        // Now $survivor is the only admin left and cannot be removed by anyone.
+        $this->actingAs($survivor)
+            ->delete(route('admin.users.destroy', $survivor))
+            ->assertSessionHas('error');
+
+        $this->assertNotNull(User::find($survivor->id));
     }
 
-    public function test_a_platform_admin_cannot_grant_super_admin(): void
+    public function test_the_last_admin_cannot_be_demoted(): void
     {
-        $target = User::factory()->create();
+        $this->secondAdmin->delete();
 
-        $this->actingAs($this->platformAdmin)
-            ->patch(route('admin.users.update', $target), [
-                'full_name' => $target->full_name,
-                'email' => $target->email,
-                'role_id' => Role::where('name', Role::SUPER_ADMIN)->value('id'),
+        $this->actingAs($this->admin)
+            ->patch(route('admin.users.update', $this->admin), [
+                'full_name' => $this->admin->full_name,
+                'email' => $this->admin->email,
+                'role_id' => Role::where('name', Role::STUDENT)->value('id'),
             ])
             ->assertForbidden();
 
-        $this->assertTrue($target->refresh()->hasRole(Role::STUDENT));
+        $this->assertTrue($this->admin->refresh()->isAdmin());
     }
 
     public function test_nobody_can_change_their_own_role(): void
     {
-        $this->actingAs($this->platformAdmin)
-            ->patch(route('admin.users.update', $this->platformAdmin), [
-                'full_name' => $this->platformAdmin->full_name,
-                'email' => $this->platformAdmin->email,
+        $this->actingAs($this->secondAdmin)
+            ->patch(route('admin.users.update', $this->secondAdmin), [
+                'full_name' => $this->secondAdmin->full_name,
+                'email' => $this->secondAdmin->email,
                 'role_id' => Role::where('name', Role::STUDENT)->value('id'),
             ])
             ->assertForbidden();
@@ -104,19 +112,20 @@ class AdminPanelTest extends TestCase
     {
         $target = User::factory()->create();
 
-        $this->actingAs($this->superAdmin)
+        // Student promoted to admin — the mutation that matters most.
+        $this->actingAs($this->admin)
             ->patch(route('admin.users.update', $target), [
                 'full_name' => $target->full_name,
                 'email' => $target->email,
-                'role_id' => Role::where('name', Role::INSTRUCTOR)->value('id'),
+                'role_id' => Role::where('name', Role::ADMIN)->value('id'),
             ])
             ->assertSessionHasNoErrors();
 
-        $this->assertTrue($target->refresh()->hasRole(Role::INSTRUCTOR));
+        $this->assertTrue($target->refresh()->isAdmin());
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'user.role_changed',
             'entity_id' => $target->id,
-            'actor_id' => $this->superAdmin->id,
+            'actor_id' => $this->admin->id,
         ]);
     }
 
@@ -125,7 +134,7 @@ class AdminPanelTest extends TestCase
         $course = Course::factory()->create(['total_enrollments' => 0]);
         $student = User::factory()->create();
 
-        $this->actingAs($this->superAdmin)
+        $this->actingAs($this->admin)
             ->post(route('admin.enrollments.store'), [
                 'user_id' => $student->id,
                 'course_id' => $course->id,
@@ -146,7 +155,7 @@ class AdminPanelTest extends TestCase
             'course_id' => $course->id,
         ]);
 
-        $this->actingAs($this->superAdmin)
+        $this->actingAs($this->admin)
             ->post(route('admin.enrollments.store'), [
                 'user_id' => $student->id,
                 'course_id' => $course->id,
@@ -175,7 +184,7 @@ class AdminPanelTest extends TestCase
             ->postJson(route('api.video-token.issue', $lesson))
             ->json('data.ticket');
 
-        $this->actingAs($this->superAdmin)
+        $this->actingAs($this->admin)
             ->patch(route('admin.enrollments.update', $enrollment), ['status' => 'suspended'])
             ->assertSessionHasNoErrors();
 
@@ -188,7 +197,7 @@ class AdminPanelTest extends TestCase
 
     public function test_admin_course_creation_handles_duplicate_titles(): void
     {
-        $instructor = User::factory()->instructor()->create();
+        $instructor = User::factory()->admin()->create();
 
         $payload = [
             'title' => 'Shared Title',
@@ -200,8 +209,8 @@ class AdminPanelTest extends TestCase
             'instructor_id' => $instructor->id,
         ];
 
-        $this->actingAs($this->superAdmin)->post(route('admin.courses.store'), $payload)->assertSessionHasNoErrors();
-        $this->actingAs($this->superAdmin)->post(route('admin.courses.store'), $payload)->assertSessionHasNoErrors();
+        $this->actingAs($this->admin)->post(route('tutor.courses.store'), $payload)->assertSessionHasNoErrors();
+        $this->actingAs($this->admin)->post(route('tutor.courses.store'), $payload)->assertSessionHasNoErrors();
 
         $this->assertSame(2, Course::count());
         $this->assertSame(2, Course::pluck('slug')->unique()->count());

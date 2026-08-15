@@ -34,7 +34,7 @@ class ContentBlockTest extends TestCase
     public function test_only_admins_can_open_the_editor(): void
     {
         $this->actingAs(User::factory()->create())->get(route('admin.content.index'))->assertForbidden();
-        $this->actingAs(User::factory()->instructor()->create())->get(route('admin.content.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('admin.content.index'))->assertForbidden();
         $this->actingAs(User::factory()->admin()->create())->get(route('admin.content.index'))->assertOk();
     }
 

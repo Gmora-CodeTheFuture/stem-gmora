@@ -25,10 +25,10 @@ class CourseSeeder extends Seeder
 {
     public function run(): void
     {
-        $instructor = User::whereHas('role', fn ($q) => $q->where('name', Role::INSTRUCTOR))->first();
+        $instructor = User::whereHas('role', fn ($q) => $q->where('name', Role::ADMIN))->first();
 
         if (! $instructor) {
-            $this->command?->warn('No instructor found — run DatabaseSeeder first.');
+            $this->command?->warn('No admin found — run DatabaseSeeder first.');
 
             return;
         }

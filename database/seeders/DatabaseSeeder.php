@@ -12,26 +12,15 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RoleSeeder::class);
 
-        // Create demo super admin
-        $superAdminRole = Role::where('name', Role::SUPER_ADMIN)->first();
+        // Create demo admin — admins author courses, so there is no separate
+        // instructor account any more.
+        $adminRole = Role::where('name', Role::ADMIN)->first();
         User::firstOrCreate(
             ['email' => 'admin@gmorastem.com'],
             [
                 'full_name' => 'Gmora Admin',
                 'password' => bcrypt('password'),
-                'role_id' => $superAdminRole->id,
-                'email_verified_at' => now(),
-            ]
-        );
-
-        // Create demo instructor
-        $instructorRole = Role::where('name', Role::INSTRUCTOR)->first();
-        User::firstOrCreate(
-            ['email' => 'instructor@gmorastem.com'],
-            [
-                'full_name' => 'Demo Instructor',
-                'password' => bcrypt('password'),
-                'role_id' => $instructorRole->id,
+                'role_id' => $adminRole->id,
                 'email_verified_at' => now(),
             ]
         );

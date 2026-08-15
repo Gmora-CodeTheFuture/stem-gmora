@@ -103,9 +103,9 @@ class UserManagementController extends Controller
             return Redirect::back()->with('error', 'You cannot delete your own account from here.');
         }
 
-        // Losing the last super admin locks everyone out of the platform.
-        if ($user->hasRole(Role::SUPER_ADMIN) && $this->superAdminCount() <= 1) {
-            return Redirect::back()->with('error', 'You cannot delete the only remaining super admin.');
+        // Losing the last admin locks everyone out of the platform.
+        if ($user->isAdmin() && $this->adminCount() <= 1) {
+            return Redirect::back()->with('error', 'You cannot delete the only remaining admin.');
         }
 
         $name = $user->full_name;
@@ -129,43 +129,35 @@ class UserManagementController extends Controller
             ->with('success', "Password reset link sent to {$user->email}.");
     }
 
-    /** A platform admin may not act on a super admin; only a super admin can. */
+    /**
+     * With a single admin tier every admin is a peer, so there is no longer a
+     * rank to defend — only the platform's ability to still have an admin.
+     */
     private function assertMayManage(Request $request, User $target): void
     {
-        if ($target->hasRole(Role::SUPER_ADMIN) && ! $request->user()->isSuperAdmin()) {
-            abort(403, 'Only a super admin can manage another super admin.');
-        }
+        // Kept as the single place to add per-target rules again if needed.
     }
 
-    /** Nobody may grant a role above their own, or change their own role. */
+    /** Nobody may change their own role, or remove the last admin. */
     private function assertMayAssignRole(Request $request, ?Role $role, User $target): void
     {
         if ($target->id === $request->user()->id) {
             abort(403, 'You cannot change your own role.');
         }
 
-        if ($role?->name === Role::SUPER_ADMIN && ! $request->user()->isSuperAdmin()) {
-            abort(403, 'Only a super admin can grant super admin.');
-        }
-
-        if ($target->hasRole(Role::SUPER_ADMIN) && $this->superAdminCount() <= 1) {
-            abort(403, 'You cannot demote the only remaining super admin.');
+        if ($target->isAdmin() && $role?->name !== Role::ADMIN && $this->adminCount() <= 1) {
+            abort(403, 'You cannot demote the only remaining admin.');
         }
     }
 
     /** @return Collection<int, Role> */
     private function assignableRoles(Request $request)
     {
-        return Role::query()
-            ->when(
-                ! $request->user()->isSuperAdmin(),
-                fn ($q) => $q->where('name', '!=', Role::SUPER_ADMIN),
-            )
-            ->get(['id', 'name', 'display_name']);
+        return Role::query()->get(['id', 'name', 'display_name']);
     }
 
-    private function superAdminCount(): int
+    private function adminCount(): int
     {
-        return User::whereHas('role', fn ($q) => $q->where('name', Role::SUPER_ADMIN))->count();
+        return User::whereHas('role', fn ($q) => $q->where('name', Role::ADMIN))->count();
     }
 }

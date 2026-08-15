@@ -26,7 +26,7 @@ class EventRegistrationTest extends TestCase
     private function event(array $attributes = []): Event
     {
         return Event::factory()->create([
-            'created_by' => User::factory()->instructor()->create()->id,
+            'created_by' => User::factory()->admin()->create()->id,
             'starts_at' => now()->addWeek(),
             'registration_open' => true,
             ...$attributes,
@@ -141,7 +141,7 @@ class EventRegistrationTest extends TestCase
 
     public function test_staff_can_open_registration_with_a_capacity(): void
     {
-        $instructor = User::factory()->instructor()->create();
+        $instructor = User::factory()->admin()->create();
         $course = Course::factory()->create(['instructor_id' => $instructor->id]);
 
         $this->actingAs($instructor)

@@ -1,0 +1,207 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '22'
+
+jobs:
+  lint:
+    name: Lint and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Check formatting
+        run: ./vendor/bin/pint --test
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # `npm run build` runs tsc first, so this covers types and the bundle.
+      - name: Typecheck and build
+        run: npm run build
+
+  backend:
+    name: PHP tests (${{ matrix.database }})
+    runs-on: ubuntu-latest
+
+    # The suite runs on SQLite for speed, but production is Postgres and the
+    # differences have bitten before — case-sensitive LIKE, uuidMorphs, and
+    # self-referencing foreign keys inside CREATE TABLE. Both must pass.
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, pgsql]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: gmora_test
+          POSTGRES_USER: gmora
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pdo_sqlite, pdo_pgsql, mbstring, gd, zip
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run the suite
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: ${{ matrix.database == 'pgsql' && 'gmora_test' || ':memory:' }}
+          DB_USERNAME: gmora
+          DB_PASSWORD: secret
+        run: php artisan test
+
+  frontend:
+    name: Component tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+  e2e:
+    name: Browser tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: gmora_e2e
+          POSTGRES_USER: gmora
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: gmora_e2e
+      DB_USERNAME: gmora
+      DB_PASSWORD: secret
+      APP_URL: http://127.0.0.1:8000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo, pdo_pgsql, mbstring, gd, zip
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          npm run build
+
+      - name: Migrate and seed
+        run: php artisan migrate --seed --force
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Playwright starts and waits for the server itself (see webServer in
+      # playwright.config.ts).
+      - name: Run the browser tests
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - name: Known vulnerabilities in PHP dependencies
+        run: composer audit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # Advisory rather than blocking: the frontend tree carries low-severity
+      # advisories that no upgrade currently resolves.
+      - name: Known vulnerabilities in npm dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true

@@ -14,10 +14,10 @@ use Tests\TestCase;
 /**
  * Regression cover for a course that reached students with nothing in it.
  *
- * A tutor built three modules and four lessons but never published any of
- * them — the builder had no toggle to do so. An admin published the course
- * from the status dropdown, which unlike the review queue ran no readiness
- * check, and the first student to enrol was redirected into a hard 404.
+ * Three modules and four lessons were authored but never published — the
+ * builder had no toggle to do so. The course was then published from a status
+ * control that, unlike the review queue, ran no readiness check, and the first
+ * student to enrol was redirected into a hard 404.
  */
 class CoursePublishingGateTest extends TestCase
 {
@@ -32,7 +32,7 @@ class CoursePublishingGateTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->admin()->create();
-        $this->instructor = User::factory()->instructor()->create();
+        $this->instructor = User::factory()->admin()->create();
     }
 
     /** A course whose content exists but is all still in draft. */
@@ -54,18 +54,18 @@ class CoursePublishingGateTest extends TestCase
         return $course->refresh();
     }
 
-    public function test_the_admin_status_dropdown_will_not_publish_an_empty_course(): void
+    public function test_the_status_control_will_not_publish_an_empty_course(): void
     {
         $course = $this->unpublishedContent();
 
         $this->actingAs($this->admin)
-            ->patch(route('admin.courses.status', $course), ['status' => Course::STATUS_PUBLISHED])
+            ->patch(route('tutor.courses.status', $course), ['status' => Course::STATUS_PUBLISHED])
             ->assertSessionHas('error');
 
         $this->assertSame(Course::STATUS_DRAFT, $course->refresh()->status);
     }
 
-    public function test_the_dropdown_still_publishes_a_course_that_is_ready(): void
+    public function test_it_still_publishes_a_course_that_is_ready(): void
     {
         $course = $this->unpublishedContent();
         $course->modules->each->update(['is_published' => true]);
@@ -73,7 +73,7 @@ class CoursePublishingGateTest extends TestCase
         app(CourseContentService::class)->syncCounters($course);
 
         $this->actingAs($this->admin)
-            ->patch(route('admin.courses.status', $course), ['status' => Course::STATUS_PUBLISHED])
+            ->patch(route('tutor.courses.status', $course), ['status' => Course::STATUS_PUBLISHED])
             ->assertSessionHasNoErrors();
 
         $this->assertSame(Course::STATUS_PUBLISHED, $course->refresh()->status);
@@ -84,7 +84,7 @@ class CoursePublishingGateTest extends TestCase
         $course = $this->unpublishedContent();
 
         $this->actingAs($this->admin)
-            ->patch(route('admin.courses.status', $course), ['status' => Course::STATUS_ARCHIVED]);
+            ->patch(route('tutor.courses.status', $course), ['status' => Course::STATUS_ARCHIVED]);
 
         $this->assertSame(Course::STATUS_ARCHIVED, $course->refresh()->status);
     }
@@ -98,7 +98,7 @@ class CoursePublishingGateTest extends TestCase
         $course->update(['status' => Course::STATUS_PUBLISHED]);
 
         $this->actingAs($this->admin)
-            ->patch(route('admin.courses.status', $course), ['status' => Course::STATUS_PUBLISHED])
+            ->patch(route('tutor.courses.status', $course), ['status' => Course::STATUS_PUBLISHED])
             ->assertSessionHasNoErrors();
 
         $this->assertSame(Course::STATUS_PUBLISHED, $course->refresh()->status);

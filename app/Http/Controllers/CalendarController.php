@@ -197,6 +197,10 @@ class CalendarController extends Controller
                 'url' => $event->join_url,
                 'course' => $event->course?->only(['id', 'title', 'slug']),
                 'editable' => true,
+                // The raw flag, so the edit form can round-trip it — `open`
+                // below folds in capacity and the clock, which it must not.
+                'registration_open' => $event->registration_open,
+                'capacity' => $event->capacity,
                 'registration' => [
                     'open' => $event->acceptsRegistrations(),
                     'registered' => (bool) ($event->viewer_registered ?? false),

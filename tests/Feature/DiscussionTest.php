@@ -27,7 +27,7 @@ class DiscussionTest extends TestCase
     {
         parent::setUp();
 
-        $this->instructor = User::factory()->instructor()->create();
+        $this->instructor = User::factory()->admin()->create();
         $this->course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
         $this->student = User::factory()->create();
 

@@ -120,7 +120,7 @@ class GamificationTest extends TestCase
 
     public function test_grading_an_assignment_awards_xp_to_the_student(): void
     {
-        $instructor = User::factory()->instructor()->create();
+        $instructor = User::factory()->admin()->create();
         $this->course->update(['instructor_id' => $instructor->id]);
 
         $assignment = Assignment::create([

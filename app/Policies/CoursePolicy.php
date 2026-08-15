@@ -12,7 +12,7 @@ class CoursePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['platform_admin', 'super_admin', 'instructor', 'course_manager']);
+        return $user->isAdmin();
     }
 
     /**
@@ -28,7 +28,7 @@ class CoursePolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['platform_admin', 'super_admin', 'instructor', 'course_manager']);
+        return $user->isAdmin();
     }
 
     /**
@@ -36,7 +36,7 @@ class CoursePolicy
      */
     public function update(User $user, Course $course): bool
     {
-        if ($user->hasAnyRole(['platform_admin', 'super_admin'])) {
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -48,7 +48,7 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course): bool
     {
-        if ($user->hasAnyRole(['platform_admin', 'super_admin'])) {
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -60,7 +60,7 @@ class CoursePolicy
      */
     public function restore(User $user, Course $course): bool
     {
-        return $user->hasAnyRole(['platform_admin', 'super_admin']);
+        return $user->isAdmin();
     }
 
     /**
@@ -68,6 +68,6 @@ class CoursePolicy
      */
     public function forceDelete(User $user, Course $course): bool
     {
-        return $user->hasAnyRole(['platform_admin', 'super_admin']);
+        return $user->isAdmin();
     }
 }

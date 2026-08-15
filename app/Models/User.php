@@ -149,12 +149,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
-        return $this->hasAnyRole([Role::PLATFORM_ADMIN, Role::SUPER_ADMIN]);
-    }
-
-    public function isInstructor(): bool
-    {
-        return $this->hasRole(Role::INSTRUCTOR);
+        return $this->hasRole(Role::ADMIN);
     }
 
     public function isStudent(): bool
@@ -163,22 +158,12 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Privileged roles are required to hold 2FA (Plan §7.1) — these are the
-     * accounts that can publish content, change roles, or issue refunds.
+     * Admins are required to hold 2FA (Plan §7.1) — they are the accounts that
+     * can publish content, change roles, or issue refunds.
      */
     public function requiresTwoFactor(): bool
     {
-        return $this->hasAnyRole([
-            Role::INSTRUCTOR,
-            Role::COURSE_MANAGER,
-            Role::PLATFORM_ADMIN,
-            Role::SUPER_ADMIN,
-        ]);
-    }
-
-    public function isSuperAdmin(): bool
-    {
-        return $this->hasRole(Role::SUPER_ADMIN);
+        return $this->isAdmin();
     }
 
     /**

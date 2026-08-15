@@ -105,7 +105,7 @@ export default function Approvals({ pending, counts, recentlyReviewed }: Props) 
                                 </div>
 
                                 <Link
-                                    href={route('admin.courses.show', course.id)}
+                                    href={route('tutor.courses.edit', course.id)}
                                     className="btn-secondary py-2"
                                 >
                                     <Eye className="w-4 h-4" />

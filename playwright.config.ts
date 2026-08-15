@@ -21,4 +21,13 @@ export default defineConfig({
         actionTimeout: 20_000,
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    // On CI there is no server running yet, so start one and wait for it. In
+    // development the server is already up, and `reuseExistingServer` keeps
+    // Playwright from fighting it for the port.
+    webServer: {
+        command: 'php artisan serve --host=127.0.0.1 --port=8000',
+        url: 'http://127.0.0.1:8000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+    },
 });

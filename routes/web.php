@@ -4,7 +4,6 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\BadgeManagementController;
 use App\Http\Controllers\Admin\ContentBlockController;
 use App\Http\Controllers\Admin\CourseApprovalController;
-use App\Http\Controllers\Admin\CourseManagementController;
 use App\Http\Controllers\Admin\EnrollmentManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
 use App\Http\Controllers\Admin\PostManagementController;
@@ -36,7 +35,6 @@ use App\Http\Controllers\Tutor\CourseBuilderController;
 use App\Http\Controllers\Tutor\LessonController;
 use App\Http\Controllers\Tutor\ModuleController;
 use App\Http\Controllers\Tutor\StudentController;
-use App\Http\Controllers\Tutor\TutorDashboardController;
 use App\Models\Certificate;
 use App\Services\ContentBlocks;
 use Illuminate\Support\Facades\Route;
@@ -184,10 +182,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     | Instructor
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:instructor,teaching_assistant,course_manager,platform_admin,super_admin')
+    Route::middleware('role:admin')
         ->prefix('instructor')
         ->group(function () {
-            Route::get('/grading', [GradingController::class, 'index'])->name('instructor.grading');
             Route::patch('/submissions/{submission}', [GradingController::class, 'grade'])
                 ->name('instructor.grade-submission');
             Route::patch('/quiz-attempts/{attempt}', [GradingController::class, 'gradeAttempt'])
@@ -218,7 +215,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | Admin Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
+Route::middleware(['auth', 'verified', 'role:admin'])
     ->prefix('admin')
     ->group(function () {
         Route::get('/', AdminDashboardController::class)->name('admin.dashboard');
@@ -237,16 +234,6 @@ Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
             ->name('admin.approvals.approve');
         Route::patch('/approvals/{course}/reject', [CourseApprovalController::class, 'reject'])
             ->name('admin.approvals.reject');
-
-        // Courses
-        Route::get('/courses', [CourseManagementController::class, 'index'])->name('admin.courses.index');
-        Route::get('/courses/create', [CourseManagementController::class, 'create'])->name('admin.courses.create');
-        Route::post('/courses', [CourseManagementController::class, 'store'])->name('admin.courses.store');
-        Route::get('/courses/{course}', [CourseManagementController::class, 'show'])->name('admin.courses.show');
-        Route::get('/courses/{course}/edit', [CourseManagementController::class, 'edit'])->name('admin.courses.edit');
-        Route::patch('/courses/{course}', [CourseManagementController::class, 'update'])->name('admin.courses.update');
-        Route::delete('/courses/{course}', [CourseManagementController::class, 'destroy'])->name('admin.courses.destroy');
-        Route::patch('/courses/{course}/status', [CourseManagementController::class, 'updateStatus'])->name('admin.courses.status');
 
         // Enrollments
         Route::get('/enrollments', [EnrollmentManagementController::class, 'index'])->name('admin.enrollments.index');
@@ -294,11 +281,9 @@ Route::middleware(['auth', 'verified', 'role:platform_admin,super_admin'])
 | Tutor Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'role:instructor,course_manager,platform_admin,super_admin'])
+Route::middleware(['auth', 'verified', 'role:admin'])
     ->prefix('tutor')
     ->group(function () {
-        Route::get('/', TutorDashboardController::class)->name('tutor.dashboard');
-
         // Courses
         Route::get('/courses', [CourseBuilderController::class, 'index'])->name('tutor.courses.index');
         Route::get('/courses/create', [CourseBuilderController::class, 'create'])->name('tutor.courses.create');

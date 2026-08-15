@@ -7,7 +7,6 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Module;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,13 +21,13 @@ class SecurityConsoleTest extends TestCase
     {
         parent::setUp();
 
-        $this->admin = User::factory()->role(Role::SUPER_ADMIN)->create();
+        $this->admin = User::factory()->admin()->create();
     }
 
     public function test_only_admins_can_open_the_console(): void
     {
         $this->actingAs(User::factory()->create())->get(route('admin.security.index'))->assertForbidden();
-        $this->actingAs(User::factory()->instructor()->create())->get(route('admin.security.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create())->get(route('admin.security.index'))->assertForbidden();
         $this->actingAs($this->admin)->get(route('admin.security.index'))->assertOk();
     }
 
