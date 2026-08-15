@@ -64,3 +64,54 @@ test.describe('student', () => {
         expect(response?.status()).toBe(403);
     });
 });
+
+test.describe('on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+    test('gets a tab bar and an off-canvas menu', async ({ page }) => {
+        await signIn(page);
+
+        const drawer = page.getByRole('complementary', { name: 'Main navigation' });
+        const tabBar = page.getByRole('navigation', { name: 'Primary' });
+
+        // The tab bar carries the four main destinations.
+        await expect(tabBar).toBeVisible();
+        for (const href of ['/dashboard', '/dashboard/courses', '/dashboard/calendar', '/dashboard/notifications']) {
+            await expect(tabBar.locator(`a[href="${href}"]`)).toBeVisible();
+        }
+
+        // The sidebar starts off-screen rather than covering the page.
+        await expect(drawer).not.toBeInViewport();
+
+        await page.getByLabel('Show menu').click();
+        await expect(drawer).toBeInViewport();
+
+        // Choosing a destination navigates and puts the menu away again.
+        await drawer.getByRole('link', { name: 'Certificates' }).click();
+        await expect(page).toHaveURL(/certificates/);
+        await expect(drawer).not.toBeInViewport();
+    });
+
+    test('never scrolls sideways', async ({ page }) => {
+        await signIn(page);
+
+        for (const path of ['/dashboard', '/dashboard/courses', '/dashboard/calendar', '/support']) {
+            await page.goto(path);
+            const overflow = await page.evaluate(
+                () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+            );
+
+            expect(overflow, `${path} overflows horizontally`).toBeLessThanOrEqual(1);
+        }
+    });
+});
+
+test.describe('on a desktop', () => {
+    test('has no tab bar, because the sidebar is always there', async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await signIn(page);
+
+        await expect(page.getByRole('complementary', { name: 'Main navigation' })).toBeInViewport();
+        await expect(page.getByRole('navigation', { name: 'Primary' })).not.toBeVisible();
+    });
+});

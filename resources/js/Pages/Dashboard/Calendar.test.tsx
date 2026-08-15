@@ -7,12 +7,9 @@ import { pageProps } from '@/tests/factories';
 
 const today = new Date();
 const iso = today.toISOString();
-const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
 const base = {
     ...pageProps,
-    month,
-    monthLabel: 'This month',
     rangeStart: today.toISOString().slice(0, 10),
     rangeEnd: today.toISOString().slice(0, 10),
     canManage: false,
@@ -43,7 +40,21 @@ const item = (registration?: Registration) => ({
     registration,
 });
 
+/**
+ * The grid shows events; the detail panel — RSVP included — only fills in once
+ * one is chosen. So each case opens the event first.
+ */
+async function selectEvent() {
+    await userEvent.click(screen.getByText('Robotics workshop'));
+}
+
 describe('Calendar registration', () => {
+    it('starts with nothing selected', () => {
+        render(<Calendar {...base} items={[item()]} />);
+
+        expect(screen.getByText(/select an event/i)).toBeInTheDocument();
+    });
+
     it('offers a register button when sign-ups are open', async () => {
         render(
             <Calendar
@@ -54,15 +65,17 @@ describe('Calendar registration', () => {
             />,
         );
 
+        await selectEvent();
+
         expect(screen.getByText(/3 going/)).toBeInTheDocument();
-        expect(screen.getByText(/7 of 10 left/)).toBeInTheDocument();
+        expect(screen.getByText(/7 spots left \(of 10\)/)).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: 'Register' }));
 
         expect(router.post).toHaveBeenCalledWith('/events/register/e-1', {}, expect.anything());
     });
 
-    it('shows a cancel path once you are going', () => {
+    it('shows a cancel path once you are going', async () => {
         render(
             <Calendar
                 {...base}
@@ -72,14 +85,18 @@ describe('Calendar registration', () => {
             />,
         );
 
+        await selectEvent();
+
         expect(screen.getByText(/You're going/)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
         // Unlimited capacity should not claim a number of spots.
-        expect(screen.queryByText(/left/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/spots left/)).not.toBeInTheDocument();
     });
 
-    it('hides registration controls for items that do not take sign-ups', () => {
+    it('hides registration controls for items that do not take sign-ups', async () => {
         render(<Calendar {...base} items={[item()]} />);
+
+        await selectEvent();
 
         expect(screen.queryByRole('button', { name: 'Register' })).not.toBeInTheDocument();
     });

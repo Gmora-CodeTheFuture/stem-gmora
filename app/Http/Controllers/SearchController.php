@@ -7,6 +7,7 @@ use App\Models\Discussion;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Services\ContentVersion;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
@@ -27,7 +28,7 @@ class SearchController extends Controller
 {
     private const PER_TYPE = 8;
 
-    public function index(Request $request): Response|\Illuminate\Http\JsonResponse
+    public function index(Request $request): Response|JsonResponse
     {
         $query = trim($request->string('q')->toString());
         $user = $request->user();
@@ -38,7 +39,7 @@ class SearchController extends Controller
                 'results' => ['courses' => [], 'lessons' => [], 'discussions' => []],
                 'total' => 0,
             ];
-            
+
             if ($request->wantsJson()) {
                 return response()->json($data);
             }

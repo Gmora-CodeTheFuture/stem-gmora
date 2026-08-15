@@ -21,13 +21,18 @@ const SIDEBAR_KEY = 'sidebar:open';
 export default function DashboardLayout({ header, children, noScroll = false }: DashboardLayoutProps) {
     const { auth, flash, notifications_count } = usePage<PageProps>().props;
 
-    // Collapsed state persists, so the sidebar stays how the user left it.
+    // Two separate ideas that used to share one flag. On a desktop the sidebar
+    // is expanded or collapsed to a rail, and that choice persists. On a phone
+    // there is no room for either, so it is a drawer that starts closed on
+    // every page — persisting it would greet mobile users with a full-screen
+    // menu over their content.
     const [sidebarOpen, setSidebarOpen] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem(SIDEBAR_KEY) !== 'false';
         }
         return true;
     });
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [isDark, setIsDark] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -42,6 +47,24 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     useEffect(() => {
         setIsDark(document.documentElement.classList.contains('dark'));
     }, []);
+
+    // `sidebarOpen` only means "collapsed to a rail" on a desktop. The drawer is
+    // always full width, so without this a user who collapsed the rail would
+    // find an icons-only menu with no labels on their phone.
+    const [isDesktop, setIsDesktop] = useState(true);
+
+    useEffect(() => {
+        const query = window.matchMedia('(min-width: 1024px)');
+        const sync = () => setIsDesktop(query.matches);
+
+        sync();
+        query.addEventListener('change', sync);
+
+        return () => query.removeEventListener('change', sync);
+    }, []);
+
+    /** Labels and section headings are visible unless the desktop rail is collapsed. */
+    const expanded = !isDesktop || sidebarOpen;
 
     useEffect(() => {
         if (searchOpen) searchRef.current?.focus();
@@ -73,6 +96,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             if (e.key === 'Escape') {
                 setSearchOpen(false);
                 setMenuOpen(false);
+                setMobileNavOpen(false);
             }
         };
 
@@ -80,6 +104,21 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
 
         return () => window.removeEventListener('keydown', onKey);
     }, []);
+
+    // Tapping a link in the drawer should take you there and get out of the way.
+    useEffect(() => router.on('navigate', () => setMobileNavOpen(false)), []);
+
+    // While the drawer is over the page, the page behind it must not scroll.
+    useEffect(() => {
+        if (!mobileNavOpen) return;
+
+        const previous = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previous;
+        };
+    }, [mobileNavOpen]);
 
     // Click outside to close menu
     useEffect(() => {
@@ -161,10 +200,10 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         <Link
             key={item.name}
             href={item.href}
-            title={!sidebarOpen ? item.name : undefined}
+            title={!expanded ? item.name : undefined}
             aria-current={isActive(item.href, item.exact) ? 'page' : undefined}
             className={`flex items-center relative py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                sidebarOpen ? 'mx-3 px-3 gap-3' : 'mx-3 justify-center'
+                expanded ? 'mx-3 px-3 gap-3' : 'mx-3 justify-center'
             } ${
                 isActive(item.href, item.exact)
                     ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-8 before:w-1 before:bg-primary-600 dark:before:bg-primary-500 before:rounded-r-full'
@@ -173,22 +212,22 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         >
             <item.icon
                 className={`shrink-0 transition-colors ${
-                    sidebarOpen ? 'w-5 h-5' : 'w-6 h-6'
+                    expanded ? 'w-5 h-5' : 'w-6 h-6'
                 } ${isActive(item.href, item.exact) ? 'text-primary-600 dark:text-primary-400' : 'text-surface-400 dark:text-surface-500 group-hover:text-surface-600 dark:group-hover:text-surface-300'}`}
                 strokeWidth={isActive(item.href, item.exact) ? 2.5 : 2}
             />
             
-            {sidebarOpen && (
+            {expanded && (
                 <span className="flex-1 truncate">{item.name}</span>
             )}
 
-            {item.badge !== undefined && item.badge > 0 && sidebarOpen && (
+            {item.badge !== undefined && item.badge > 0 && expanded && (
                 <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center">
                     {item.badge > 99 ? '99+' : item.badge}
                 </span>
             )}
             
-            {item.badge !== undefined && item.badge > 0 && !sidebarOpen && (
+            {item.badge !== undefined && item.badge > 0 && !expanded && (
                 <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-surface-900"></span>
             )}
         </Link>
@@ -198,21 +237,25 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         <div className={`bg-surface-50 dark:bg-surface-950 font-sans selection:bg-primary-200 dark:selection:bg-primary-900/40 text-surface-900 dark:text-surface-100 transition-colors duration-200 ${noScroll ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 z-40 h-full flex flex-col bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-[width,transform] duration-200 ease-in-out
-                    ${sidebarOpen ? 'w-[248px]' : 'w-[72px] -translate-x-full lg:translate-x-0'}`}
+                className={`fixed top-0 left-0 z-50 h-full flex flex-col bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-[width,transform] duration-200 ease-in-out
+                    w-[264px] ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full'}
+                    lg:translate-x-0 ${sidebarOpen ? 'lg:w-[248px]' : 'lg:w-[72px]'}`}
+                aria-label="Main navigation"
             >
                 {/* Brand / Toggle Header */}
-                <div className={`h-[88px] flex items-center shrink-0 ${sidebarOpen ? 'px-3 gap-2' : 'justify-center'}`}>
+                <div className={`h-[88px] flex items-center shrink-0 ${expanded ? 'px-3 gap-2' : 'justify-center'}`}>
+                    {/* On a desktop this collapses the rail; in the mobile drawer
+                        the same corner is where a close button belongs. */}
                     <button
-                        onClick={toggleSidebar}
+                        onClick={() => (isDesktop ? toggleSidebar() : setMobileNavOpen(false))}
                         className="btn-icon shrink-0 relative z-10"
-                        aria-label={sidebarOpen ? 'Collapse menu' : 'Expand menu'}
-                        aria-expanded={sidebarOpen}
+                        aria-label={isDesktop ? (expanded ? 'Collapse menu' : 'Expand menu') : 'Close menu'}
+                        aria-expanded={isDesktop ? sidebarOpen : mobileNavOpen}
                     >
-                        <Menu className="w-5 h-5" />
+                        {isDesktop ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
                     </button>
 
-                    {sidebarOpen && (
+                    {expanded && (
                         <Link
                             href="/dashboard"
                             className="flex-1 flex items-center justify-center -ml-9 pointer-events-auto overflow-hidden whitespace-nowrap fade-in"
@@ -229,8 +272,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                         <>
                             <div className="space-y-1">{navigation.map(navLink)}</div>
 
-                            <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
-                                {sidebarOpen ? (
+                            <div className={`pt-6 pb-2 ${expanded ? 'px-6' : 'px-0 text-center'}`}>
+                                {expanded ? (
                                     <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Your Work</p>
                                 ) : (
                                     <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
@@ -244,8 +287,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     {/* Admin section */}
                     {isAdmin && adminNav.length > 0 && (
                         <>
-                            <div className={`pt-6 pb-2 ${sidebarOpen ? 'px-6' : 'px-0 text-center'}`}>
-                                {sidebarOpen ? (
+                            <div className={`pt-6 pb-2 ${expanded ? 'px-6' : 'px-0 text-center'}`}>
+                                {expanded ? (
                                     <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Administration</p>
                                 ) : (
                                     <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
@@ -260,21 +303,21 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     <Link
                         href={route('courses.index')}
                         className={`flex items-center py-2.5 rounded-xl text-sm font-medium text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors ${
-                            sidebarOpen ? 'px-3 gap-3' : 'justify-center'
+                            expanded ? 'px-3 gap-3' : 'justify-center'
                         }`}
-                        title={!sidebarOpen ? 'Browse catalog' : undefined}
+                        title={!expanded ? 'Browse catalog' : undefined}
                     >
                         <BookOpen className="w-[18px] h-[18px] shrink-0" />
-                        {sidebarOpen && <span className="whitespace-nowrap">Browse catalog</span>}
+                        {expanded && <span className="whitespace-nowrap">Browse catalog</span>}
                     </Link>
                 </div>
             </aside>
 
-            {/* Mobile scrim */}
-            {sidebarOpen && (
+            {/* Drawer scrim — mobile only; the desktop rail never covers content. */}
+            {mobileNavOpen && (
                 <div
-                    className="fixed inset-0 z-30 bg-black/40 lg:hidden"
-                    onClick={toggleSidebar}
+                    className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+                    onClick={() => setMobileNavOpen(false)}
                     aria-hidden
                 />
             )}
@@ -283,19 +326,23 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             <div className={`transition-[margin] duration-200 ease-in-out ${sidebarOpen ? 'lg:ml-[248px]' : 'ml-0 lg:ml-[72px]'} ${noScroll ? 'h-screen overflow-hidden flex flex-col' : 'flex-1'}`}>
                 
                 {/* ── Top Bar (Mobile menu toggle + Topic + Island) ───────── */}
-                <div className="fixed top-0 right-0 z-30 h-[72px] flex items-center justify-between px-4 sm:px-6 lg:px-10 pointer-events-none transition-all duration-200" style={{ left: sidebarOpen ? '248px' : '72px' }}>
+                <div
+                    className={`fixed top-0 right-0 left-0 z-30 h-[72px] flex items-center justify-between px-4 sm:px-6 lg:px-10 pointer-events-none transition-all duration-200 ${
+                        sidebarOpen ? 'lg:left-[248px]' : 'lg:left-[72px]'
+                    }`}
+                >
                     
                     <div className="pointer-events-auto flex items-center gap-4 min-w-0 pr-4">
-                        {/* Mobile Hamburger */}
-                        {!sidebarOpen && (
-                            <button
-                                onClick={toggleSidebar}
-                                className="btn-icon lg:hidden shrink-0"
-                                aria-label="Show menu"
-                            >
-                                <Menu className="w-5 h-5" />
-                            </button>
-                        )}
+                        {/* Opens the drawer. Always present on mobile, since the
+                            sidebar is off-canvas there whatever the rail state. */}
+                        <button
+                            onClick={() => setMobileNavOpen(true)}
+                            className="btn-icon lg:hidden shrink-0 bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800"
+                            aria-label="Show menu"
+                            aria-expanded={mobileNavOpen}
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
                         
                         {/* Page Topic / Header */}
                         {header && (
@@ -469,7 +516,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 </div>
 
                 {/* ── Page Content ────────────────────────────────── */}
-                <div className={`max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-10 pt-[88px] overflow-x-hidden ${noScroll ? 'flex-1 flex flex-col min-h-0 pb-4' : 'pb-16'}`}>
+                {/* The extra bottom padding on mobile clears the tab bar. */}
+                <div className={`max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-10 pt-[88px] overflow-x-hidden ${noScroll ? 'flex-1 flex flex-col min-h-0 pb-4' : 'pb-28 lg:pb-16'}`}>
 
                     {message && !dismissed && (
                         <div
@@ -494,6 +542,46 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     {children}
                 </div>
             </div>
+
+            {/* ── Mobile tab bar ──────────────────────────────────
+                The four places people move between constantly. Everything else
+                stays in the drawer — a tab bar stops being useful the moment it
+                becomes a second menu. */}
+            <nav
+                className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-surface-900/95 backdrop-blur border-t border-surface-200 dark:border-surface-800 pb-[env(safe-area-inset-bottom)]"
+                aria-label="Primary"
+            >
+                <div className="flex items-stretch">
+                    {navigation.map((item) => {
+                        const active = isActive(item.href, item.exact);
+
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                aria-current={active ? 'page' : undefined}
+                                className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
+                                    active
+                                        ? 'text-primary-600 dark:text-primary-400'
+                                        : 'text-surface-500 dark:text-surface-400'
+                                }`}
+                            >
+                                <span className="relative">
+                                    <item.icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
+
+                                    {item.badge !== undefined && item.badge > 0 && (
+                                        <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1 min-w-[16px] h-4 rounded-full flex items-center justify-center">
+                                            {item.badge > 9 ? '9+' : item.badge}
+                                        </span>
+                                    )}
+                                </span>
+
+                                {item.name}
+                            </Link>
+                        );
+                    })}
+                </div>
+            </nav>
         </div>
     );
 }
