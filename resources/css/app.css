@@ -217,3 +217,98 @@
         @apply rounded-2xl;
     }
 }
+
+/*
+ * FullCalendar ships its own greys, borders and button chrome, which reads as a
+ * third-party widget dropped into the page. This restyles it through the same
+ * tokens every other surface uses, so the calendar matches the rest of the app
+ * in both themes.
+ */
+.fc-gmora {
+    --fc-border-color: var(--color-surface-200);
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: var(--color-surface-50);
+    --fc-today-bg-color: var(--color-primary-50);
+    --fc-event-border-color: transparent;
+}
+
+.dark .fc-gmora.fc-gmora {
+    --fc-border-color: var(--color-surface-800);
+    --fc-neutral-bg-color: var(--color-surface-800);
+    --fc-today-bg-color: color-mix(in oklab, var(--color-primary-500) 12%, transparent);
+}
+
+/* Toolbar: the app uses one primary action and quiet secondaries. */
+.fc-gmora.fc-gmora.fc-gmora .fc-toolbar-title {
+    @apply text-base font-semibold text-surface-900 dark:text-white;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-button {
+    @apply bg-transparent border border-surface-200 dark:border-surface-700
+           text-surface-600 dark:text-surface-300 font-medium text-sm
+           rounded-lg px-3 py-1.5 shadow-none capitalize transition-colors;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-button:hover {
+    @apply bg-surface-100 dark:bg-surface-800 text-surface-900 dark:text-white
+           border-surface-300 dark:border-surface-600;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-button:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-1 dark:ring-offset-surface-900;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-button-primary:not(:disabled).fc-button-active,
+.fc-gmora.fc-gmora.fc-gmora .fc-button-primary:not(:disabled):active {
+    @apply bg-primary-600 border-primary-600 text-white;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-button-primary:disabled {
+    @apply bg-transparent border-surface-200 dark:border-surface-800 text-surface-300 dark:text-surface-600 opacity-100;
+}
+
+/* Grid */
+.fc-gmora.fc-gmora.fc-gmora .fc-col-header-cell {
+    @apply bg-transparent py-2;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-col-header-cell-cushion {
+    @apply text-xs font-semibold uppercase tracking-wider text-surface-500 no-underline;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-daygrid-day-number {
+    @apply text-sm text-surface-600 dark:text-surface-300 no-underline px-2 py-1;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-day-today .fc-daygrid-day-number {
+    @apply font-bold text-primary-700 dark:text-primary-300;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-day-other .fc-daygrid-day-number {
+    @apply text-surface-300 dark:text-surface-600;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-scrollgrid {
+    @apply rounded-2xl overflow-hidden;
+}
+
+/* Events read as the app's badges rather than blue blocks. */
+.fc-gmora.fc-gmora.fc-gmora .fc-event {
+    @apply cursor-pointer border-0 bg-transparent shadow-none;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-daygrid-event {
+    @apply px-1.5 py-0.5 rounded-lg;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-more-link {
+    @apply text-xs font-medium text-primary-600 dark:text-primary-400 no-underline;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-popover {
+    @apply card shadow-lift;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-popover-header {
+    @apply bg-transparent text-sm font-semibold text-surface-900 dark:text-white px-4 py-3;
+}

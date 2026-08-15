@@ -33,11 +33,17 @@ class SearchController extends Controller
         $user = $request->user();
 
         if (mb_strlen($query) < 2) {
-            return Inertia::render('Dashboard/Search', [
+            $data = [
                 'query' => $query,
                 'results' => ['courses' => [], 'lessons' => [], 'discussions' => []],
                 'total' => 0,
-            ]);
+            ];
+            
+            if ($request->wantsJson()) {
+                return response()->json($data);
+            }
+
+            return Inertia::render('Dashboard/Search', $data);
         }
 
         $key = 'search:'.$user->id.':'.ContentVersion::current().':'.md5(mb_strtolower($query));
@@ -55,11 +61,17 @@ class SearchController extends Controller
             ];
         });
 
-        return Inertia::render('Dashboard/Search', [
+        $data = [
             'query' => $query,
             'results' => $results,
             'total' => count($results['courses']) + count($results['lessons']) + count($results['discussions']),
-        ]);
+        ];
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Dashboard/Search', $data);
     }
 
     /** The published catalog is searchable by everyone. */

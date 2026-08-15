@@ -104,11 +104,15 @@ export default function Calendar({
         <DashboardLayout header="Calendar">
             <Head title="Calendar — Gmora STEM" />
 
+            {/* The layout already renders the page title; every other page
+                follows it with a line of context and its primary action. */}
             <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-xl font-bold text-surface-900 dark:text-white flex-1">Calendar</h2>
+                <p className="text-sm text-surface-500">
+                    Classes, workshops and deadlines from the courses you're enrolled in.
+                </p>
 
                 {canManage && (
-                    <button onClick={() => setComposerOpen(true)} className="btn-primary">
+                    <button onClick={() => setComposerOpen(true)} className="btn-primary ml-auto">
                         <Plus className="w-4 h-4" />
                         Add event
                     </button>
@@ -118,7 +122,7 @@ export default function Calendar({
             <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
                 {/* ── FullCalendar ─────────────────────────────── */}
                 <div className="card p-4 overflow-x-auto">
-                    <div className="min-w-[700px] fc-theme-standard">
+                    <div className="min-w-[700px] fc-gmora">
                         <FullCalendar
                             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                             initialView="dayGridMonth"

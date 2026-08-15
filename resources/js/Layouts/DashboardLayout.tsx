@@ -1,9 +1,11 @@
+import axios from 'axios';
 import { Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, ReactNode, useEffect, useRef, useState } from 'react';
 import {
     Award, Bell, BookOpen, Calendar, ClipboardCheck, GraduationCap, Home,
     LifeBuoy, LogOut, Menu, Moon, Search, Settings, Sun, X,
     LayoutDashboard, Users, CreditCard, Trophy, Wrench, PenSquare, UserCheck, ShieldCheck, BarChart3,
+    PlayCircle, MessageSquare, CheckCircle2
 } from 'lucide-react';
 import { PageProps } from '@/types';
 
@@ -31,6 +33,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     const [menuOpen, setMenuOpen] = useState(false);
     const [dismissed, setDismissed] = useState(false);
     const [query, setQuery] = useState('');
+    const [results, setResults] = useState<any>(null);
+    const [isSearching, setIsSearching] = useState(false);
 
     const searchRef = useRef<HTMLInputElement | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -42,6 +46,26 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     useEffect(() => {
         if (searchOpen) searchRef.current?.focus();
     }, [searchOpen]);
+
+    useEffect(() => {
+        if (query.trim().length < 2) {
+            setResults(null);
+            return;
+        }
+
+        setIsSearching(true);
+        const timer = setTimeout(() => {
+            axios.get(route('dashboard.search'), { params: { q: query } })
+                .then(res => {
+                    setResults(res.data);
+                })
+                .finally(() => {
+                    setIsSearching(false);
+                });
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [query]);
 
     // Escape closes whichever overlay is open.
     useEffect(() => {
@@ -85,8 +109,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
 
     const search: FormEventHandler = (e) => {
         e.preventDefault();
-        setSearchOpen(false);
-        router.get(route('dashboard.search'), { q: query });
+        // The search is now handled inline via dropdown.
     };
 
     const isAdmin = auth?.user?.role?.name === 'admin';
@@ -302,9 +325,96 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                                     placeholder="Search courses, lessons, discussions…"
                                     className="flex-1 bg-transparent border-0 text-sm py-1.5 px-2 focus:ring-0 min-w-0 dark:text-white placeholder:text-surface-400"
                                 />
-                                <button type="button" onClick={() => setSearchOpen(false)} className="p-1 mr-1 text-surface-400 hover:text-surface-600 shrink-0">
+                                <button type="button" onClick={() => { setSearchOpen(false); setQuery(''); }} className="p-1 mr-1 text-surface-400 hover:text-surface-600 shrink-0">
                                     <X className="w-4 h-4" />
                                 </button>
+                                
+                                {searchOpen && query.trim().length >= 2 && (
+                                    <div className="absolute top-full right-0 mt-3 w-full sm:w-[400px] max-h-[80vh] overflow-y-auto bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 shadow-xl rounded-2xl z-50 p-2 fade-in">
+                                        {isSearching ? (
+                                            <div className="p-4 text-center text-surface-500 text-sm">Searching...</div>
+                                        ) : results?.total === 0 ? (
+                                            <div className="p-4 text-center text-surface-500 text-sm">No results found for "{query}"</div>
+                                        ) : results ? (
+                                            <div className="space-y-4 p-2">
+                                                {/* Courses */}
+                                                {results.results?.courses?.length > 0 && (
+                                                    <div>
+                                                        <h3 className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-2 px-2">Courses</h3>
+                                                        <div className="space-y-1">
+                                                            {results.results.courses.map((course: any) => (
+                                                                <Link 
+                                                                    key={course.id} 
+                                                                    href={course.is_enrolled ? route('learn.show', course.slug) : route('courses.show', course.slug)}
+                                                                    onClick={() => setSearchOpen(false)}
+                                                                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors group"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
+                                                                        <BookOpen className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                        <div className="text-sm font-medium text-surface-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{course.title}</div>
+                                                                        <div className="text-xs text-surface-500 truncate">{course.category}</div>
+                                                                    </div>
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Lessons */}
+                                                {results.results?.lessons?.length > 0 && (
+                                                    <div>
+                                                        <h3 className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-2 px-2">Lessons</h3>
+                                                        <div className="space-y-1">
+                                                            {results.results.lessons.map((lesson: any) => (
+                                                                <Link 
+                                                                    key={lesson.id} 
+                                                                    href={route('learn.lesson', [lesson.course_slug, lesson.id])}
+                                                                    onClick={() => setSearchOpen(false)}
+                                                                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors group"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center shrink-0">
+                                                                        <PlayCircle className="w-4 h-4 text-surface-500" />
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                        <div className="text-sm font-medium text-surface-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{lesson.title}</div>
+                                                                        <div className="text-xs text-surface-500 truncate">{lesson.course_title}</div>
+                                                                    </div>
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Discussions */}
+                                                {results.results?.discussions?.length > 0 && (
+                                                    <div>
+                                                        <h3 className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-2 px-2">Discussions</h3>
+                                                        <div className="space-y-1">
+                                                            {results.results.discussions.map((thread: any) => (
+                                                                <Link 
+                                                                    key={thread.id} 
+                                                                    href={route('discussions.show', thread.id)}
+                                                                    onClick={() => setSearchOpen(false)}
+                                                                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors group"
+                                                                >
+                                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${thread.is_solved ? 'bg-accent-50 dark:bg-accent-950 text-accent-600 dark:text-accent-400' : 'bg-surface-100 dark:bg-surface-800 text-surface-500'}`}>
+                                                                        {thread.is_solved ? <CheckCircle2 className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0 text-left">
+                                                                        <div className="text-sm font-medium text-surface-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{thread.title}</div>
+                                                                        <div className="text-xs text-surface-500 truncate">{thread.course_title}</div>
+                                                                    </div>
+                                                                </Link>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                )}
                             </form>
                         )}
 

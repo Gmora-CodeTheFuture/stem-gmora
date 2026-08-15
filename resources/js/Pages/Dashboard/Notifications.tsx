@@ -104,13 +104,28 @@ export default function Notifications({ notifications, unreadCount }: Props) {
                                     </span>
                                 </span>
 
-                                <span className="text-xs text-surface-400 shrink-0">
-                                    {relative(notification.created_at)}
-                                </span>
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                    <span className="text-xs text-surface-400">
+                                        {relative(notification.created_at)}
+                                    </span>
+                                    {!notification.read_at && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                open(notification);
+                                            }}
+                                            className="text-surface-400 hover:text-primary-600 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                                            title="Mark as read"
+                                        >
+                                            <CheckCheck className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
                             </>
                         );
 
-                        const className = 'flex items-start gap-4 p-5 hover:bg-surface-50 dark:hover:bg-surface-800/60 transition-colors w-full text-left';
+                        const className = 'group flex items-start gap-4 p-5 hover:bg-surface-50 dark:hover:bg-surface-800/60 transition-colors w-full text-left';
 
                         return notification.data.url ? (
                             <Link
