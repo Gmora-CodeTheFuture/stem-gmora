@@ -40,7 +40,6 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
         language: course.language,
         price: course.price,
         currency: course.currency,
-        thumbnail_url: course.thumbnail_url || '',
     });
 
     const submitDetails: FormEventHandler = (e) => {
@@ -127,6 +126,18 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
             { title: editingModule.title, description: editingModule.description },
             { preserveScroll: true, onSuccess: () => setEditingModule(null) },
         );
+    };
+
+    const uploadCover = (file: File) => {
+        const formData = new FormData();
+        formData.append('image', file);
+        router.post(`/tutor/courses/${course.id}/image`, formData, { forceFormData: true, preserveScroll: true });
+    };
+
+    const uploadPdf = (lessonId: string, file: File) => {
+        const formData = new FormData();
+        formData.append('pdf_file', file);
+        router.post(`/tutor/lessons/${lessonId}/pdf`, formData, { forceFormData: true, preserveScroll: true });
     };
 
     const uploadPresentation = (lessonId: string, file?: File) => {
@@ -367,8 +378,39 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="thumbnail_url" value="Thumbnail URL" />
-                                <TextInput id="thumbnail_url" className="mt-1 block w-full" value={data.thumbnail_url} onChange={(e) => setData('thumbnail_url', e.target.value)} />
+                                <InputLabel value="Cover image" />
+                                <div className="mt-2 flex items-start gap-4 flex-wrap">
+                                    {course.thumbnail_url ? (
+                                        <img
+                                            src={course.thumbnail_url}
+                                            alt=""
+                                            className="w-40 h-24 object-cover rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-100 dark:bg-surface-800"
+                                        />
+                                    ) : (
+                                        <div className="w-40 h-24 rounded-lg border border-dashed border-surface-300 dark:border-surface-700 flex items-center justify-center text-xs text-surface-400">
+                                            No cover yet
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="btn-secondary text-sm cursor-pointer inline-flex">
+                                            <Upload className="w-4 h-4" />
+                                            {course.thumbnail_url ? 'Replace image' : 'Upload image'}
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                className="hidden"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) uploadCover(file);
+                                                }}
+                                            />
+                                        </label>
+                                        <p className="text-xs text-surface-500 mt-2">
+                                            JPEG, PNG or WebP, up to 4 MB. Shown on the course card and detail page.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
@@ -456,10 +498,10 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-4">
-                                                {editingLesson.type !== 'html' && (
+                                                {editingLesson.type === 'youtube' && (
                                                     <div>
                                                         <InputLabel value={editingLesson.type === 'youtube' ? 'YouTube Video ID' : 'PDF URL'} />
-                                                        <TextInput className="mt-1 block w-full" value={editingLesson.content_ref} onChange={(e) => setEditingLesson({ ...editingLesson, content_ref: e.target.value })} placeholder="Leave blank to keep the current one" />
+                                                        <TextInput className="mt-1 block w-full" value={editingLesson.content_ref} onChange={(e) => setEditingLesson({ ...editingLesson, content_ref: e.target.value })} placeholder={editingLesson.type === 'youtube' ? 'Paste the YouTube link' : 'Leave blank to keep the current one'} />
                                                     </div>
                                                 )}
                                                 <div>
@@ -468,6 +510,52 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                                     <p className="text-xs text-surface-500 mt-1">Required before the course can be published.</p>
                                                 </div>
                                             </div>
+
+                                            {editingLesson.type === 'pdf' && (
+                                                <div className="p-3 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">
+                                                    <InputLabel value="PDF document" />
+                                                    <p className="text-xs text-surface-500 mt-1 mb-2">
+                                                        {lesson.has_pdf ? 'A document is attached. Uploading replaces it.' : 'No document attached yet.'}
+                                                    </p>
+                                                    <label className="btn-secondary text-sm cursor-pointer inline-flex">
+                                                        <Upload className="w-4 h-4" />
+                                                        {lesson.has_pdf ? 'Replace PDF' : 'Upload PDF'}
+                                                        <input
+                                                            type="file"
+                                                            accept="application/pdf,.pdf"
+                                                            className="hidden"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) uploadPdf(lesson.id, file);
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+                                            )}
+
+                                            {editingLesson.type === 'html' && (
+                                                <div className="p-3 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">
+                                                    <InputLabel value="HTML presentation" />
+                                                    <p className="text-xs text-surface-500 mt-1 mb-2">
+                                                        {lesson.has_presentation
+                                                            ? 'A presentation is attached. Uploading replaces it.'
+                                                            : 'Upload a .zip containing index.html and its assets.'}
+                                                    </p>
+                                                    <label className="btn-secondary text-sm cursor-pointer inline-flex">
+                                                        <Upload className="w-4 h-4" />
+                                                        {lesson.has_presentation ? 'Replace .zip' : 'Upload .zip'}
+                                                        <input
+                                                            type="file"
+                                                            accept=".zip"
+                                                            className="hidden"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) uploadPresentation(lesson.id, file);
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+                                            )}
 
                                             <div className="flex items-center justify-between pt-2">
                                                 <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400">
@@ -564,7 +652,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                             {lessonData.type !== 'html' && (
                                             <div>
                                                 <InputLabel value={lessonData.type === 'youtube' ? 'YouTube Video ID' : 'PDF URL'} />
-                                                <TextInput className="mt-1 block w-full" value={lessonData.content_ref} onChange={(e) => setLessonData({ ...lessonData, content_ref: e.target.value })} placeholder={lessonData.type === 'youtube' ? 'e.g. dQw4w9WgXcQ' : 'https://...'} />
+                                                <TextInput className="mt-1 block w-full" value={lessonData.content_ref} onChange={(e) => setLessonData({ ...lessonData, content_ref: e.target.value })} placeholder={lessonData.type === 'youtube' ? 'Paste the YouTube link' : 'https://...'} />
                                             </div>
                                             )}
                                             <div>

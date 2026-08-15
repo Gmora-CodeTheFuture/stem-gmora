@@ -83,6 +83,7 @@ export interface Lesson {
     /** Only the course builder receives this, so the author can edit it. */
     content_ref?: string | null;
     has_presentation?: boolean;
+    has_pdf?: boolean;
     quiz?: { id: string; title: string } | null;
     progress?: Pick<Progress, 'status' | 'watch_percentage'> | null;
 }

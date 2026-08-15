@@ -152,6 +152,8 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             <QuizPanel lesson={currentLesson} />
                         ) : currentLesson.type === 'html' ? (
                             <PresentationPanel lesson={currentLesson} />
+                        ) : currentLesson.type === 'pdf' ? (
+                            <DocumentPanel lesson={currentLesson} />
                         ) : (
                             <PlaceholderPanel lesson={currentLesson} />
                         )}
@@ -379,6 +381,45 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
                     The presentation hasn't been uploaded yet.
                 </p>
             )}
+        </div>
+    );
+}
+
+function DocumentPanel({ lesson }: { lesson: Lesson }) {
+    if (!lesson.has_pdf) {
+        return (
+            <div className="card p-8 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mx-auto mb-4">
+                    <FileText className="w-7 h-7 text-primary-500" />
+                </div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{lesson.title}</h2>
+                <p className="text-surface-500 mt-2">The document for this lesson hasn't been uploaded yet.</p>
+            </div>
+        );
+    }
+
+    const src = route('lesson.pdf', lesson.id);
+
+    return (
+        <div className="card overflow-hidden h-full flex flex-col">
+            {/* The browser's own viewer handles paging, zoom and search. */}
+            <object data={src} type="application/pdf" className="w-full flex-1 min-h-[28rem]">
+                <div className="p-8 text-center">
+                    <p className="text-surface-500">
+                        Your browser can't display PDFs inline.
+                    </p>
+                    <a href={src} target="_blank" rel="noopener noreferrer" className="btn-primary mt-4">
+                        Open the document
+                    </a>
+                </div>
+            </object>
+
+            <div className="p-3 border-t border-surface-200 dark:border-surface-800 flex justify-end">
+                <a href={src} target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm">
+                    <FileText className="w-4 h-4" />
+                    Open in a new tab
+                </a>
+            </div>
         </div>
     );
 }

@@ -4,7 +4,15 @@ import { PropsWithChildren, useState } from 'react';
 import { Menu, X, Search } from 'lucide-react';
 import { PageProps } from '@/types';
 
-export default function MarketingLayout({ children }: PropsWithChildren) {
+/**
+ * The public shell. The menubar belongs to the homepage only — every other
+ * page in the product navigates by the sidebar, and a signed-in user should
+ * never meet a second navigation.
+ */
+export default function MarketingLayout({
+    children,
+    nav = false,
+}: PropsWithChildren<{ nav?: boolean }>) {
     const { auth } = usePage<PageProps>().props;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -12,10 +20,10 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
     // pointing at routes that were never built, so the main navigation of the
     // public site served three 404s.
     const navLinks = [
+        { name: 'What is STEM', href: '/#stem' },
+        { name: 'Our vision', href: '/#vision' },
         { name: 'Courses', href: '/courses' },
-        { name: 'Pricing', href: '/pricing' },
         { name: 'Blog', href: '/blog' },
-        { name: 'About', href: '/about' },
     ];
 
     return (
@@ -30,7 +38,7 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
                             <span className="text-2xl font-bold tracking-tighter text-[#1E3A8A]">gmora</span>
                         </Link>
                         
-                        <div className="hidden lg:flex items-center h-full">
+                        <div className={`items-center h-full ${nav ? 'hidden lg:flex' : 'hidden'}`}>
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.name}
@@ -45,7 +53,7 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
 
                     {/* Right: Search and Auth */}
                     <div className="hidden md:flex items-center gap-4">
-                        <div className="relative w-64">
+                        <div className={`relative w-64 ${nav ? '' : 'hidden'}`}>
                             <Search className="w-4 h-4 text-surface-500 absolute left-3 top-1/2 -translate-y-1/2" />
                             <input 
                                 type="text"
@@ -79,7 +87,8 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="lg:hidden p-2 rounded-lg text-surface-600"
+                        aria-label="Menu"
+                        className={`p-2 rounded-lg text-surface-600 ${nav ? 'lg:hidden' : 'hidden'}`}
                     >
                         {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
@@ -87,7 +96,7 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
 
                 {/* Mobile Menu */}
                 <AnimatePresence>
-                    {mobileMenuOpen && (
+                    {nav && mobileMenuOpen && (
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
@@ -157,15 +166,15 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
                         <h4 className="font-bold mb-4">Platform</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
                             <li><Link href="/courses" className="hover:text-white">Courses</Link></li>
-                            <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
+                            <li><Link href="/#stem" className="hover:text-white">What is STEM</Link></li>
                             <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-bold mb-4">Company</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="/about" className="hover:text-white">About</Link></li>
-                            <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+                            <li><Link href="/#vision" className="hover:text-white">Our vision</Link></li>
+                            <li><a href="mailto:hello@gmorastem.com" className="hover:text-white">Contact</a></li>
                         </ul>
                     </div>
                     <div>

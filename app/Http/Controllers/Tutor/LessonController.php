@@ -7,9 +7,11 @@ use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Module;
 use App\Services\CourseContentService;
+use App\Services\YouTubeVideoId;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 
 class LessonController extends Controller
 {
@@ -28,6 +30,10 @@ class LessonController extends Controller
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
             'is_free_preview' => ['boolean'],
         ]);
+
+        if ($error = $this->normaliseVideo($validated)) {
+            return Redirect::back()->withErrors(['content_ref' => $error]);
+        }
 
         $maxOrder = $module->lessons()->max('order_index') ?? 0;
 
@@ -57,6 +63,10 @@ class LessonController extends Controller
             'is_free_preview' => ['boolean'],
             'is_published' => ['boolean'],
         ]);
+
+        if ($error = $this->normaliseVideo($validated)) {
+            return Redirect::back()->withErrors(['content_ref' => $error]);
+        }
 
         // An empty `content_ref` means "unchanged", never "erase it". The edit
         // form submits an empty string whenever the field was not touched, and
@@ -108,6 +118,67 @@ class LessonController extends Controller
         }
 
         return Redirect::back()->with('success', 'Lessons reordered.');
+    }
+
+    /**
+     * Authors paste the YouTube share link, so accept one and keep the id.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return string|null A validation message when the input is unusable.
+     */
+    private function normaliseVideo(array &$validated): ?string
+    {
+        if (($validated['type'] ?? null) !== Lesson::TYPE_YOUTUBE) {
+            return null;
+        }
+
+        $given = trim((string) ($validated['content_ref'] ?? ''));
+
+        if ($given === '') {
+            return null;
+        }
+
+        $id = YouTubeVideoId::fromInput($given);
+
+        if ($id === null) {
+            return 'That does not look like a YouTube video. Paste the share link or the 11-character video id.';
+        }
+
+        $validated['content_ref'] = $id;
+
+        return null;
+    }
+
+    /**
+     * Attach a PDF to a PDF lesson.
+     *
+     * Stored on the private disk and served back through an enrollment-gated
+     * route, so the document is no more reachable than the course itself.
+     */
+    public function uploadPdf(Request $request, Lesson $lesson): RedirectResponse
+    {
+        $course = $lesson->module->course;
+        $this->authorizeTutor($request, $course);
+
+        $request->validate([
+            'pdf_file' => ['required', 'file', 'mimes:pdf', 'max:51200'], // 50 MB
+        ]);
+
+        $previous = $lesson->getRawOriginal('content_ref');
+
+        $path = $request->file('pdf_file')->store("lesson-pdfs/{$lesson->id}", 'private');
+
+        $lesson->forceFill([
+            'type' => Lesson::TYPE_PDF,
+            'content_ref' => $path,
+        ])->save();
+
+        // Replacing a document should not leave the old one on disk.
+        if ($previous && $previous !== $path && Storage::disk('private')->exists($previous)) {
+            Storage::disk('private')->delete($previous);
+        }
+
+        return Redirect::back()->with('success', 'Document uploaded.');
     }
 
     private function authorizeTutor(Request $request, Course $course): void

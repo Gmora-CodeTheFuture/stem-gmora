@@ -23,6 +23,7 @@ use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\Instructor\GradingController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LearningController;
+use App\Http\Controllers\LessonFileController;
 use App\Http\Controllers\MyCoursesController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PresentationController;
@@ -36,7 +37,10 @@ use App\Http\Controllers\Tutor\LessonController;
 use App\Http\Controllers\Tutor\ModuleController;
 use App\Http\Controllers\Tutor\StudentController;
 use App\Models\Certificate;
+use App\Models\Course;
+use App\Models\Enrollment;
 use App\Services\ContentBlocks;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -45,33 +49,30 @@ use Inertia\Inertia;
 | Marketing (Public) Routes
 |--------------------------------------------------------------------------
 */
-// Signed-in users go straight to work; visitors get the marketing site, which
-// is what every public link (About, Pricing, Contact, course pages) hangs off.
+// Signed-in users go straight to work. The homepage is the only page carrying
+// a menubar; everywhere else navigates by the sidebar.
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
     }
 
-    return Inertia::render('Welcome', ['content' => ContentBlocks::forPage('home')]);
+    return Inertia::render('Welcome', [
+        'content' => ContentBlocks::forPage('home'),
+        // Counted, not claimed — the homepage used to assert 2,500 students.
+        'figures' => Cache::remember('home:figures', now()->addHour(), fn () => [
+            'courses' => Course::published()->count(),
+            'lessons' => (int) Course::published()->sum('total_lessons'),
+            'learners' => Enrollment::distinct('user_id')->count('user_id'),
+            'certificates' => Certificate::count(),
+        ]),
+    ]);
 })->name('home');
 
 Route::get('/courses', [CourseCatalogController::class, 'index'])->name('courses.index');
 Route::get('/courses/{slug}', [CourseCatalogController::class, 'show'])->name('courses.show');
 
-Route::get('/about', function () {
-    return Inertia::render('Marketing/About', ['content' => ContentBlocks::forPage('about')]);
-})->name('about');
-
-Route::get('/pricing', function () {
-    return Inertia::render('Marketing/Pricing');
-})->name('pricing');
-
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
-
-Route::get('/contact', function () {
-    return Inertia::render('Marketing/Contact', ['content' => ContentBlocks::forPage('contact')]);
-})->name('contact');
 
 // Public User Portfolio
 Route::get('/u/{user}', [ProfileController::class, 'show'])->name('portfolio.show');
@@ -154,6 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/learn/{course:slug}/{lesson}', [LearningController::class, 'show'])->name('learn.lesson');
 
         // Presentations — served in a new tab with sandboxed CSP
+        Route::get('/lessons/{lesson}/pdf', [LessonFileController::class, 'pdf'])->name('lesson.pdf');
         Route::get('/presentations/{lesson}/view', [PresentationController::class, 'show'])
             ->name('presentation.show');
         Route::get('/presentations/{lesson}/assets/{path}', [PresentationController::class, 'asset'])
@@ -292,6 +294,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::patch('/courses/{course}', [CourseBuilderController::class, 'update'])->name('tutor.courses.update');
         Route::delete('/courses/{course}', [CourseBuilderController::class, 'destroy'])->name('tutor.courses.destroy');
         Route::patch('/courses/{course}/status', [CourseBuilderController::class, 'updateStatus'])->name('tutor.courses.status');
+        Route::post('/courses/{course}/image', [CourseBuilderController::class, 'uploadImage'])->name('tutor.courses.image');
 
         // Modules
         Route::post('/courses/{course}/modules', [ModuleController::class, 'store'])->name('tutor.modules.store');
@@ -305,6 +308,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy'])->name('tutor.lessons.destroy');
         Route::post('/modules/{module}/lessons/reorder', [LessonController::class, 'reorder'])->name('tutor.lessons.reorder');
         Route::post('/lessons/{lesson}/presentation', [PresentationController::class, 'upload'])->name('tutor.lessons.presentation.upload');
+        Route::post('/lessons/{lesson}/pdf', [LessonController::class, 'uploadPdf'])->name('tutor.lessons.pdf.upload');
 
         // Students
         Route::get('/courses/{course}/students', [StudentController::class, 'index'])->name('tutor.students.index');

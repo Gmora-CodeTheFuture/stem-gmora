@@ -132,7 +132,7 @@ class ContentBlockTest extends TestCase
     public function test_only_declared_fields_are_stored(): void
     {
         $this->actingAs(User::factory()->admin()->create())
-            ->patch(route('admin.content.update', 'contact.details'), [
+            ->patch(route('admin.content.update', 'home.contact'), [
                 'is_published' => true,
                 'content' => [
                     'email' => 'hi@example.com',
@@ -142,11 +142,12 @@ class ContentBlockTest extends TestCase
                 ],
             ]);
 
-        $stored = ContentBlock::where('section_key', 'contact.details')->firstOrFail()->content;
+        $stored = ContentBlock::where('section_key', 'home.contact')->firstOrFail()->content;
 
         $this->assertArrayNotHasKey('sneaky_extra', $stored);
         $this->assertSame('Kandy', $stored['location']);
 
-        $this->get(route('contact'))->assertOk()->assertSee('hi@example.com');
+        // Contact details render on the homepage now that the standalone page is gone.
+        $this->guest()->get(route('home'))->assertOk()->assertSee('hi@example.com');
     }
 }

@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Tutor;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Course;
+use App\Models\Lesson;
 use App\Services\CourseContentService;
 use App\Services\CourseReadiness;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -82,13 +84,23 @@ class CourseBuilderController extends Controller
             'modules.lessons' => fn ($q) => $q->orderBy('order_index'),
             'modules.lessons.liveSession',
             'modules.lessons.quiz:id,lesson_id,title,is_published',
+            'modules.lessons.presentation:id,lesson_id,original_filename',
         ]);
 
         // `content_ref` is hidden from every student-facing response; the tutor
         // who owns the course is the one audience that must see it to edit it.
-        $course->modules->each(
-            fn ($module) => $module->lessons->each->makeVisible('content_ref')
-        );
+        $course->modules->each(function ($module) {
+            $module->lessons->each(function ($lesson) {
+                $lesson->makeVisible('content_ref');
+
+                // So the builder can say whether a file is already attached.
+                $lesson->setAttribute('has_presentation', $lesson->presentation !== null);
+                $lesson->setAttribute(
+                    'has_pdf',
+                    $lesson->type === Lesson::TYPE_PDF && filled($lesson->getRawOriginal('content_ref')),
+                );
+            });
+        });
 
         return Inertia::render('Tutor/Courses/Edit', [
             'course' => $course,
@@ -118,6 +130,39 @@ class CourseBuilderController extends Controller
         $course->update($validated);
 
         return Redirect::back()->with('success', 'Course updated.');
+    }
+
+    /**
+     * Upload a cover image.
+     *
+     * Course covers are shown to visitors on the catalog, so they live on the
+     * public disk. The field also accepts a URL, but pasting one is how a
+     * YouTube link ended up rendering as a broken image.
+     */
+    public function uploadImage(Request $request, Course $course): RedirectResponse
+    {
+        $this->authorizeTutor($request, $course);
+
+        $request->validate([
+            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:4096'], // 4 MB
+        ]);
+
+        $previous = $course->thumbnail_url;
+
+        $path = $request->file('image')->store('course-covers', 'public');
+
+        $course->update(['thumbnail_url' => Storage::disk('public')->url($path)]);
+
+        // Replacing the cover should not leave the old file behind, but only
+        // ever delete something we stored ourselves.
+        if ($previous && str_contains($previous, '/storage/course-covers/')) {
+            $old = 'course-covers/'.basename(parse_url($previous, PHP_URL_PATH) ?: '');
+            if (Storage::disk('public')->exists($old)) {
+                Storage::disk('public')->delete($old);
+            }
+        }
+
+        return Redirect::back()->with('success', 'Cover image updated.');
     }
 
     public function destroy(Request $request, Course $course): RedirectResponse

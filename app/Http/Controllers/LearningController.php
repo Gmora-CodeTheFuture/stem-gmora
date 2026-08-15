@@ -79,6 +79,7 @@ class LearningController extends Controller
                 ...$current->only(['id', 'title', 'description', 'type', 'duration_seconds']),
                 'has_video' => $current->isVideo() && $current->content_ref !== null,
                 'has_presentation' => $current->type === Lesson::TYPE_HTML && $current->presentation !== null,
+                'has_pdf' => $current->type === Lesson::TYPE_PDF && filled($current->getRawOriginal('content_ref')),
                 'live_session' => $current->liveSession?->only([
                     'id', 'title', 'scheduled_start', 'duration_minutes', 'zoom_join_url',
                 ]),

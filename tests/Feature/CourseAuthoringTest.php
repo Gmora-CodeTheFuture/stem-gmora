@@ -86,15 +86,15 @@ class CourseAuthoringTest extends TestCase
     {
         $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
         $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id, 'content_ref' => 'old-id']);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id, 'content_ref' => 'oldVideoId0']);
 
         $this->actingAs($this->instructor)->patch(route('tutor.lessons.update', $lesson), [
             'title' => $lesson->title,
             'type' => 'youtube',
-            'content_ref' => 'new-video-id',
+            'content_ref' => 'dQw4w9WgXcQ',
         ]);
 
-        $this->assertSame('new-video-id', $lesson->refresh()->content_ref);
+        $this->assertSame('dQw4w9WgXcQ', $lesson->refresh()->content_ref);
     }
 
     public function test_a_video_lesson_cannot_be_published_without_a_video(): void

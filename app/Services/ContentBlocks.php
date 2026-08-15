@@ -81,24 +81,49 @@ class ContentBlocks
                 ],
             ],
 
-            'about.intro' => [
-                'page' => 'about',
-                'label' => 'About — introduction',
+            'home.stem' => [
+                'page' => 'home',
+                'label' => 'Home — what STEM is',
                 'fields' => [
                     'title' => ['label' => 'Heading', 'type' => 'text'],
-                    'highlight' => ['label' => 'Highlighted words', 'type' => 'text'],
-                    'subtitle' => ['label' => 'Subtitle', 'type' => 'textarea'],
+                    'body' => ['label' => 'Explanation', 'type' => 'textarea'],
+                    'science' => ['label' => 'Science', 'type' => 'textarea'],
+                    'technology' => ['label' => 'Technology', 'type' => 'textarea'],
+                    'engineering' => ['label' => 'Engineering', 'type' => 'textarea'],
+                    'maths' => ['label' => 'Mathematics', 'type' => 'textarea'],
                 ],
                 'defaults' => [
-                    'title' => 'Learn. Build.',
-                    'highlight' => 'Innovate.',
-                    'subtitle' => 'Gmora STEM exists to make hands-on STEM education accessible, project-driven, and AI-augmented — a platform built from day one to host many subjects, not a single video library.',
+                    'title' => 'What STEM actually means',
+                    'body' => 'STEM is Science, Technology, Engineering and Mathematics taught as one connected subject rather than four separate ones. A student does not learn physics on Monday and coding on Thursday and never join them up — they build something that needs both.',
+                    'science' => 'Asking what is true, and designing an experiment that could prove you wrong.',
+                    'technology' => 'Using the tools well, and understanding what is happening underneath them.',
+                    'engineering' => 'Turning a constraint into a design, then building it and watching it fail usefully.',
+                    'maths' => 'The language the other three are written in — the part that makes a result repeatable.',
                 ],
             ],
 
-            'contact.details' => [
-                'page' => 'contact',
-                'label' => 'Contact — details',
+            'home.vision' => [
+                'page' => 'home',
+                'label' => 'Home — our vision',
+                'fields' => [
+                    'title' => ['label' => 'Heading', 'type' => 'text'],
+                    'body' => ['label' => 'Vision statement', 'type' => 'textarea'],
+                    'point_one' => ['label' => 'First commitment', 'type' => 'textarea'],
+                    'point_two' => ['label' => 'Second commitment', 'type' => 'textarea'],
+                    'point_three' => ['label' => 'Third commitment', 'type' => 'textarea'],
+                ],
+                'defaults' => [
+                    'title' => 'Our vision',
+                    'body' => 'A student in Sri Lanka should be able to learn robotics, machine learning or cybersecurity to the same standard as a student anywhere else — without needing a university lab, an expensive device, or a family who already knows the field.',
+                    'point_one' => 'Build things, not just watch things. Every course ends in something the student made and can show to someone.',
+                    'point_two' => 'Teach in the open. Course material is versioned, reviewed before it is published, and corrected when it is wrong.',
+                    'point_three' => 'Keep the door low. Free courses stay genuinely free, and a certificate is verifiable by anyone who is handed one.',
+                ],
+            ],
+
+            'home.contact' => [
+                'page' => 'home',
+                'label' => 'Home — how to reach us',
                 'fields' => [
                     'email' => ['label' => 'General email', 'type' => 'text'],
                     'support_email' => ['label' => 'Support email', 'type' => 'text'],

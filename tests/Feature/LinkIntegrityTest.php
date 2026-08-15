@@ -71,9 +71,9 @@ class LinkIntegrityTest extends TestCase
         $this->assertSame([], $broken, "These links do not resolve:\n".implode("\n", $broken));
     }
 
-    public function test_the_marketing_pages_the_navigation_offers_all_load(): void
+    public function test_the_public_pages_the_navigation_offers_all_load(): void
     {
-        foreach (['/', '/courses', '/pricing', '/blog', '/about', '/contact'] as $path) {
+        foreach (['/', '/courses', '/blog'] as $path) {
             $this->get($path)->assertOk();
         }
     }
