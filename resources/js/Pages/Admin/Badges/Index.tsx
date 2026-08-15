@@ -63,7 +63,7 @@ export default function BadgesIndex({ badges }: Props) {
                 <div className="card p-6 mb-6">
                     <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">{editingId ? 'Edit Badge' : 'New Badge'}</h2>
                     <form onSubmit={submit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <InputLabel htmlFor="name" value="Name" />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />

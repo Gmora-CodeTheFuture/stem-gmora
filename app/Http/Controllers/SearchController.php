@@ -10,8 +10,6 @@ use App\Services\ContentVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * Global search (Plan §4.13).
@@ -28,7 +26,12 @@ class SearchController extends Controller
 {
     private const PER_TYPE = 8;
 
-    public function index(Request $request): Response|JsonResponse
+    /**
+     * Search is served straight to the header's dropdown. The standalone
+     * results page was retired, so there is no view to fall back to — a request
+     * that is not asking for JSON has nowhere to go.
+     */
+    public function index(Request $request): JsonResponse
     {
         $query = trim($request->string('q')->toString());
         $user = $request->user();
@@ -40,11 +43,7 @@ class SearchController extends Controller
                 'total' => 0,
             ];
 
-            if ($request->wantsJson()) {
-                return response()->json($data);
-            }
-
-            return Inertia::render('Dashboard/Search', $data);
+            return response()->json($data);
         }
 
         $key = 'search:'.$user->id.':'.ContentVersion::current().':'.md5(mb_strtolower($query));
@@ -68,11 +67,7 @@ class SearchController extends Controller
             'total' => count($results['courses']) + count($results['lessons']) + count($results['discussions']),
         ];
 
-        if ($request->wantsJson()) {
-            return response()->json($data);
-        }
-
-        return Inertia::render('Dashboard/Search', $data);
+        return response()->json($data);
     }
 
     /** The published catalog is searchable by everyone. */

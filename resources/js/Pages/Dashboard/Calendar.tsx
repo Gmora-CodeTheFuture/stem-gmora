@@ -11,6 +11,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 
 type EventType = 'class' | 'workshop' | 'deadline' | 'announcement';
 
@@ -62,6 +63,19 @@ export default function Calendar({
     
     // We keep track of the initial date so that FullCalendar doesn't reset to today on every prop update
     const initialDate = useRef(new Date().toISOString().slice(0, 10));
+
+    // Below this the month grid stops being legible and becomes a list.
+    const [isNarrow, setIsNarrow] = useState(false);
+
+    useEffect(() => {
+        const query = window.matchMedia('(max-width: 767px)');
+        const sync = () => setIsNarrow(query.matches);
+
+        sync();
+        query.addEventListener('change', sync);
+
+        return () => query.removeEventListener('change', sync);
+    }, []);
     
     // Set selected event to null if items change and it's no longer there
     useEffect(() => {
@@ -106,13 +120,16 @@ export default function Calendar({
 
             {/* The layout already renders the page title; every other page
                 follows it with a line of context and its primary action. */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                 <p className="text-sm text-surface-500">
                     Classes, workshops and deadlines from the courses you're enrolled in.
                 </p>
 
                 {canManage && (
-                    <button onClick={() => setComposerOpen(true)} className="btn-primary ml-auto">
+                    <button
+                        onClick={() => setComposerOpen(true)}
+                        className="btn-primary w-full sm:w-auto justify-center sm:ml-auto whitespace-nowrap"
+                    >
                         <Plus className="w-4 h-4" />
                         Add event
                     </button>
@@ -121,17 +138,24 @@ export default function Calendar({
 
             <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
                 {/* ── FullCalendar ─────────────────────────────── */}
-                <div className="card p-4 overflow-x-auto">
-                    <div className="min-w-[700px] fc-gmora">
+                <div className="card p-2 sm:p-4">
+                    {/* A month grid needs ~700px to be readable, so a phone gets
+                        the agenda list instead of a grid it has to scroll. */}
+                    <div className="fc-gmora">
                         <FullCalendar
-                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                            initialView="dayGridMonth"
+                            key={isNarrow ? 'list' : 'grid'}
+                            plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+                            initialView={isNarrow ? 'listMonth' : 'dayGridMonth'}
                             initialDate={initialDate.current}
-                            headerToolbar={{
-                                left: 'prev,next today',
-                                center: 'title',
-                                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                            }}
+                            headerToolbar={isNarrow
+                                ? { left: 'prev,next', center: 'title', right: 'today' }
+                                : {
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay',
+                                }}
+                            noEventsText="Nothing scheduled this month."
+
                             events={events}
                             datesSet={handleDatesSet}
                             eventClick={(info) => {
@@ -157,7 +181,7 @@ export default function Calendar({
                 </div>
 
                 {/* ── Event detail ─────────────────────────────── */}
-                <aside className="card p-6 sticky top-[88px]">
+                <aside className={`card p-6 lg:sticky lg:top-[88px] ${selectedEvent ? '' : 'hidden lg:block'}`}>
                     <h3 className="text-base font-semibold text-surface-900 dark:text-white flex items-center justify-between mb-5">
                         Event Details
                         {selectedEvent && (

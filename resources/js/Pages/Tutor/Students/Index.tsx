@@ -51,7 +51,7 @@ export default function TutorStudentsIndex({ students, courses, filters }: Props
             </div>
 
             <div className="card overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="table-stack w-full text-sm">
                     <thead>
                         <tr className="border-b border-surface-200 dark:border-surface-800 text-left">
                             <th className="px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Student</th>
@@ -64,7 +64,7 @@ export default function TutorStudentsIndex({ students, courses, filters }: Props
                     <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
                         {students.data.map((student) => (
                             <tr key={`${student.id}-${student.course_id}`} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-surface-200 dark:bg-surface-700 flex items-center justify-center text-xs font-bold text-surface-500">
                                             {student.full_name.charAt(0)}
@@ -75,13 +75,13 @@ export default function TutorStudentsIndex({ students, courses, filters }: Props
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="Course">
                                     <div className="flex items-center gap-2">
                                         <BookOpen className="w-4 h-4 text-surface-400" />
                                         <span className="text-surface-600 dark:text-surface-400">{student.course_title}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="Progress">
                                     <div className="flex items-center gap-2">
                                         <div className="flex-1 h-1.5 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden w-24">
                                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${student.progress}%` }}></div>
@@ -89,10 +89,10 @@ export default function TutorStudentsIndex({ students, courses, filters }: Props
                                         <span className="text-xs text-surface-500">{Math.round(student.progress)}%</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-surface-500 text-xs">
+                                <td className="px-6 py-4 text-surface-500 text-xs" data-label="Enrolled">
                                     {new Date(student.enrolled_at).toLocaleDateString()}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="Contact">
                                     <a href={`mailto:${student.email}`} className="btn-icon" title={`Email ${student.full_name}`}>
                                         <Mail className="w-4 h-4" />
                                     </a>

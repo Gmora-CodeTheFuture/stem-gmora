@@ -57,7 +57,7 @@ export default function EnrollmentsIndex({ enrollments, filters }: Props) {
             </div>
 
             <div className="card overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="table-stack w-full text-sm">
                     <thead>
                         <tr className="border-b border-surface-200 dark:border-surface-800 text-left">
                             <th className="px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Student</th>
@@ -70,18 +70,18 @@ export default function EnrollmentsIndex({ enrollments, filters }: Props) {
                     <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
                         {enrollments.data.map((enrollment) => (
                             <tr key={enrollment.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="">
                                     <p className="font-medium text-surface-900 dark:text-white">{enrollment.user.full_name}</p>
                                     <p className="text-xs text-surface-500">{enrollment.user.email}</p>
                                 </td>
-                                <td className="px-6 py-4 text-surface-600 dark:text-surface-400">{enrollment.course.title}</td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 text-surface-600 dark:text-surface-400" data-label="Course">{enrollment.course.title}</td>
+                                <td className="px-6 py-4" data-label="Status">
                                     <span className={`text-[11px] px-2 py-1 rounded-full font-medium ${statusColors[enrollment.status] || ''}`}>
                                         {enrollment.status}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-surface-500 text-xs">{new Date(enrollment.enrolled_at).toLocaleDateString()}</td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 text-surface-500 text-xs" data-label="Enrolled">{new Date(enrollment.enrolled_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4" data-actions>
                                     <select
                                         value={enrollment.status}
                                         onChange={(e) => router.patch(`/admin/enrollments/${enrollment.id}`, { status: e.target.value })}

@@ -346,7 +346,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                     value={data.description} onChange={(e) => setData('description', e.target.value)} rows={5} />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <InputLabel htmlFor="category" value="Category *" />
                                     <TextInput id="category" className="mt-1 block w-full" value={data.category} onChange={(e) => setData('category', e.target.value)} required />
@@ -362,7 +362,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                 <div>
                                     <InputLabel htmlFor="price" value="Price *" />
                                     <TextInput id="price" type="number" step="0.01" className="mt-1 block w-full" value={data.price} onChange={(e) => setData('price', parseFloat(e.target.value))} required />
@@ -482,7 +482,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                     {module.lessons?.map((lesson: Lesson) => editingLesson?.id === lesson.id ? (
                                         <form key={lesson.id} onSubmit={saveLesson} className="p-4 border border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20 space-y-4">
                                             <h4 className="text-sm font-semibold text-primary-900 dark:text-primary-300">Edit lesson</h4>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <InputLabel value="Lesson Title" />
                                                     <TextInput className="mt-1 block w-full" value={editingLesson.title} onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })} required autoFocus />
@@ -497,7 +497,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 {editingLesson.type === 'youtube' && (
                                                     <div>
                                                         <InputLabel value={editingLesson.type === 'youtube' ? 'YouTube Video ID' : 'PDF URL'} />
@@ -635,7 +635,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                     {addingLessonTo === module.id ? (
                                         <form onSubmit={addLesson} className="p-4 border border-dashed border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20 mt-4 space-y-4">
                                             <h4 className="text-sm font-semibold text-primary-900 dark:text-primary-300">New Lesson</h4>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
                                                     <InputLabel value="Lesson Title" />
                                                     <TextInput className="mt-1 block w-full" value={lessonData.title} onChange={(e) => setLessonData({ ...lessonData, title: e.target.value })} required autoFocus />

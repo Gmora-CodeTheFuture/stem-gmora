@@ -312,3 +312,96 @@
 .fc-gmora.fc-gmora.fc-gmora .fc-popover-header {
     @apply bg-transparent text-sm font-semibold text-surface-900 dark:text-white px-4 py-3;
 }
+
+/*
+ * Data tables on a phone.
+ *
+ * A six-column admin table at 390px shows two columns and hides the rest —
+ * including the row's actions — behind a horizontal scroll nobody discovers.
+ * Below `md` each row becomes a stacked card instead, with the column heading
+ * carried in `data-label` so the markup stays a single real <table>.
+ */
+@layer components {
+    @media (max-width: 767px) {
+        .table-stack thead {
+            @apply hidden;
+        }
+
+        .table-stack tbody {
+            @apply block divide-y-0;
+        }
+
+        .table-stack tr {
+            @apply block border border-surface-200 dark:border-surface-800 rounded-2xl p-4 mb-3;
+        }
+
+        .table-stack td {
+            @apply flex items-start justify-between gap-4 px-0 py-1.5 border-0 text-sm;
+        }
+
+        /* The heading this cell would have sat under. */
+        .table-stack td[data-label]::before {
+            content: attr(data-label);
+            @apply text-xs font-semibold uppercase tracking-wider text-surface-500 shrink-0 pt-0.5;
+        }
+
+        /* A cell marked as the row's title leads the card: its children stack
+           down the left rather than being thrown to opposite edges. */
+        .table-stack td[data-label=""] {
+            @apply flex-col items-start gap-0.5 pb-3;
+        }
+
+        .table-stack td > * {
+            @apply text-right ml-auto;
+        }
+
+        .table-stack td[data-label=""] > * {
+            @apply text-left ml-0;
+        }
+
+        /* Actions sit as a full-width row of buttons at the foot of the card. */
+        .table-stack td[data-actions] {
+            @apply pt-3 mt-1 border-t border-surface-100 dark:border-surface-800;
+        }
+
+        .table-stack td[data-actions] > * {
+            @apply w-full justify-start ml-0;
+        }
+    }
+}
+
+/* The agenda list the calendar falls back to on phones. */
+.fc-gmora.fc-gmora.fc-gmora .fc-list {
+    @apply border-0;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-day-cushion {
+    @apply bg-surface-50 dark:bg-surface-800 text-xs font-semibold uppercase tracking-wider text-surface-500 py-2;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event td {
+    @apply text-sm py-2.5;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event:hover td {
+    @apply bg-surface-50 dark:bg-surface-800/60;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-title a {
+    @apply text-surface-900 dark:text-white font-medium no-underline;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-empty {
+    @apply bg-transparent text-sm text-surface-500 py-10;
+}
+
+/* The toolbar stacks rather than squeezing on a narrow screen. */
+@media (max-width: 767px) {
+    .fc-gmora.fc-gmora.fc-gmora .fc-toolbar {
+        @apply flex-wrap gap-2;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-toolbar-title {
+        @apply text-sm;
+    }
+}

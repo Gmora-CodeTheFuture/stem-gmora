@@ -57,7 +57,7 @@ export default function CreateCourse({ auth }: PageProps) {
                             <InputError className="mt-2" message={errors.description} />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <InputLabel htmlFor="category" value="Category *" />
                                 <TextInput id="category" className="mt-1 block w-full" value={data.category} onChange={(e) => setData('category', e.target.value)} required placeholder="e.g. Mathematics" />
@@ -74,7 +74,7 @@ export default function CreateCourse({ auth }: PageProps) {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                             <div>
                                 <InputLabel htmlFor="price" value="Price *" />
                                 <TextInput id="price" type="number" step="0.01" className="mt-1 block w-full" value={data.price} onChange={(e) => setData('price', parseFloat(e.target.value))} required />

@@ -98,8 +98,8 @@ export default function CoursesIndex({ courses, categories, filters }: Props) {
                     </p>
                 </div>
             ) : (
-                <div className="card overflow-x-auto">
-                    <table className="w-full text-sm min-w-[46rem]">
+                <div className="md:card md:overflow-x-auto">
+                    <table className="table-stack w-full text-sm md:min-w-[46rem]">
                         <thead>
                             <tr className="border-b border-surface-200 dark:border-surface-800 text-left">
                                 <th className="px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Course</th>
@@ -113,21 +113,21 @@ export default function CoursesIndex({ courses, categories, filters }: Props) {
                         <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
                             {courses.data.map((course) => (
                                 <tr key={course.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4" data-label="">
                                         <p className="font-medium text-surface-900 dark:text-white">{course.title}</p>
                                         <p className="text-xs text-surface-500">{course.category} · {course.difficulty}</p>
                                     </td>
-                                    <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
-                                        {course.instructor?.full_name ?? '—'}
+                                    <td className="px-6 py-4 text-surface-600 dark:text-surface-400" data-label="Author">
+                                        <span>{course.instructor?.full_name ?? '—'}</span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4" data-label="Status">
                                         <span className={`text-[11px] px-2 py-1 rounded-full font-medium capitalize ${statusColors[course.status]}`}>
                                             {course.status.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-surface-600 dark:text-surface-400">{course.enrollments_count}</td>
-                                    <td className="px-6 py-4 text-surface-600 dark:text-surface-400">{course.total_lessons}</td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-surface-600 dark:text-surface-400" data-label="Students"><span>{course.enrollments_count}</span></td>
+                                    <td className="px-6 py-4 text-surface-600 dark:text-surface-400" data-label="Lessons"><span>{course.total_lessons}</span></td>
+                                    <td className="px-6 py-4" data-actions>
                                         <div className="flex items-center gap-3">
                                             <Link href={`/tutor/courses/${course.id}/edit`} className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">Edit</Link>
                                             <Link href={`/tutor/courses/${course.id}/students`} className="text-sm text-surface-500 hover:text-surface-700">Students</Link>

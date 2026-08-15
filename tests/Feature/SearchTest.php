@@ -32,10 +32,10 @@ class SearchTest extends TestCase
         $this->actingAs($this->student)
             ->get(route('dashboard.search', ['q' => 'arduino']))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page
+            ->assertJson(fn ($json) => $json
                 ->has('results.courses', 1)
                 ->where('results.courses.0.title', 'Arduino for Beginners')
-                ->where('total', 1));
+                ->where('total', 1)->etc());
     }
 
     public function test_search_is_case_insensitive(): void
@@ -46,7 +46,7 @@ class SearchTest extends TestCase
             $this->actingAs($this->student)
                 ->get(route('dashboard.search', ['q' => $term]))
                 ->assertOk()
-                ->assertInertia(fn ($page) => $page->has('results.courses', 1));
+                ->assertJson(fn ($json) => $json->has('results.courses', 1)->etc());
         }
     }
 
@@ -57,7 +57,7 @@ class SearchTest extends TestCase
         $this->actingAs($this->student)
             ->get(route('dashboard.search', ['q' => 'secret']))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('total', 0));
+            ->assertJson(fn ($json) => $json->where('total', 0)->etc());
     }
 
     public function test_lessons_only_surface_for_enrolled_learners(): void
@@ -74,16 +74,16 @@ class SearchTest extends TestCase
         $this->actingAs($this->student)
             ->get(route('dashboard.search', ['q' => 'backpropagation']))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->has('results.lessons', 0));
+            ->assertJson(fn ($json) => $json->has('results.lessons', 0)->etc());
 
         Enrollment::factory()->create(['user_id' => $this->student->id, 'course_id' => $course->id]);
 
         $this->actingAs($this->student)
             ->get(route('dashboard.search', ['q' => 'backpropagation']))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page
+            ->assertJson(fn ($json) => $json
                 ->has('results.lessons', 1)
-                ->where('results.lessons.0.title', 'Backpropagation explained'));
+                ->where('results.lessons.0.title', 'Backpropagation explained')->etc());
     }
 
     public function test_lesson_results_never_carry_the_video_id(): void
@@ -131,9 +131,9 @@ class SearchTest extends TestCase
         $this->actingAs($this->student)
             ->get(route('dashboard.search', ['q' => 'overfitting']))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page
+            ->assertJson(fn ($json) => $json
                 ->has('results.discussions', 1)
-                ->where('results.discussions.0.title', 'Overfitting question'))
+                ->where('results.discussions.0.title', 'Overfitting question')->etc())
             ->assertDontSee('Overfitting elsewhere');
     }
 
@@ -144,7 +144,7 @@ class SearchTest extends TestCase
         $this->actingAs($this->student)
             ->get(route('dashboard.search', ['q' => 'a']))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('total', 0));
+            ->assertJson(fn ($json) => $json->where('total', 0)->etc());
     }
 
     public function test_search_requires_signing_in(): void

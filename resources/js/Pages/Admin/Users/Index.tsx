@@ -41,7 +41,7 @@ export default function UsersIndex({ users, roles, filters }: Props) {
                 <select
                     value={filters.role || ''}
                     onChange={(e) => applyFilters({ role: e.target.value })}
-                    className="text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-1.5 text-surface-700 dark:text-surface-300"
+                    className="w-full sm:w-auto text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-2 pr-8 text-surface-700 dark:text-surface-300"
                 >
                     <option value="">All roles</option>
                     {roles.map((role) => (
@@ -52,7 +52,7 @@ export default function UsersIndex({ users, roles, filters }: Props) {
 
             {/* Table */}
             <div className="card overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="table-stack w-full text-sm">
                     <thead>
                         <tr className="border-b border-surface-200 dark:border-surface-800 text-left">
                             <th className="px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">User</th>
@@ -65,7 +65,7 @@ export default function UsersIndex({ users, roles, filters }: Props) {
                     <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
                         {users.data.map((user) => (
                             <tr key={user.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-surface-200 dark:bg-surface-700 flex items-center justify-center text-xs font-bold text-surface-500">
                                             {user.full_name.charAt(0)}
@@ -76,14 +76,14 @@ export default function UsersIndex({ users, roles, filters }: Props) {
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="Role">
                                     <span className="text-xs px-2 py-1 rounded-full bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 font-medium">
                                         {user.role?.display_name || user.role?.name}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-surface-600 dark:text-surface-400">{user.enrollments_count}</td>
-                                <td className="px-6 py-4 text-surface-500 text-xs">{new Date(user.created_at).toLocaleDateString()}</td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 text-surface-600 dark:text-surface-400" data-label="Enrollments">{user.enrollments_count}</td>
+                                <td className="px-6 py-4 text-surface-500 text-xs" data-label="Joined">{new Date(user.created_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4" data-actions>
                                     <div className="flex items-center gap-1">
                                         <Link href={`/admin/users/${user.id}/edit`} className="btn-icon" title="Edit">
                                             <Edit className="w-4 h-4" />

@@ -32,7 +32,7 @@ export default function PaymentsIndex({ payments, summary, filters }: Props) {
             <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-6">Payments</h1>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="card p-5">
                     <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="w-5 h-5 text-emerald-500" />
@@ -58,7 +58,7 @@ export default function PaymentsIndex({ payments, summary, filters }: Props) {
 
             {/* Table */}
             <div className="card overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="table-stack w-full text-sm">
                     <thead>
                         <tr className="border-b border-surface-200 dark:border-surface-800 text-left">
                             <th className="px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">User</th>
@@ -71,15 +71,15 @@ export default function PaymentsIndex({ payments, summary, filters }: Props) {
                     <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
                         {payments.data.map((payment) => (
                             <tr key={payment.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="">
                                     <p className="font-medium text-surface-900 dark:text-white">{payment.user.full_name}</p>
                                     <p className="text-xs text-surface-500">{payment.user.email}</p>
                                 </td>
-                                <td className="px-6 py-4 text-surface-600 dark:text-surface-400">{payment.course.title}</td>
-                                <td className="px-6 py-4 font-medium text-surface-900 dark:text-white">
+                                <td className="px-6 py-4 text-surface-600 dark:text-surface-400" data-label="Course">{payment.course.title}</td>
+                                <td className="px-6 py-4 font-medium text-surface-900 dark:text-white" data-label="Amount">
                                     {payment.currency} {payment.amount}
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4" data-label="Status">
                                     <span className={`text-[11px] px-2 py-1 rounded-full font-medium ${
                                         payment.status === 'completed' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' :
                                         payment.status === 'refunded' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
@@ -88,7 +88,7 @@ export default function PaymentsIndex({ payments, summary, filters }: Props) {
                                         {payment.status}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-surface-500 text-xs">{new Date(payment.created_at).toLocaleDateString()}</td>
+                                <td className="px-6 py-4 text-surface-500 text-xs" data-label="Date">{new Date(payment.created_at).toLocaleDateString()}</td>
                             </tr>
                         ))}
                     </tbody>
