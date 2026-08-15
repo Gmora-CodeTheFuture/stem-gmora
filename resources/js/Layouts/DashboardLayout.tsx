@@ -182,7 +182,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 <div className={`h-[88px] flex items-center shrink-0 ${sidebarOpen ? 'px-3 gap-2' : 'justify-center'}`}>
                     <button
                         onClick={toggleSidebar}
-                        className="btn-icon shrink-0"
+                        className="btn-icon shrink-0 relative z-10"
                         aria-label={sidebarOpen ? 'Collapse menu' : 'Expand menu'}
                         aria-expanded={sidebarOpen}
                     >
