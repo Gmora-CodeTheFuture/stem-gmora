@@ -6,7 +6,8 @@
         <meta name="color-scheme" content="light dark">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
-        <link rel="icon" type="image/png" href="/favicon.png">
+        <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
+        <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
 
         {{-- Resolve the theme before first paint so dark mode never flashes white. --}}
         <script>

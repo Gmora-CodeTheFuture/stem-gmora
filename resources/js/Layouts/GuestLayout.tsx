@@ -14,7 +14,8 @@ export default function Guest({ children }: PropsWithChildren) {
                 <div className="relative z-10">
                     {/* Header/Logo */}
                     <div className="flex items-center gap-2 mb-12">
-                        <img src="/logo.png" alt="Gmora STEM" className="h-10 w-auto object-contain" />
+                        <img src="/logo.svg" alt="Gmora STEM" className="h-16 w-auto object-contain dark:hidden block" />
+                        <img src="/logo-dark.svg" alt="Gmora STEM" className="h-16 w-auto object-contain hidden dark:block" />
                     </div>
 
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 text-[10px] font-bold tracking-wider mb-6 bg-white/5 uppercase">

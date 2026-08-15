@@ -63,22 +63,24 @@ class MyCoursesController extends Controller
             ->sortByDesc('percentage')
             ->values();
 
-        $catalog = Course::published()
+        // One read of the published catalog, then filter and count in memory.
+        // Each round trip to the database costs a second or more from here, and
+        // this page used to make three separate published() queries — enough to
+        // exceed PHP's execution limit whenever the database was cold.
+        $published = Course::published()
             ->with('instructor:id,full_name')
-            ->when($search !== '', fn ($q) => $q->where(fn ($inner) => $inner
-                ->whereLike('title', "%{$search}%")
-                ->orWhereLike('subtitle', "%{$search}%")
-                ->orWhereLike('category', "%{$search}%")))
-            ->when($category !== '', fn ($q) => $q->where('category', $category))
             ->orderByDesc('total_enrollments')
-            ->get()
+            ->get();
+
+        $catalog = $published
+            ->filter(fn (Course $course) => $this->matches($course, $search, $category))
             ->map(fn (Course $course) => $this->presentCourse($course, in_array($course->id, $enrolledIds, true)))
             ->values();
 
         return [
             'enrolled' => $enrolled->toArray(),
             'catalog' => $catalog->toArray(),
-            'categories' => Course::published()->distinct()->orderBy('category')->pluck('category')->all(),
+            'categories' => $published->pluck('category')->unique()->sort()->values()->all(),
             'filters' => [
                 'search' => $search,
                 'filter' => $filter,
@@ -86,7 +88,7 @@ class MyCoursesController extends Controller
             ],
             'counts' => [
                 'enrolled' => count($enrolledIds),
-                'all' => Course::published()->count(),
+                'all' => $published->count(),
             ],
         ];
     }
