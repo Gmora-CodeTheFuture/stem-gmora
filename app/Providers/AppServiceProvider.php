@@ -32,6 +32,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // `artisan serve` is single-threaded, so one request that outruns PHP's
+        // 30 second limit does not just fail — it takes the whole dev server
+        // down. The database is remote and occasionally cold, which is enough
+        // to trigger it. Local only: in production a request this slow is a
+        // fault that should surface, not be waited on.
+        if ($this->app->environment('local') && php_sapi_name() === 'cli-server') {
+            set_time_limit(0);
+        }
+
         // Serves the signed-in user from cache; see CachedUserProvider.
         Auth::provider('eloquent-cached', fn ($app, array $config) => new CachedUserProvider(
             $app['hash'],

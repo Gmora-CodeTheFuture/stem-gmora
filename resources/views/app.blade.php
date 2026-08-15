@@ -6,8 +6,12 @@
         <meta name="color-scheme" content="light dark">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
-        <link rel="icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
-        <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
+        {{-- One SVG for both themes: it carries its own prefers-color-scheme
+             rule, which is the only theme signal a favicon ever sees. The PNGs
+             stay as a fallback for browsers that do not take SVG icons. --}}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        <link rel="alternate icon" type="image/png" href="/favicon.png" media="(prefers-color-scheme: light)">
+        <link rel="alternate icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)">
 
         {{-- Resolve the theme before first paint so dark mode never flashes white. --}}
         <script>

@@ -179,7 +179,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     ${sidebarOpen ? 'w-[248px]' : 'w-[72px] -translate-x-full lg:translate-x-0'}`}
             >
                 {/* Brand / Toggle Header */}
-                <div className={`h-[72px] flex items-center shrink-0 ${sidebarOpen ? 'px-4 gap-3' : 'justify-center'}`}>
+                <div className={`h-[88px] flex items-center shrink-0 ${sidebarOpen ? 'px-3 gap-2' : 'justify-center'}`}>
                     <button
                         onClick={toggleSidebar}
                         className="btn-icon shrink-0"
@@ -190,9 +190,12 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     </button>
 
                     {sidebarOpen && (
-                        <Link href="/dashboard" className="overflow-hidden whitespace-nowrap fade-in flex items-center">
-                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
-                            <img src="/logo-dark.svg" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
+                        <Link
+                            href="/dashboard"
+                            className="flex-1 flex items-center justify-center -ml-9 pointer-events-auto overflow-hidden whitespace-nowrap fade-in"
+                        >
+                            <img src="/logo.svg" alt="Gmora STEM" className="h-16 w-auto object-contain dark:hidden block" />
+                            <img src="/logo-dark.svg" alt="Gmora STEM" className="h-16 w-auto object-contain hidden dark:block" />
                         </Link>
                     )}
                 </div>

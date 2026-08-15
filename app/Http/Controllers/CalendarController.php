@@ -28,29 +28,27 @@ class CalendarController extends Controller
 {
     public function index(Request $request): Response
     {
-        $month = $request->string('month')->toString() ?: now()->format('Y-m');
+        // FullCalendar provides `start` and `end` ISO strings when fetching events.
+        // We use these instead of just a month string to support week and day views.
+        $startStr = $request->string('start')->toString() ?: now()->startOfMonth()->toDateString();
+        $endStr = $request->string('end')->toString() ?: now()->endOfMonth()->toDateString();
 
-        $key = 'calendar:'.$request->user()->id.':'.ContentVersion::current().':'.$month;
+        $key = 'calendar:'.$request->user()->id.':'.ContentVersion::current().':'.$startStr.':'.$endStr;
 
         return Inertia::render('Dashboard/Calendar', Cache::remember(
             $key,
             now()->addMinutes(10),
-            fn () => $this->payload($request),
+            fn () => $this->payload($request, $startStr, $endStr),
         ));
     }
 
     /** @return array<string, mixed> */
-    private function payload(Request $request): array
+    private function payload(Request $request, string $startStr, string $endStr): array
     {
         $user = $request->user();
 
-        // Month being viewed, e.g. ?month=2026-08
-        $month = Carbon::parse($request->string('month')->toString() ?: now()->format('Y-m').'-01')
-            ->startOfMonth();
-
-        // The grid spills into neighbouring months, so fetch the visible range.
-        $from = $month->copy()->startOfWeek();
-        $to = $month->copy()->endOfMonth()->endOfWeek();
+        $from = Carbon::parse($startStr);
+        $to = Carbon::parse($endStr);
 
         $courseIds = Enrollment::where('user_id', $user->id)
             ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
@@ -64,11 +62,10 @@ class CalendarController extends Controller
             ->values();
 
         return [
-            'month' => $month->format('Y-m'),
-            'monthLabel' => $month->format('F Y'),
-            'rangeStart' => $from->toDateString(),
-            'rangeEnd' => $to->toDateString(),
+            // Send the raw items. FullCalendar will consume these.
             'items' => $items->toArray(),
+            'rangeStart' => $startStr,
+            'rangeEnd' => $endStr,
             'canManage' => $this->canManage($request),
             // Courses this user may attach an event to.
             'manageableCourses' => $this->canManage($request)

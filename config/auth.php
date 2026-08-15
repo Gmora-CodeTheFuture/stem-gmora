@@ -63,7 +63,11 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            // Serves the signed-in user from cache instead of querying on every
+            // authenticated request — see App\Auth\CachedUserProvider. Falling
+            // back to plain 'eloquent' costs a database round trip per request,
+            // which is seconds when the database is remote.
+            'driver' => 'eloquent-cached',
             'model' => env('AUTH_MODEL', User::class),
         ],
 

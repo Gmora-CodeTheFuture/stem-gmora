@@ -1,11 +1,16 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { FormEventHandler, useMemo, useState } from 'react';
+import { FormEventHandler, useMemo, useState, useRef, useEffect } from 'react';
 import {
-    CalendarDays, Check, ChevronLeft, ChevronRight, Clock, ExternalLink,
-    MapPin, Pencil, Plus, Trash2, X,
+    CalendarDays, Check, Clock, ExternalLink,
+    MapPin, Pencil, Plus, Trash2, X, XCircle, Info
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/types';
+
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 type EventType = 'class' | 'workshop' | 'deadline' | 'announcement';
 
@@ -34,8 +39,6 @@ interface CalendarItem {
 }
 
 interface Props extends PageProps {
-    month: string;
-    monthLabel: string;
     rangeStart: string;
     rangeEnd: string;
     items: CalendarItem[];
@@ -50,82 +53,62 @@ const TYPE_STYLES: Record<EventType, string> = {
     announcement: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300',
 };
 
-const dayKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
-
-function addMonths(month: string, delta: number): string {
-    const [year, m] = month.split('-').map(Number);
-    const date = new Date(Date.UTC(year, m - 1 + delta, 1));
-
-    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
 export default function Calendar({
-    month, monthLabel, rangeStart, rangeEnd, items, canManage, manageableCourses,
+    rangeStart, rangeEnd, items, canManage, manageableCourses,
 }: Props) {
-    const [selected, setSelected] = useState<string>(new Date().toISOString().slice(0, 10));
     const [composerOpen, setComposerOpen] = useState(false);
     const [editing, setEditing] = useState<CalendarItem | null>(null);
-
-    // Build the visible grid from the server-provided range.
-    const days = useMemo(() => {
-        const out: string[] = [];
-        const cursor = new Date(rangeStart + 'T00:00:00Z');
-        const end = new Date(rangeEnd + 'T00:00:00Z');
-
-        while (cursor <= end) {
-            out.push(cursor.toISOString().slice(0, 10));
-            cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const [selectedEvent, setSelectedEvent] = useState<CalendarItem | null>(null);
+    
+    // We keep track of the initial date so that FullCalendar doesn't reset to today on every prop update
+    const initialDate = useRef(new Date().toISOString().slice(0, 10));
+    
+    // Set selected event to null if items change and it's no longer there
+    useEffect(() => {
+        if (selectedEvent) {
+            const stillExists = items.find(i => i.id === selectedEvent.id && i.source === selectedEvent.source);
+            if (!stillExists) setSelectedEvent(null);
+            else setSelectedEvent(stillExists);
         }
-
-        return out;
-    }, [rangeStart, rangeEnd]);
-
-    const byDay = useMemo(() => {
-        const map: Record<string, CalendarItem[]> = {};
-
-        for (const item of items) {
-            (map[dayKey(item.starts_at)] ??= []).push(item);
-        }
-
-        return map;
     }, [items]);
 
-    const selectedItems = byDay[selected] ?? [];
-    const currentMonth = Number(month.split('-')[1]);
+    const events = useMemo(() => {
+        return items.map(item => {
+            return {
+                id: `${item.source}-${item.id}`,
+                title: item.title,
+                start: item.starts_at,
+                end: item.ends_at ?? undefined,
+                allDay: item.type === 'deadline' || !item.ends_at,
+                extendedProps: item,
+                classNames: [TYPE_STYLES[item.type], 'border-0', 'rounded-md', 'px-1', 'py-0.5', 'text-xs', 'overflow-hidden'],
+            };
+        });
+    }, [items]);
+
+    const handleDatesSet = (arg: any) => {
+        const start = arg.startStr.split('T')[0];
+        const end = arg.endStr.split('T')[0];
+        
+        // Prevent infinite loops if ranges haven't really changed
+        if (start === rangeStart && end === rangeEnd) return;
+
+        router.get(
+            route('dashboard.calendar'),
+            { start, end },
+            { preserveState: true, preserveScroll: true, replace: true }
+        );
+    };
 
     return (
         <DashboardLayout header="Calendar">
             <Head title="Calendar — Gmora STEM" />
 
             <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={() => router.get(route('dashboard.calendar'), { month: addMonths(month, -1) })}
-                        className="btn-icon"
-                        aria-label="Previous month"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                        onClick={() => router.get(route('dashboard.calendar'), { month: addMonths(month, 1) })}
-                        className="btn-icon"
-                        aria-label="Next month"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{monthLabel}</h2>
-
-                <button
-                    onClick={() => router.get(route('dashboard.calendar'))}
-                    className="text-sm text-surface-500 hover:text-primary-600 transition-colors"
-                >
-                    Today
-                </button>
+                <h2 className="text-xl font-bold text-surface-900 dark:text-white flex-1">Calendar</h2>
 
                 {canManage && (
-                    <button onClick={() => setComposerOpen(true)} className="btn-primary ml-auto">
+                    <button onClick={() => setComposerOpen(true)} className="btn-primary">
                         <Plus className="w-4 h-4" />
                         Add event
                     </button>
@@ -133,204 +116,196 @@ export default function Calendar({
             </div>
 
             <div className="grid lg:grid-cols-[1fr_340px] gap-5 items-start">
-                {/* ── Month grid ─────────────────────────────── */}
-                <div className="card p-4">
-                    <div className="grid grid-cols-7 mb-2">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((label) => (
-                            <div key={label} className="text-center text-xs font-medium text-surface-400 py-2">
-                                {label}
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-7 gap-1">
-                        {days.map((day) => {
-                            const dayItems = byDay[day] ?? [];
-                            const inMonth = Number(day.split('-')[1]) === currentMonth;
-                            const isToday = day === new Date().toISOString().slice(0, 10);
-
-                            return (
-                                <button
-                                    key={day}
-                                    onClick={() => setSelected(day)}
-                                    className={`min-h-[86px] p-2 rounded-xl text-left transition-colors border ${
-                                        selected === day
-                                            ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/40'
-                                            : 'border-transparent hover:bg-surface-50 dark:hover:bg-surface-800'
-                                    } ${inMonth ? '' : 'opacity-40'}`}
-                                >
-                                    <span
-                                        className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-                                            isToday
-                                                ? 'bg-primary-600 text-white'
-                                                : 'text-surface-600 dark:text-surface-300'
-                                        }`}
-                                    >
-                                        {Number(day.slice(-2))}
-                                    </span>
-
-                                    <span className="block space-y-1 mt-1">
-                                        {dayItems.slice(0, 2).map((item) => (
-                                            <span
-                                                key={`${item.source}-${item.id}`}
-                                                className={`block px-1.5 py-0.5 rounded-md text-[11px] leading-tight truncate ${TYPE_STYLES[item.type]}`}
-                                            >
-                                                {item.title}
-                                            </span>
-                                        ))}
-                                        {dayItems.length > 2 && (
-                                            <span className="block text-[11px] text-surface-400 px-1.5">
-                                                +{dayItems.length - 2} more
-                                            </span>
+                {/* ── FullCalendar ─────────────────────────────── */}
+                <div className="card p-4 overflow-x-auto">
+                    <div className="min-w-[700px] fc-theme-standard">
+                        <FullCalendar
+                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                            initialView="dayGridMonth"
+                            initialDate={initialDate.current}
+                            headerToolbar={{
+                                left: 'prev,next today',
+                                center: 'title',
+                                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                            }}
+                            events={events}
+                            datesSet={handleDatesSet}
+                            eventClick={(info) => {
+                                setSelectedEvent(info.event.extendedProps as CalendarItem);
+                            }}
+                            height="auto"
+                            dayMaxEvents={true}
+                            eventContent={(arg) => {
+                                const item = arg.event.extendedProps as CalendarItem;
+                                return (
+                                    <div className="flex flex-col w-full overflow-hidden text-[11px] leading-tight">
+                                        <div className="font-semibold truncate">{arg.event.title}</div>
+                                        {!arg.event.allDay && (
+                                            <div className="truncate opacity-80">
+                                                {arg.timeText}
+                                            </div>
                                         )}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                    </div>
+                                );
+                            }}
+                        />
                     </div>
                 </div>
 
-                {/* ── Day detail ─────────────────────────────── */}
-                <aside className="card p-6">
-                    <h3 className="text-base font-semibold text-surface-900 dark:text-white">
-                        {new Date(selected + 'T00:00:00').toLocaleDateString(undefined, {
-                            weekday: 'long',
-                            day: 'numeric',
-                            month: 'long',
-                        })}
+                {/* ── Event detail ─────────────────────────────── */}
+                <aside className="card p-6 sticky top-[88px]">
+                    <h3 className="text-base font-semibold text-surface-900 dark:text-white flex items-center justify-between mb-5">
+                        Event Details
+                        {selectedEvent && (
+                            <button onClick={() => setSelectedEvent(null)} className="text-surface-400 hover:text-surface-600 transition-colors">
+                                <XCircle className="w-5 h-5" />
+                            </button>
+                        )}
                     </h3>
 
-                    {selectedItems.length === 0 ? (
+                    {!selectedEvent ? (
                         <div className="text-center py-10">
                             <CalendarDays className="w-7 h-7 text-surface-300 dark:text-surface-600 mx-auto mb-3" />
-                            <p className="text-sm text-surface-500">Nothing scheduled on this day.</p>
+                            <p className="text-sm text-surface-500">Select an event on the calendar to see details.</p>
                         </div>
                     ) : (
-                        <ul className="mt-5 space-y-4">
-                            {selectedItems.map((item) => (
-                                <li
-                                    key={`${item.source}-${item.id}`}
-                                    className="pb-4 border-b border-surface-100 dark:border-surface-800 last:border-0 last:pb-0"
-                                >
-                                    <div className="flex items-start gap-2">
-                                        <span className={`badge ${TYPE_STYLES[item.type]} capitalize`}>{item.type}</span>
+                        <div className="space-y-4">
+                            <div className="pb-4 border-b border-surface-100 dark:border-surface-800">
+                                <div className="flex items-start gap-2">
+                                    <span className={`badge ${TYPE_STYLES[selectedEvent.type]} capitalize`}>{selectedEvent.type}</span>
 
-                                        {item.editable && canManage && (
-                                            <span className="ml-auto flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setEditing(item)}
-                                                    className="text-surface-400 hover:text-primary-600 transition-colors"
-                                                    aria-label={`Edit ${item.title}`}
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => router.delete(route('events.destroy', item.id), {
+                                    {selectedEvent.editable && canManage && (
+                                        <span className="ml-auto flex items-center gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setEditing(selectedEvent);
+                                                    setSelectedEvent(null);
+                                                }}
+                                                className="text-surface-400 hover:text-primary-600 transition-colors"
+                                                aria-label={`Edit ${selectedEvent.title}`}
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    router.delete(route('events.destroy', selectedEvent.id), {
                                                         preserveScroll: true,
-                                                    })}
-                                                    className="text-surface-400 hover:text-red-500 transition-colors"
-                                                    aria-label={`Delete ${item.title}`}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <h4 className="text-sm font-medium text-surface-900 dark:text-white mt-2">
-                                        {item.title}
-                                    </h4>
-
-                                    {item.course && (
-                                        <Link
-                                            href={route('courses.show', item.course.slug)}
-                                            className="block text-xs text-primary-600 dark:text-primary-400 mt-0.5 hover:underline"
-                                        >
-                                            {item.course.title}
-                                        </Link>
+                                                    });
+                                                    setSelectedEvent(null);
+                                                }}
+                                                className="text-surface-400 hover:text-red-500 transition-colors"
+                                                aria-label={`Delete ${selectedEvent.title}`}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </span>
                                     )}
+                                </div>
 
-                                    <p className="inline-flex items-center gap-1.5 text-xs text-surface-500 mt-2">
-                                        <Clock className="w-3.5 h-3.5" />
-                                        {new Date(item.starts_at).toLocaleTimeString(undefined, {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                        {item.ends_at &&
-                                            ` – ${new Date(item.ends_at).toLocaleTimeString(undefined, {
+                                <h4 className="text-lg font-bold text-surface-900 dark:text-white mt-3 leading-tight">
+                                    {selectedEvent.title}
+                                </h4>
+
+                                {selectedEvent.course && (
+                                    <Link
+                                        href={route('courses.show', selectedEvent.course.slug)}
+                                        className="inline-flex text-sm font-medium text-primary-600 dark:text-primary-400 mt-1.5 hover:underline"
+                                    >
+                                        {selectedEvent.course.title}
+                                    </Link>
+                                )}
+                            </div>
+
+                            <div className="space-y-3 pt-2">
+                                <p className="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                                    <Clock className="w-4 h-4 text-surface-400 mt-0.5 shrink-0" />
+                                    <span>
+                                        <span className="block font-medium">
+                                            {new Date(selectedEvent.starts_at).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                                        </span>
+                                        <span className="text-surface-500">
+                                            {new Date(selectedEvent.starts_at).toLocaleTimeString(undefined, {
                                                 hour: '2-digit',
                                                 minute: '2-digit',
-                                            })}`}
+                                            })}
+                                            {selectedEvent.ends_at &&
+                                                ` – ${new Date(selectedEvent.ends_at).toLocaleTimeString(undefined, {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}`}
+                                        </span>
+                                    </span>
+                                </p>
+
+                                {selectedEvent.location && (
+                                    <p className="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                                        <MapPin className="w-4 h-4 text-surface-400 mt-0.5 shrink-0" />
+                                        <span>{selectedEvent.location}</span>
                                     </p>
+                                )}
 
-                                    {item.location && (
-                                        <p className="inline-flex items-center gap-1.5 text-xs text-surface-500 mt-1 ml-3">
-                                            <MapPin className="w-3.5 h-3.5" />
-                                            {item.location}
-                                        </p>
-                                    )}
+                                {selectedEvent.description && (
+                                    <div className="flex items-start gap-3 text-sm text-surface-700 dark:text-surface-300">
+                                        <Info className="w-4 h-4 text-surface-400 mt-0.5 shrink-0" />
+                                        <p className="leading-relaxed whitespace-pre-wrap">{selectedEvent.description}</p>
+                                    </div>
+                                )}
+                            </div>
 
-                                    {item.description && (
-                                        <p className="text-xs text-surface-500 mt-2 leading-relaxed">
-                                            {item.description}
-                                        </p>
-                                    )}
-
-                                    {item.registration && (item.registration.open || item.registration.registered) && (
-                                        <div className="flex items-center gap-3 mt-3">
-                                            {item.registration.registered ? (
-                                                <>
-                                                    <span className="badge-accent">
-                                                        <Check className="w-3 h-3" />
-                                                        You're going
-                                                    </span>
-                                                    <button
-                                                        onClick={() =>
-                                                            router.delete(route('events.unregister', item.id), {
-                                                                preserveScroll: true,
-                                                            })
-                                                        }
-                                                        className="text-xs text-surface-500 hover:text-red-500 transition-colors"
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </>
-                                            ) : (
+                            {selectedEvent.registration && (selectedEvent.registration.open || selectedEvent.registration.registered) && (
+                                <div className="p-4 rounded-xl bg-surface-50 dark:bg-surface-800/50 mt-4">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {selectedEvent.registration.registered ? (
+                                            <>
+                                                <span className="badge-accent py-1.5 px-3">
+                                                    <Check className="w-3.5 h-3.5 mr-1" />
+                                                    You're going
+                                                </span>
                                                 <button
                                                     onClick={() =>
-                                                        router.post(route('events.register', item.id), {}, {
+                                                        router.delete(route('events.unregister', selectedEvent.id), {
                                                             preserveScroll: true,
                                                         })
                                                     }
-                                                    className="btn-primary py-1.5 px-4 text-xs"
+                                                    className="text-sm font-medium text-surface-500 hover:text-red-500 transition-colors"
                                                 >
-                                                    Register
+                                                    Cancel
                                                 </button>
-                                            )}
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={() =>
+                                                    router.post(route('events.register', selectedEvent.id), {}, {
+                                                        preserveScroll: true,
+                                                    })
+                                                }
+                                                className="btn-primary w-full justify-center"
+                                            >
+                                                Register
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-surface-500 mt-3 flex items-center justify-between">
+                                        <span>{selectedEvent.registration.going} going</span>
+                                        {selectedEvent.registration.capacity && (
+                                            <span>{selectedEvent.registration.spots_left} spots left (of {selectedEvent.registration.capacity})</span>
+                                        )}
+                                    </p>
+                                </div>
+                            )}
 
-                                            <span className="text-xs text-surface-400">
-                                                {item.registration.going} going
-                                                {item.registration.capacity
-                                                    ? ` · ${item.registration.spots_left} of ${item.registration.capacity} left`
-                                                    : ''}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {item.url && (
-                                        <a
-                                            href={item.url}
-                                            target={item.url.startsWith('http') ? '_blank' : undefined}
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 mt-3 hover:underline"
-                                        >
-                                            <ExternalLink className="w-3.5 h-3.5" />
-                                            Open
-                                        </a>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+                            {selectedEvent.url && (
+                                <a
+                                    href={selectedEvent.url}
+                                    target={selectedEvent.url.startsWith('http') ? '_blank' : undefined}
+                                    rel="noreferrer"
+                                    className="btn-primary w-full justify-center mt-2"
+                                >
+                                    <ExternalLink className="w-4 h-4" />
+                                    Open Link
+                                </a>
+                            )}
+                        </div>
                     )}
                 </aside>
             </div>
@@ -338,7 +313,7 @@ export default function Calendar({
             {(composerOpen || editing) && (
                 <EventComposer
                     courses={manageableCourses}
-                    defaultDate={selected}
+                    defaultDate={initialDate.current}
                     event={editing}
                     onClose={() => {
                         setComposerOpen(false);
