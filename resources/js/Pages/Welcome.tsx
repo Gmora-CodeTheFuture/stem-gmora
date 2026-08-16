@@ -1,21 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import MarketingLayout from '@/Layouts/MarketingLayout';
 import { motion } from 'framer-motion';
 import {
-    Award, BookOpen, Users, ArrowRight, Check, Sparkles,
-    FlaskConical, Cpu, Wrench, Sigma, PlayCircle, Mail, MapPin,
+    Award, BookOpen, Users, ArrowRight, PlayCircle, Sigma, Cpu, FlaskConical, Wrench
 } from 'lucide-react';
-
-const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({
-        opacity: 1,
-        y: 0,
-        transition: { delay: i * 0.08, duration: 0.5, ease: 'easeOut' },
-    }),
-};
-
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
+import { ParallaxComponent } from '@/Components/ui/parallax-scrolling';
 
 interface HomeContent {
     hero: { badge: string; title: string; highlight: string; subtitle: string; primary_cta: string; secondary_cta: string };
@@ -31,13 +19,11 @@ interface Props {
 }
 
 export default function Welcome({ content, figures }: Props) {
-    // Every figure is counted from the database, so an empty platform says so
-    // rather than claiming numbers it does not have.
     const stats = [
-        { value: figures.courses, label: figures.courses === 1 ? 'Course' : 'Courses', icon: BookOpen },
-        { value: figures.lessons, label: figures.lessons === 1 ? 'Lesson' : 'Lessons', icon: PlayCircle },
-        { value: figures.learners, label: figures.learners === 1 ? 'Learner' : 'Learners', icon: Users },
-        { value: figures.certificates, label: 'Certificates issued', icon: Award },
+        { value: figures.courses, label: 'COURSES', icon: BookOpen },
+        { value: figures.lessons, label: 'LESSONS', icon: PlayCircle },
+        { value: figures.learners, label: 'LEARNERS', icon: Users },
+        { value: figures.certificates, label: 'CERTIFICATES', icon: Award },
     ];
 
     const disciplines = [
@@ -47,215 +33,173 @@ export default function Welcome({ content, figures }: Props) {
         { letter: 'M', name: 'Mathematics', body: content.stem.maths, icon: Sigma },
     ];
 
-    const commitments = [content.vision.point_one, content.vision.point_two, content.vision.point_three];
-
     return (
-        <MarketingLayout nav>
-            <Head title="Gmora STEM — learn science, technology, engineering and maths" />
+        <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white font-sans relative overflow-hidden">
+            <Head title="Gmora STEM — The Great Expanse" />
+            
+            <header className="absolute top-0 left-0 w-full z-50 border-b border-black/10 bg-white/80 backdrop-blur-md">
+                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-mono text-sm uppercase tracking-widest text-black/70">
+                    <div className="flex items-center gap-8">
+                        <Link href="/" className="font-display text-black font-bold text-xl tracking-normal normal-case">
+                            GMORA.STEM
+                        </Link>
+                        <nav className="hidden md:flex gap-6">
+                            <Link href="#stem" className="hover:text-black transition-colors">Curriculum</Link>
+                            <Link href="#vision" className="hover:text-black transition-colors">Directives</Link>
+                        </nav>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <Link href="/login" className="hover:text-black transition-colors">Sys Login</Link>
+                        <Link href="/register" className="bg-[#0a0a0a] text-white px-4 py-1.5 hover:bg-black/80 transition-colors font-bold">
+                            Initialize
+                        </Link>
+                    </div>
+                </div>
+            </header>
 
-            {/* ── Hero ──────────────────────────────────────────── */}
-            <section className="pt-24 pb-20 bg-white dark:bg-surface-950">
-                <div className="max-w-[1440px] mx-auto px-6">
-                    <div className="max-w-3xl mx-auto text-center">
-                        <motion.span
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-100 dark:bg-surface-900 text-xs font-bold tracking-wide uppercase text-surface-700 dark:text-surface-300"
-                        >
-                            <Sparkles className="w-3.5 h-3.5 text-[#1E3A8A]" />
-                            {content.hero.badge}
-                        </motion.span>
+            {/* Global Grid Background for content below hero */}
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-grid-pattern"></div>
 
-                        <motion.h1
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="text-5xl md:text-6xl font-bold tracking-tight text-surface-900 dark:text-white mt-8 text-balance"
-                        >
-                            {content.hero.title}{' '}
-                            <span className="text-[#1E3A8A] dark:text-primary-400">{content.hero.highlight}</span>
-                        </motion.h1>
+            <main className="relative z-10 pt-16">
+                <ParallaxComponent>
+                    {/* The rest of the page sits inside ParallaxComponent so it flows below the visual layers */}
+                    <div className="bg-white">
+                        
+                        {/* ── Brutalist Call to Action inside Hero spacing ────────────────── */}
+                        <div className="max-w-[1440px] mx-auto px-6 py-20 bg-white relative z-10 border-b border-black/10">
+                            <div className="max-w-4xl">
+                                <div className="flex items-center gap-4 mb-8 text-black/40">
+                                    <svg width="120" height="30" viewBox="0 0 120 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M0 15H20L30 5L40 25L50 15H120" stroke="currentColor" strokeWidth="1" />
+                                        <circle cx="30" cy="5" r="2" fill="currentColor" />
+                                        <circle cx="40" cy="25" r="2" fill="currentColor" />
+                                    </svg>
+                                    <span className="font-mono text-xs tracking-[0.2em]">{content.hero.badge}</span>
+                                </div>
 
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="text-lg text-surface-600 dark:text-surface-400 mt-6 leading-relaxed"
-                        >
-                            {content.hero.subtitle}
-                        </motion.p>
+                                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tighter uppercase leading-[0.85] mb-8">
+                                    Master <span className="text-outline">The Future</span><br/>
+                                    With STEM <span className="text-outline">Education</span>
+                                </h1>
 
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="flex flex-wrap items-center justify-center gap-3 mt-10"
-                        >
-                            <Link
-                                href="/register"
-                                className="px-7 py-3 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 font-bold hover:opacity-90 transition-opacity"
-                            >
-                                {content.hero.primary_cta}
-                            </Link>
-                            <Link
-                                href="/courses"
-                                className="px-7 py-3 rounded-full border border-surface-300 dark:border-surface-700 font-bold text-surface-900 dark:text-white hover:bg-surface-50 dark:hover:bg-surface-900 transition-colors"
-                            >
-                                {content.hero.secondary_cta}
-                            </Link>
-                        </motion.div>
+                                <p className="font-mono text-sm md:text-base text-black/60 max-w-xl leading-relaxed mb-12 border-l border-black/20 pl-4">
+                                    {content.hero.subtitle}
+                                </p>
 
-                        <div className="flex flex-wrap items-center justify-center gap-6 mt-12 text-surface-500 text-sm font-medium">
-                            <span className="flex items-center gap-1.5">
-                                <Check className="w-4 h-4 text-surface-900 dark:text-surface-300" /> Free courses stay free
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <Check className="w-4 h-4 text-surface-900 dark:text-surface-300" /> Verifiable certificates
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <Check className="w-4 h-4 text-surface-900 dark:text-surface-300" /> Project-based from day one
-                            </span>
+                                <div className="flex flex-wrap items-center gap-6 font-display font-bold uppercase tracking-wider text-sm">
+                                    <Link href="/register" className="bg-[#0a0a0a] text-white px-8 py-4 hover:bg-black/80 transition-colors">
+                                        {content.hero.primary_cta}
+                                    </Link>
+                                    <Link href="/courses" className="relative px-8 py-4 text-black hover:text-black/70 transition-colors group">
+                                        <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-black group-hover:border-black/50 transition-colors"></span>
+                                        <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-black group-hover:border-black/50 transition-colors"></span>
+                                        <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-black group-hover:border-black/50 transition-colors"></span>
+                                        <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black group-hover:border-black/50 transition-colors"></span>
+                                        {content.hero.secondary_cta}
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
 
-            {/* ── Figures ───────────────────────────────────────── */}
-            <section className="bg-surface-50 dark:bg-surface-900 border-y border-surface-200 dark:border-surface-800 py-12">
-                <div className="max-w-[1440px] mx-auto px-6">
-                    <motion.div
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: '-50px' }}
-                        variants={stagger}
-                        className="grid grid-cols-2 md:grid-cols-4 gap-8"
-                    >
-                        {stats.map((stat, i) => (
-                            <motion.div key={stat.label} custom={i} variants={fadeInUp} className="text-center">
-                                <stat.icon className="w-6 h-6 text-[#1E3A8A] mx-auto mb-3" />
-                                <div className="text-3xl font-bold text-surface-900 dark:text-white mb-1 tabular-nums">
-                                    {stat.value}
+                        {/* ── Figures ────────────────── */}
+                        <section className="bg-white/50 backdrop-blur-sm relative z-10">
+                            <div className="max-w-[1440px] mx-auto grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-black/10">
+                                {stats.map((stat, i) => (
+                                    <div key={stat.label} className="p-8 md:p-12 flex flex-col relative group bg-white">
+                                        <span className="font-mono text-xs text-black/40 mb-8 tracking-widest">SEC_0{i + 1}</span>
+                                        <div className="mt-auto">
+                                            <div className="font-display text-4xl md:text-5xl font-bold mb-2 tabular-nums">
+                                                {stat.value}
+                                            </div>
+                                            <div className="font-mono text-xs tracking-[0.15em] text-black/60 uppercase">
+                                                {stat.label}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* ── What STEM is (Technical Grid) ─────────────────── */}
+                        <section id="stem" className="py-32 relative z-10 border-y border-black/10 bg-white/80 backdrop-blur-sm">
+                            <div className="max-w-[1440px] mx-auto px-6">
+                                <div className="max-w-2xl mb-20">
+                                    <h2 className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
+                                        {content.stem.title}
+                                    </h2>
+                                    <p className="font-mono text-sm text-black/60 leading-relaxed border-l border-black/20 pl-4">
+                                        {content.stem.body}
+                                    </p>
                                 </div>
-                                <div className="text-xs font-bold text-surface-500 uppercase tracking-widest">
-                                    {stat.label}
+
+                                <div className="grid md:grid-cols-2 gap-px bg-black/10 border border-black/10">
+                                    {disciplines.map((d, i) => (
+                                        <div key={d.name} className="bg-white p-8 md:p-12 group hover:bg-black/[0.02] transition-colors relative">
+                                            <div className="absolute top-4 right-4 font-mono text-[10px] text-black/30 tracking-widest">
+                                                DATA.{d.letter}
+                                            </div>
+                                            <div className="font-display text-7xl font-bold text-outline opacity-20 mb-6 group-hover:opacity-40 transition-opacity">
+                                                {d.letter}
+                                            </div>
+                                            <h3 className="font-display text-xl md:text-2xl font-bold uppercase tracking-wide mb-4">
+                                                {d.name}
+                                            </h3>
+                                            <p className="font-mono text-sm text-black/50 leading-relaxed">
+                                                {d.body}
+                                            </p>
+                                        </div>
+                                    ))}
                                 </div>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
+                            </div>
+                        </section>
 
-            {/* ── What STEM is ──────────────────────────────────── */}
-            <section id="stem" className="py-20 bg-white dark:bg-surface-950 scroll-mt-16">
-                <div className="max-w-[1440px] mx-auto px-6">
-                    <div className="max-w-3xl">
-                        <h2 className="text-3xl md:text-4xl font-bold text-surface-900 dark:text-white mb-5 text-balance">
-                            {content.stem.title}
-                        </h2>
-                        <p className="text-lg text-surface-600 dark:text-surface-400 leading-relaxed">
-                            {content.stem.body}
-                        </p>
-                    </div>
+                        {/* ── Closing Terminal ──────────────────────────────── */}
+                        <section className="py-32 relative z-10 bg-white">
+                            <div className="max-w-[1440px] mx-auto px-6">
+                                <div className="border border-black/20 p-1 md:p-2 bg-white/50 backdrop-blur-md max-w-4xl mx-auto">
+                                    <div className="border border-black/10 p-8 md:p-16 flex flex-col items-center text-center relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-full h-8 border-b border-black/10 bg-black/5 flex items-center px-4">
+                                            <div className="flex gap-2">
+                                                <div className="w-2 h-2 bg-black/20"></div>
+                                                <div className="w-2 h-2 bg-black/20"></div>
+                                                <div className="w-2 h-2 bg-black/20"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <h2 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-tight mt-12 mb-6">
+                                            {content.cta.title}
+                                        </h2>
+                                        <p className="font-mono text-sm text-black/60 max-w-xl mx-auto mb-10">
+                                            {content.cta.subtitle}
+                                        </p>
+                                        
+                                        <Link href="/register" className="font-display uppercase tracking-widest font-bold bg-[#0a0a0a] text-white px-10 py-4 flex items-center gap-4 hover:bg-black/90 transition-colors">
+                                            {content.cta.button}
+                                            <ArrowRight className="w-5 h-5" />
+                                        </Link>
+                                    </div>
+                                </div>
 
-                    <motion.div
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: '-50px' }}
-                        variants={stagger}
-                        className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12"
-                    >
-                        {disciplines.map((d, i) => (
-                            <motion.div
-                                key={d.name}
-                                custom={i}
-                                variants={fadeInUp}
-                                className="p-7 rounded-2xl border border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-950"
-                            >
-                                <div className="flex items-baseline gap-3 mb-4">
-                                    <span className="text-4xl font-bold text-[#1E3A8A] dark:text-primary-400 leading-none">
-                                        {d.letter}
+                                <div className="flex flex-wrap items-center justify-center gap-8 mt-20 font-mono text-xs text-black/40 tracking-widest uppercase">
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-1 h-1 bg-black/40 rounded-full"></span>
+                                        {content.contact.email}
                                     </span>
-                                    <d.icon className="w-5 h-5 text-surface-400" />
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-1 h-1 bg-black/40 rounded-full"></span>
+                                        {content.contact.support_email}
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-1 h-1 bg-black/40 rounded-full"></span>
+                                        {content.contact.location}
+                                    </span>
                                 </div>
-                                <h3 className="text-base font-bold text-surface-900 dark:text-white mb-2">{d.name}</h3>
-                                <p className="text-sm text-surface-600 dark:text-surface-400 leading-relaxed">{d.body}</p>
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
+                            </div>
+                        </section>
 
-            {/* ── Vision ────────────────────────────────────────── */}
-            <section
-                id="vision"
-                className="py-20 bg-surface-50 dark:bg-surface-900 border-y border-surface-200 dark:border-surface-800 scroll-mt-16"
-            >
-                <div className="max-w-[1440px] mx-auto px-6 grid lg:grid-cols-2 gap-14 items-start">
-                    <div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-surface-900 dark:text-white mb-5 text-balance">
-                            {content.vision.title}
-                        </h2>
-                        <p className="text-lg text-surface-600 dark:text-surface-400 leading-relaxed">
-                            {content.vision.body}
-                        </p>
                     </div>
-
-                    <ul className="space-y-5">
-                        {commitments.map((point, i) => (
-                            <li
-                                key={i}
-                                className="flex gap-4 p-6 rounded-2xl bg-white dark:bg-surface-950 border border-surface-200 dark:border-surface-800"
-                            >
-                                <span className="w-8 h-8 shrink-0 rounded-full bg-[#1E3A8A] text-white text-sm font-bold flex items-center justify-center tabular-nums">
-                                    {i + 1}
-                                </span>
-                                <p className="text-surface-700 dark:text-surface-300 leading-relaxed">{point}</p>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </section>
-
-            {/* ── Closing ───────────────────────────────────────── */}
-            <section className="py-24 bg-white dark:bg-surface-950">
-                <div className="max-w-[1440px] mx-auto px-6">
-                    <div className="bg-surface-900 dark:bg-surface-800 rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl" />
-                        <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2 blur-2xl" />
-
-                        <div className="relative z-10">
-                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 text-balance">
-                                {content.cta.title}
-                            </h2>
-                            <p className="text-surface-300 text-lg max-w-2xl mx-auto mb-10 font-medium">
-                                {content.cta.subtitle}
-                            </p>
-                            <Link
-                                href="/register"
-                                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-white text-surface-900 font-bold hover:bg-surface-100 transition-colors"
-                            >
-                                {content.cta.button}
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-12 text-sm text-surface-500">
-                        <a href={`mailto:${content.contact.email}`} className="flex items-center gap-2 hover:text-surface-900 dark:hover:text-white">
-                            <Mail className="w-4 h-4" />
-                            {content.contact.email}
-                        </a>
-                        <a href={`mailto:${content.contact.support_email}`} className="flex items-center gap-2 hover:text-surface-900 dark:hover:text-white">
-                            <Mail className="w-4 h-4" />
-                            {content.contact.support_email}
-                        </a>
-                        <span className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            {content.contact.location}
-                        </span>
-                    </div>
-                </div>
-            </section>
-        </MarketingLayout>
+                </ParallaxComponent>
+            </main>
+        </div>
     );
 }
