@@ -355,7 +355,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                     {/* Island (top-right): search + profile */}
                     <div 
                         className={`flex items-center justify-between p-1 rounded-full bg-white/90 dark:bg-surface-900/90 backdrop-blur border border-surface-200 dark:border-surface-800 shadow-card pointer-events-auto ml-auto transition-[width] duration-300 ease-out overflow-visible ${
-                            searchOpen ? 'w-[320px]' : 'w-[84px]'
+                            searchOpen ? 'w-[260px] sm:w-[320px]' : 'w-[84px]'
                         }`}
                     >
                         {!searchOpen ? (
@@ -370,7 +370,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder="Search courses, lessons, discussions…"
-                                    className="flex-1 bg-transparent border-0 text-sm py-1.5 px-2 focus:ring-0 min-w-0 dark:text-white placeholder:text-surface-400"
+                                    className="flex-1 bg-transparent border-0 text-[16px] sm:text-sm py-1.5 px-2 focus:ring-0 min-w-0 dark:text-white placeholder:text-surface-400"
                                 />
                                 <button type="button" onClick={() => { setSearchOpen(false); setQuery(''); }} className="p-1 mr-1 text-surface-400 hover:text-surface-600 shrink-0">
                                     <X className="w-4 h-4" />

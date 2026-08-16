@@ -81,7 +81,7 @@ export default function Dashboard({
                     <p className="text-surface-500">Jump back in, or start something new.</p>
                 </div>
 
-                <div className="flex items-start gap-8 sm:gap-10">
+                <div className="flex flex-wrap items-start gap-6 sm:gap-10">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Level
