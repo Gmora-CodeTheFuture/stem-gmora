@@ -38,11 +38,42 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Lesson PDFs, presentation bundles and certificates are written here.
+         * The app referenced this disk by name while no such disk existed, so
+         * every call threw "Disk [private] does not have a configured driver".
+         *
+         * The driver is switchable because a serverless host has no persistent
+         * filesystem: set PRIVATE_FILESYSTEM_DRIVER=s3 there and the same code
+         * writes to object storage instead.
+         */
+        'private' => [
+            'driver' => env('PRIVATE_FILESYSTEM_DRIVER', 'local'),
+            'root' => storage_path('app/private'),
+            // Not served over a URL: these files go out through controllers
+            // that check enrolment first.
+            'visibility' => 'private',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_PRIVATE_BUCKET', env('AWS_BUCKET')),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
-            'driver' => 'local',
+            'driver' => env('PUBLIC_FILESYSTEM_DRIVER', 'local'),
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => env('PUBLIC_FILESYSTEM_URL', rtrim(env('APP_URL', 'http://localhost'), '/').'/storage'),
             'visibility' => 'public',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,
             'report' => false,
         ],

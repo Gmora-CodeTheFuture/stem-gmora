@@ -1,0 +1,19 @@
+# Nothing here is needed to serve the app, and every megabyte counts against
+# the serverless bundle limit.
+/node_modules
+/tests
+/test-results
+/playwright-report
+/blob-report
+/.github
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/public/hot
+/.env
+/.env.*
+!/.env.example
+/docs
+*.md
+!/docs/DEPLOY-VERCEL.md
