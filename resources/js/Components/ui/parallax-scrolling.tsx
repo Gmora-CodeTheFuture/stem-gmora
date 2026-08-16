@@ -61,20 +61,20 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
           {/* We give the layers a taller height and offset top so they have room to translate down without cutting off */}
           <div data-parallax-layers className="parallax__layers absolute inset-0 w-full h-[130%] -top-[15%]">
             <img 
-                src="https://cdn.prod.website-files.com/671752cd4027f01b1b8f1c7f/6717795be09b462b2e8ebf71_osmo-parallax-layer-3.webp" 
+                src="https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?auto=format&fit=crop&w=2000&q=80" 
                 loading="eager" 
                 width="800" 
                 data-parallax-layer="1" 
-                alt="" 
+                alt="Starry Sky" 
                 className="parallax__layer-img absolute inset-0 w-full h-full object-cover object-bottom" 
             />
             <img 
-                src="https://cdn.prod.website-files.com/671752cd4027f01b1b8f1c7f/6717795b4d5ac529e7d3a562_osmo-parallax-layer-2.webp" 
+                src="https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?auto=format&fit=crop&w=2000&q=80" 
                 loading="eager" 
                 width="800" 
                 data-parallax-layer="2" 
-                alt="" 
-                className="parallax__layer-img absolute inset-0 w-full h-full object-cover object-bottom z-10" 
+                alt="Moon" 
+                className="parallax__layer-img absolute top-[10%] right-[5%] w-1/3 h-[40%] object-contain z-10 mix-blend-screen" 
             />
             
             <div data-parallax-layer="3" className="parallax__layer-title absolute inset-0 flex items-center justify-center z-20">
@@ -84,12 +84,12 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
             </div>
             
             <img 
-                src="/images/robot.jpg" 
+                src="/images/robot_solid.png" 
                 loading="eager" 
                 width="800" 
                 data-parallax-layer="4" 
                 alt="Robot Foreground" 
-                className="parallax__layer-img absolute inset-x-0 bottom-0 top-auto w-full h-[75%] object-contain object-bottom z-30 pointer-events-none mix-blend-darken" 
+                className="parallax__layer-img absolute inset-x-0 bottom-0 top-auto w-full h-[75%] object-contain object-bottom z-30 pointer-events-none" 
             />
           </div>
           <div className="parallax__fade absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-white to-transparent z-40"></div>
