@@ -40,8 +40,8 @@ export default function Welcome({ content, figures }: Props) {
             <header className="absolute top-0 left-0 w-full z-50 border-b border-black/10 bg-white/80 backdrop-blur-md">
                 <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-sans text-sm uppercase tracking-widest text-black/70">
                     <div className="flex items-center gap-8">
-                        <Link href="/" className="font-sans text-black font-bold text-xl tracking-normal normal-case">
-                            GMORA.STEM
+                        <Link href="/" className="flex items-center">
+                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain" />
                         </Link>
                         <nav className="hidden md:flex gap-6">
                             <Link href="#stem" className="hover:text-black transition-colors">Curriculum</Link>
