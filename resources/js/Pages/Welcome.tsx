@@ -66,9 +66,10 @@ export default function Welcome({ content, figures }: Props) {
                     <div className="bg-white">
                         
                         {/* ── Brutalist Call to Action inside Hero spacing ────────────────── */}
-                        <div className="max-w-[1440px] mx-auto px-6 py-20 bg-white relative z-10 border-b border-black/10">
-                            <div className="max-w-4xl">
-                                <div className="flex items-center gap-4 mb-8 text-black/40">
+                        <div className="bg-black text-white w-full border-b border-white/10 relative z-10">
+                            <div className="max-w-[1440px] mx-auto px-6 py-20 relative z-10">
+                                <div className="max-w-4xl">
+                                    <div className="flex items-center gap-4 mb-8 text-white/40">
                                     <svg width="120" height="30" viewBox="0 0 120 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M0 15H20L30 5L40 25L50 15H120" stroke="currentColor" strokeWidth="1" />
                                         <circle cx="30" cy="5" r="2" fill="currentColor" />
@@ -82,24 +83,25 @@ export default function Welcome({ content, figures }: Props) {
                                     With STEM <span className="text-outline">Education</span>
                                 </h1>
 
-                                <p className="font-mono text-sm md:text-base text-black/60 max-w-xl leading-relaxed mb-12 border-l border-black/20 pl-4">
+                                <p className="font-mono text-sm md:text-base text-white/60 max-w-xl leading-relaxed mb-12 border-l border-white/20 pl-4">
                                     {content.hero.subtitle}
                                 </p>
 
                                 <div className="flex flex-wrap items-center gap-6 font-display font-bold uppercase tracking-wider text-sm">
-                                    <Link href="/register" className="bg-[#0a0a0a] text-white px-8 py-4 hover:bg-black/80 transition-colors">
+                                    <Link href="/register" className="bg-white text-black px-8 py-4 hover:bg-white/80 transition-colors">
                                         {content.hero.primary_cta}
                                     </Link>
-                                    <Link href="/courses" className="relative px-8 py-4 text-black hover:text-black/70 transition-colors group">
-                                        <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-black group-hover:border-black/50 transition-colors"></span>
-                                        <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-black group-hover:border-black/50 transition-colors"></span>
-                                        <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-black group-hover:border-black/50 transition-colors"></span>
-                                        <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-black group-hover:border-black/50 transition-colors"></span>
+                                    <Link href="/courses" className="relative px-8 py-4 text-white hover:text-white/70 transition-colors group">
+                                        <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white group-hover:border-white/50 transition-colors"></span>
+                                        <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white group-hover:border-white/50 transition-colors"></span>
+                                        <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white group-hover:border-white/50 transition-colors"></span>
+                                        <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white group-hover:border-white/50 transition-colors"></span>
                                         {content.hero.secondary_cta}
                                     </Link>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
                         {/* ── Figures ────────────────── */}
                         <section className="bg-white/50 backdrop-blur-sm relative z-10">

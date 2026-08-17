@@ -92,7 +92,7 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
                 className="parallax__layer-img absolute inset-x-0 bottom-0 top-auto w-full h-[75%] object-contain object-bottom z-30 pointer-events-none" 
             />
           </div>
-          <div className="parallax__fade absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-white to-transparent z-40"></div>
+          <div className="parallax__fade absolute bottom-0 left-0 w-full h-48 bg-gradient-to-t from-black to-transparent z-40"></div>
         </div>
       </section>
       
