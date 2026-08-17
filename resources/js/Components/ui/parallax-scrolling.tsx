@@ -55,7 +55,7 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
 
   return (
     <div className="parallax relative overflow-hidden" ref={parallaxRef}>
-      <section className="parallax__header relative w-full h-[120vh] overflow-hidden -mt-16 z-0">
+      <section className="parallax__header relative w-full h-[100vh] overflow-hidden -mt-16 z-0">
         <div className="parallax__visuals absolute inset-0">
           <div className="parallax__black-line-overflow hidden"></div>
           {/* We give the layers a taller height and offset top so they have room to translate down without cutting off */}
