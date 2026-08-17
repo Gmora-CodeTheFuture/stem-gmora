@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Award, BookOpen, Users, ArrowRight, PlayCircle, Sigma, Cpu, FlaskConical, Wrench
+    Award, BookOpen, Users, ArrowRight, PlayCircle, Sigma, Cpu, FlaskConical, Wrench, Menu
 } from 'lucide-react';
 import { ParallaxComponent } from '@/Components/ui/parallax-scrolling';
 
@@ -67,10 +67,10 @@ export default function Welcome({ content, figures }: Props) {
     ];
 
     const disciplines = [
-        { letter: 'S', name: 'Science', body: content.stem.science, icon: FlaskConical },
-        { letter: 'T', name: 'Technology', body: content.stem.technology, icon: Cpu },
-        { letter: 'E', name: 'Engineering', body: content.stem.engineering, icon: Wrench },
-        { letter: 'M', name: 'Mathematics', body: content.stem.maths, icon: Sigma },
+        { letter: 'S', name: 'Science', body: content.stem.science, icon: FlaskConical, colorClass: 'text-red-500' },
+        { letter: 'T', name: 'Technology', body: content.stem.technology, icon: Cpu, colorClass: 'text-yellow-400' },
+        { letter: 'E', name: 'Engineering', body: content.stem.engineering, icon: Wrench, colorClass: 'text-blue-500' },
+        { letter: 'M', name: 'Mathematics', body: content.stem.maths, icon: Sigma, colorClass: 'text-green-500' },
     ];
 
     const navClasses = navTheme === 'dark' 
@@ -98,11 +98,16 @@ export default function Welcome({ content, figures }: Props) {
                             <Link href="#vision" className={`transition-colors duration-300 ${linkHoverClass}`}>Directives</Link>
                         </nav>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <Link href="/login" className={`transition-colors duration-300 ${linkHoverClass}`}>Sys Login</Link>
-                        <Link href="/register" className={`px-4 py-1.5 transition-colors duration-300 font-bold ${buttonClass}`}>
-                            Initialize
-                        </Link>
+                    <div className="flex items-center gap-4 md:gap-6">
+                        <div className="hidden md:flex items-center gap-6">
+                            <Link href="/login" className={`transition-colors duration-300 ${linkHoverClass}`}>Sys Login</Link>
+                            <Link href="/register" className={`px-4 py-1.5 transition-colors duration-300 font-bold ${buttonClass}`}>
+                                Initialize
+                            </Link>
+                        </div>
+                        <button className={`md:hidden p-2 -mr-2 transition-colors duration-300 ${linkHoverClass}`} aria-label="Menu">
+                            <Menu className="w-6 h-6" />
+                        </button>
                     </div>
                 </div>
             </header>
@@ -189,7 +194,7 @@ export default function Welcome({ content, figures }: Props) {
                                     {disciplines.map((d, i) => (
                                         <div key={d.name} className="bg-white p-8 md:p-12 group hover:bg-black transition-colors duration-500 relative overflow-hidden">
                                             <div 
-                                                className="font-sans text-[120px] leading-none font-bold text-transparent opacity-10 mb-6 group-hover:opacity-20 transition-all duration-500 z-0 stem-letter"
+                                                className={`font-sans text-[120px] leading-none font-bold opacity-30 mb-6 group-hover:opacity-60 transition-all duration-500 z-0 ${d.colorClass}`}
                                             >
                                                 {d.letter}
                                             </div>
