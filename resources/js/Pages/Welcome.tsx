@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     Award, BookOpen, Users, ArrowRight, PlayCircle, Sigma, Cpu, FlaskConical, Wrench
@@ -19,6 +20,31 @@ interface Props {
 }
 
 export default function Welcome({ content, figures }: Props) {
+    const [isNavVisible, setIsNavVisible] = useState(true);
+
+    useEffect(() => {
+        let scrollTimeout: NodeJS.Timeout;
+        const handleScroll = () => {
+            // Check if at the very top, keep it visible
+            if (window.scrollY < 50) {
+                setIsNavVisible(true);
+                return;
+            }
+            setIsNavVisible(false);
+            clearTimeout(scrollTimeout);
+            
+            scrollTimeout = setTimeout(() => {
+                setIsNavVisible(true);
+            }, 150);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            clearTimeout(scrollTimeout);
+        };
+    }, []);
+
     const stats = [
         { value: figures.courses, label: 'COURSES', icon: BookOpen },
         { value: figures.lessons, label: 'LESSONS', icon: PlayCircle },
@@ -34,23 +60,23 @@ export default function Welcome({ content, figures }: Props) {
     ];
 
     return (
-        <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-black text-black selection:bg-black selection:text-white font-sans relative overflow-hidden">
             <Head title="Gmora STEM — The Great Expanse" />
             
-            <header className="absolute top-0 left-0 w-full z-50 border-b border-black/10 bg-white/80 backdrop-blur-md">
-                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-sans text-sm uppercase tracking-widest text-black/70">
+            <header className={`fixed top-0 left-0 w-full z-50 border-b bg-white border-black/10 text-black/70 transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-sans text-sm uppercase tracking-widest transition-colors duration-300">
                     <div className="flex items-center gap-8">
                         <Link href="/" className="flex items-center">
-                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain" />
+                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain transition-opacity duration-300" />
                         </Link>
                         <nav className="hidden md:flex gap-6">
-                            <Link href="#stem" className="hover:text-black transition-colors">Curriculum</Link>
-                            <Link href="#vision" className="hover:text-black transition-colors">Directives</Link>
+                            <Link href="#stem" className="transition-colors duration-300 hover:text-black">Curriculum</Link>
+                            <Link href="#vision" className="transition-colors duration-300 hover:text-black">Directives</Link>
                         </nav>
                     </div>
                     <div className="flex items-center gap-6">
-                        <Link href="/login" className="hover:text-black transition-colors">Sys Login</Link>
-                        <Link href="/register" className="bg-[#0a0a0a] text-white px-4 py-1.5 hover:bg-black/80 transition-colors font-bold">
+                        <Link href="/login" className="transition-colors duration-300 hover:text-black">Sys Login</Link>
+                        <Link href="/register" className="px-4 py-1.5 transition-colors duration-300 font-bold bg-[#0a0a0a] text-white hover:bg-black/80">
                             Initialize
                         </Link>
                     </div>
