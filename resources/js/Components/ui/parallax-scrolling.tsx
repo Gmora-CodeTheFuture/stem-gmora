@@ -78,7 +78,7 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
             />
             
             <div data-parallax-layer="3" className="parallax__layer-title absolute inset-0 flex items-center justify-center z-20">
-              <h2 className="parallax__title font-display text-[15vw] leading-none font-bold text-white uppercase tracking-tighter mix-blend-overlay">
+              <h2 className="parallax__title font-sans text-[15vw] leading-none font-bold text-white uppercase tracking-tighter mix-blend-overlay">
                   GMORA
               </h2>
             </div>

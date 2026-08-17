@@ -38,9 +38,9 @@ export default function Welcome({ content, figures }: Props) {
             <Head title="Gmora STEM — The Great Expanse" />
             
             <header className="absolute top-0 left-0 w-full z-50 border-b border-black/10 bg-white/80 backdrop-blur-md">
-                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-mono text-sm uppercase tracking-widest text-black/70">
+                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-sans text-sm uppercase tracking-widest text-black/70">
                     <div className="flex items-center gap-8">
-                        <Link href="/" className="font-display text-black font-bold text-xl tracking-normal normal-case">
+                        <Link href="/" className="font-sans text-black font-bold text-xl tracking-normal normal-case">
                             GMORA.STEM
                         </Link>
                         <nav className="hidden md:flex gap-6">
@@ -75,19 +75,19 @@ export default function Welcome({ content, figures }: Props) {
                                         <circle cx="30" cy="5" r="2" fill="currentColor" />
                                         <circle cx="40" cy="25" r="2" fill="currentColor" />
                                     </svg>
-                                    <span className="font-mono text-xs tracking-[0.2em]">{content.hero.badge}</span>
+                                    <span className="font-sans text-xs tracking-[0.2em]">{content.hero.badge}</span>
                                 </div>
 
-                                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tighter uppercase leading-[0.85] mb-8">
+                                <h1 className="font-sans text-4xl md:text-5xl font-bold tracking-tighter uppercase leading-[0.85] mb-8">
                                     Master <span className="text-outline">The Future</span><br/>
                                     With STEM <span className="text-outline">Education</span>
                                 </h1>
 
-                                <p className="font-mono text-sm md:text-base text-white/60 max-w-xl leading-relaxed mb-12 border-l border-white/20 pl-4">
+                                <p className="font-sans text-sm md:text-base text-white/60 max-w-xl leading-relaxed mb-12 border-l border-white/20 pl-4">
                                     {content.hero.subtitle}
                                 </p>
 
-                                <div className="flex flex-wrap items-center gap-6 font-display font-bold uppercase tracking-wider text-sm">
+                                <div className="flex flex-wrap items-center gap-6 font-sans font-bold uppercase tracking-wider text-sm">
                                     <Link href="/register" className="bg-white text-black px-8 py-4 hover:bg-white/80 transition-colors">
                                         {content.hero.primary_cta}
                                     </Link>
@@ -108,12 +108,12 @@ export default function Welcome({ content, figures }: Props) {
                             <div className="max-w-[1440px] mx-auto grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-black/10">
                                 {stats.map((stat, i) => (
                                     <div key={stat.label} className="p-8 md:p-12 flex flex-col relative group bg-white">
-                                        <span className="font-mono text-xs text-black/40 mb-8 tracking-widest">SEC_0{i + 1}</span>
+                                        <span className="font-sans text-xs text-black/40 mb-8 tracking-widest">SEC_0{i + 1}</span>
                                         <div className="mt-auto">
-                                            <div className="font-display text-4xl md:text-5xl font-bold mb-2 tabular-nums">
+                                            <div className="font-sans text-4xl md:text-5xl font-bold mb-2 tabular-nums">
                                                 {stat.value}
                                             </div>
-                                            <div className="font-mono text-xs tracking-[0.15em] text-black/60 uppercase">
+                                            <div className="font-sans text-xs tracking-[0.15em] text-black/60 uppercase">
                                                 {stat.label}
                                             </div>
                                         </div>
@@ -126,10 +126,10 @@ export default function Welcome({ content, figures }: Props) {
                         <section id="stem" className="py-32 relative z-10 border-y border-black/10 bg-white/80 backdrop-blur-sm">
                             <div className="max-w-[1440px] mx-auto px-6">
                                 <div className="max-w-2xl mb-20">
-                                    <h2 className="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
+                                    <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
                                         {content.stem.title}
                                     </h2>
-                                    <p className="font-mono text-sm text-black/60 leading-relaxed border-l border-black/20 pl-4">
+                                    <p className="font-sans text-sm text-black/60 leading-relaxed border-l border-black/20 pl-4">
                                         {content.stem.body}
                                     </p>
                                 </div>
@@ -137,16 +137,16 @@ export default function Welcome({ content, figures }: Props) {
                                 <div className="grid md:grid-cols-2 gap-px bg-black/10 border border-black/10">
                                     {disciplines.map((d, i) => (
                                         <div key={d.name} className="bg-white p-8 md:p-12 group hover:bg-black/[0.02] transition-colors relative">
-                                            <div className="absolute top-4 right-4 font-mono text-[10px] text-black/30 tracking-widest">
+                                            <div className="absolute top-4 right-4 font-sans text-[10px] text-black/30 tracking-widest">
                                                 DATA.{d.letter}
                                             </div>
-                                            <div className="font-display text-7xl font-bold text-outline opacity-20 mb-6 group-hover:opacity-40 transition-opacity">
+                                            <div className="font-sans text-7xl font-bold text-outline opacity-20 mb-6 group-hover:opacity-40 transition-opacity">
                                                 {d.letter}
                                             </div>
-                                            <h3 className="font-display text-xl md:text-2xl font-bold uppercase tracking-wide mb-4">
+                                            <h3 className="font-sans text-xl md:text-2xl font-bold uppercase tracking-wide mb-4">
                                                 {d.name}
                                             </h3>
-                                            <p className="font-mono text-sm text-black/50 leading-relaxed">
+                                            <p className="font-sans text-sm text-black/50 leading-relaxed">
                                                 {d.body}
                                             </p>
                                         </div>
@@ -168,21 +168,21 @@ export default function Welcome({ content, figures }: Props) {
                                             </div>
                                         </div>
                                         
-                                        <h2 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-tight mt-12 mb-6">
+                                        <h2 className="font-sans text-4xl md:text-5xl font-bold uppercase tracking-tight mt-12 mb-6">
                                             {content.cta.title}
                                         </h2>
-                                        <p className="font-mono text-sm text-black/60 max-w-xl mx-auto mb-10">
+                                        <p className="font-sans text-sm text-black/60 max-w-xl mx-auto mb-10">
                                             {content.cta.subtitle}
                                         </p>
                                         
-                                        <Link href="/register" className="font-display uppercase tracking-widest font-bold bg-[#0a0a0a] text-white px-10 py-4 flex items-center gap-4 hover:bg-black/90 transition-colors">
+                                        <Link href="/register" className="font-sans uppercase tracking-widest font-bold bg-[#0a0a0a] text-white px-10 py-4 flex items-center gap-4 hover:bg-black/90 transition-colors">
                                             {content.cta.button}
                                             <ArrowRight className="w-5 h-5" />
                                         </Link>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap items-center justify-center gap-8 mt-20 font-mono text-xs text-black/40 tracking-widest uppercase">
+                                <div className="flex flex-wrap items-center justify-center gap-8 mt-20 font-sans text-xs text-black/40 tracking-widest uppercase">
                                     <span className="flex items-center gap-2">
                                         <span className="w-1 h-1 bg-black/40 rounded-full"></span>
                                         {content.contact.email}
