@@ -76,10 +76,11 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
                 alt="Moon" 
                 className="parallax__layer-img absolute top-[10%] right-[5%] w-1/3 h-[40%] object-contain z-10 mix-blend-screen" 
             />
-            
-            <div data-parallax-layer="3" className="parallax__layer-title absolute inset-0 flex items-center justify-center z-20">
-              <h2 className="parallax__title font-sans text-[15vw] leading-none font-bold text-white uppercase tracking-tighter mix-blend-overlay">
-                  GMORA
+            <div data-parallax-layer="3" className="parallax__layer-title absolute inset-0 flex flex-col justify-center px-6 md:px-20 pt-24 pb-20 md:pb-32 z-20">
+              <h2 className="parallax__title font-sans text-[min(14vw,25vh)] md:text-[min(16vw,28vh)] xl:text-[min(18vw,30vh)] leading-[0.8] font-black text-white uppercase tracking-tighter text-left drop-shadow-2xl">
+                  <span className="text-transparent" style={{ WebkitTextStroke: 'max(1px, 0.15vw) white' }}>SHAPE</span><br/>
+                  <span className="text-transparent" style={{ WebkitTextStroke: 'max(1px, 0.15vw) white' }}>THE</span><br/>
+                  FUTURE
               </h2>
             </div>
             

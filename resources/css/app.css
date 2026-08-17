@@ -169,8 +169,19 @@
 
 
     .text-outline {
-        -webkit-text-stroke: 1px currentColor;
         color: transparent;
+        text-shadow: 
+            -1.5px -1.5px 0 currentColor,
+             1.5px -1.5px 0 currentColor,
+            -1.5px  1.5px 0 currentColor,
+             1.5px  1.5px 0 currentColor;
+    }
+
+    .stem-letter {
+        -webkit-text-stroke: 2px black;
+    }
+    .group:hover .stem-letter {
+        -webkit-text-stroke: 2px white;
     }
 
     .bg-grid-pattern {

@@ -21,6 +21,7 @@ interface Props {
 
 export default function Welcome({ content, figures }: Props) {
     const [isNavVisible, setIsNavVisible] = useState(true);
+    const [navTheme, setNavTheme] = useState<'light'|'dark'>('dark');
 
     useEffect(() => {
         let scrollTimeout: NodeJS.Timeout;
@@ -39,9 +40,22 @@ export default function Welcome({ content, figures }: Props) {
         };
 
         window.addEventListener('scroll', handleScroll);
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const theme = entry.target.getAttribute('data-theme');
+                    if (theme) setNavTheme(theme as 'light' | 'dark');
+                }
+            });
+        }, { rootMargin: '-64px 0px -80% 0px' });
+
+        document.querySelectorAll('[data-theme]').forEach(el => observer.observe(el));
+
         return () => {
             window.removeEventListener('scroll', handleScroll);
             clearTimeout(scrollTimeout);
+            observer.disconnect();
         };
     }, []);
 
@@ -59,24 +73,34 @@ export default function Welcome({ content, figures }: Props) {
         { letter: 'M', name: 'Mathematics', body: content.stem.maths, icon: Sigma },
     ];
 
+    const navClasses = navTheme === 'dark' 
+        ? 'bg-black/90 border-white/10 text-white' 
+        : 'bg-white border-black/10 text-black/70';
+        
+    const logoSrc = navTheme === 'dark' ? '/logo-dark.svg' : '/logo.svg';
+    const linkHoverClass = navTheme === 'dark' ? 'hover:text-white/70' : 'hover:text-black';
+    const buttonClass = navTheme === 'dark'
+        ? 'bg-white text-black hover:bg-white/80'
+        : 'bg-[#0a0a0a] text-white hover:bg-black/80';
+
     return (
         <div className="min-h-screen bg-black text-black selection:bg-black selection:text-white font-sans relative overflow-hidden">
             <Head title="Gmora STEM — The Great Expanse" />
             
-            <header className={`fixed top-0 left-0 w-full z-50 border-b bg-white border-black/10 text-black/70 transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-sans text-sm uppercase tracking-widest transition-colors duration-300">
+            <header className={`fixed top-0 left-0 w-full z-50 border-b backdrop-blur-md transition-all duration-500 ${navClasses} ${isNavVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+                <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between font-sans text-sm uppercase tracking-widest">
                     <div className="flex items-center gap-8">
                         <Link href="/" className="flex items-center">
-                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain transition-opacity duration-300" />
+                            <img src={logoSrc} alt="Gmora STEM" className="h-12 w-auto object-contain transition-opacity duration-300" />
                         </Link>
                         <nav className="hidden md:flex gap-6">
-                            <Link href="#stem" className="transition-colors duration-300 hover:text-black">Curriculum</Link>
-                            <Link href="#vision" className="transition-colors duration-300 hover:text-black">Directives</Link>
+                            <Link href="#stem" className={`transition-colors duration-300 ${linkHoverClass}`}>Curriculum</Link>
+                            <Link href="#vision" className={`transition-colors duration-300 ${linkHoverClass}`}>Directives</Link>
                         </nav>
                     </div>
                     <div className="flex items-center gap-6">
-                        <Link href="/login" className="transition-colors duration-300 hover:text-black">Sys Login</Link>
-                        <Link href="/register" className="px-4 py-1.5 transition-colors duration-300 font-bold bg-[#0a0a0a] text-white hover:bg-black/80">
+                        <Link href="/login" className={`transition-colors duration-300 ${linkHoverClass}`}>Sys Login</Link>
+                        <Link href="/register" className={`px-4 py-1.5 transition-colors duration-300 font-bold ${buttonClass}`}>
                             Initialize
                         </Link>
                     </div>
@@ -87,12 +111,13 @@ export default function Welcome({ content, figures }: Props) {
             <div className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-grid-pattern"></div>
 
             <main className="relative z-10 pt-16">
+                <div data-theme="dark" className="absolute top-0 left-0 w-full h-[100vh] pointer-events-none"></div>
                 <ParallaxComponent>
                     {/* The rest of the page sits inside ParallaxComponent so it flows below the visual layers */}
                     <div className="bg-white">
                         
                         {/* ── Brutalist Call to Action inside Hero spacing ────────────────── */}
-                        <div className="bg-black text-white w-full border-b border-white/10 relative z-10">
+                        <div data-theme="dark" className="bg-black text-white w-full border-b border-white/10 relative z-10">
                             <div className="max-w-[1440px] mx-auto px-6 py-20 relative z-10">
                                 <div className="max-w-4xl">
                                     <div className="flex items-center gap-4 mb-8 text-white/40">
@@ -130,7 +155,7 @@ export default function Welcome({ content, figures }: Props) {
                     </div>
 
                         {/* ── Figures ────────────────── */}
-                        <section className="bg-white/50 backdrop-blur-sm relative z-10">
+                        <section data-theme="light" className="bg-white/50 backdrop-blur-sm relative z-10">
                             <div className="max-w-[1440px] mx-auto grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-black/10">
                                 {stats.map((stat, i) => (
                                     <div key={stat.label} className="p-8 md:p-12 flex flex-col relative group bg-white">
@@ -149,7 +174,7 @@ export default function Welcome({ content, figures }: Props) {
                         </section>
 
                         {/* ── What STEM is (Technical Grid) ─────────────────── */}
-                        <section id="stem" className="py-32 relative z-10 border-y border-black/10 bg-white/80 backdrop-blur-sm">
+                        <section data-theme="light" id="stem" className="py-32 relative z-10 border-y border-black/10 bg-white/80 backdrop-blur-sm">
                             <div className="max-w-[1440px] mx-auto px-6">
                                 <div className="max-w-2xl mb-20">
                                     <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
@@ -162,68 +187,77 @@ export default function Welcome({ content, figures }: Props) {
 
                                 <div className="grid md:grid-cols-2 gap-px bg-black/10 border border-black/10">
                                     {disciplines.map((d, i) => (
-                                        <div key={d.name} className="bg-white p-8 md:p-12 group hover:bg-black/[0.02] transition-colors relative">
-                                            <div className="absolute top-4 right-4 font-sans text-[10px] text-black/30 tracking-widest">
-                                                DATA.{d.letter}
-                                            </div>
-                                            <div className="font-sans text-7xl font-bold text-outline opacity-20 mb-6 group-hover:opacity-40 transition-opacity">
+                                        <div key={d.name} className="bg-white p-8 md:p-12 group hover:bg-black transition-colors duration-500 relative overflow-hidden">
+                                            <div 
+                                                className="font-sans text-[120px] leading-none font-bold text-transparent opacity-10 mb-6 group-hover:opacity-20 transition-all duration-500 z-0 stem-letter"
+                                            >
                                                 {d.letter}
                                             </div>
-                                            <h3 className="font-sans text-xl md:text-2xl font-bold uppercase tracking-wide mb-4">
-                                                {d.name}
-                                            </h3>
-                                            <p className="font-sans text-sm text-black/50 leading-relaxed">
-                                                {d.body}
-                                            </p>
+                                            <div className="relative z-10">
+                                                <h3 className="font-sans text-xl md:text-2xl font-bold uppercase tracking-wide mb-4 text-black group-hover:text-white transition-colors duration-500">
+                                                    {d.name}
+                                                </h3>
+                                                <p className="font-sans text-sm text-black/50 group-hover:text-white/60 leading-relaxed transition-colors duration-500">
+                                                    {d.body}
+                                                </p>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </section>
 
-                        {/* ── Closing Terminal ──────────────────────────────── */}
-                        <section className="py-32 relative z-10 bg-white">
-                            <div className="max-w-[1440px] mx-auto px-6">
-                                <div className="border border-black/20 p-1 md:p-2 bg-white/50 backdrop-blur-md max-w-4xl mx-auto">
-                                    <div className="border border-black/10 p-8 md:p-16 flex flex-col items-center text-center relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-full h-8 border-b border-black/10 bg-black/5 flex items-center px-4">
-                                            <div className="flex gap-2">
-                                                <div className="w-2 h-2 bg-black/20"></div>
-                                                <div className="w-2 h-2 bg-black/20"></div>
-                                                <div className="w-2 h-2 bg-black/20"></div>
-                                            </div>
-                                        </div>
-                                        
-                                        <h2 className="font-sans text-4xl md:text-5xl font-bold uppercase tracking-tight mt-12 mb-6">
-                                            {content.cta.title}
-                                        </h2>
-                                        <p className="font-sans text-sm text-black/60 max-w-xl mx-auto mb-10">
-                                            {content.cta.subtitle}
-                                        </p>
-                                        
-                                        <Link href="/register" className="font-sans uppercase tracking-widest font-bold bg-[#0a0a0a] text-white px-10 py-4 flex items-center gap-4 hover:bg-black/90 transition-colors">
-                                            {content.cta.button}
-                                            <ArrowRight className="w-5 h-5" />
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap items-center justify-center gap-8 mt-20 font-sans text-xs text-black/40 tracking-widest uppercase">
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-1 h-1 bg-black/40 rounded-full"></span>
-                                        {content.contact.email}
-                                    </span>
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-1 h-1 bg-black/40 rounded-full"></span>
-                                        {content.contact.support_email}
-                                    </span>
-                                    <span className="flex items-center gap-2">
-                                        <span className="w-1 h-1 bg-black/40 rounded-full"></span>
-                                        {content.contact.location}
-                                    </span>
-                                </div>
+                        {/* ── Closing CTA ──────────────────────────────── */}
+                        <section data-theme="light" className="py-32 relative z-10 bg-white">
+                            <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
+                                <h2 className="font-sans text-5xl md:text-6xl font-bold uppercase tracking-tight mb-8">
+                                    {content.cta.title}
+                                </h2>
+                                <p className="font-sans text-base text-black/60 max-w-xl mx-auto mb-12 leading-relaxed">
+                                    {content.cta.subtitle}
+                                </p>
+                                
+                                <Link href="/register" className="font-sans uppercase tracking-widest font-bold bg-[#0a0a0a] text-white px-12 py-5 flex items-center gap-4 hover:bg-black/90 transition-all hover:scale-105 duration-300">
+                                    {content.cta.button}
+                                    <ArrowRight className="w-5 h-5" />
+                                </Link>
                             </div>
                         </section>
+
+                        {/* ── Footer ──────────────────────────────── */}
+                        <footer data-theme="dark" className="bg-black text-white pt-20 pb-12 relative z-10 border-t border-white/10">
+                            <div className="max-w-[1440px] mx-auto px-6">
+                                <div className="grid md:grid-cols-2 gap-12 border-b border-white/10 pb-12 mb-12">
+                                    <div>
+                                        <img src="/logo-dark.svg" alt="Gmora STEM" className="h-16 w-auto mb-6" />
+                                        <p className="font-sans text-sm text-white/50 max-w-sm leading-relaxed">
+                                            Gmora STEM is a premier educational platform dedicated to advancing the future of science, technology, engineering, and mathematics.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col md:items-end justify-center font-sans text-xs text-white/40 tracking-widest uppercase space-y-4">
+                                        <span className="flex items-center gap-3">
+                                            {content.contact.email}
+                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                        </span>
+                                        <span className="flex items-center gap-3">
+                                            {content.contact.support_email}
+                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                        </span>
+                                        <span className="flex items-center gap-3">
+                                            {content.contact.location}
+                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-6 font-sans text-xs text-white/40 tracking-widest uppercase">
+                                    <span>© {new Date().getFullYear()} Gmora. All rights reserved.</span>
+                                    <div className="flex gap-8">
+                                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
+                                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </footer>
 
                     </div>
                 </ParallaxComponent>
