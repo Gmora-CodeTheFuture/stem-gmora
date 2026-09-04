@@ -81,11 +81,25 @@ class UserFactory extends Factory
         return $this->role(Role::ADMIN);
     }
 
+    public function instructor(): static
+    {
+        return $this->role(Role::INSTRUCTOR);
+    }
+
     private function roleId(string $roleName): string
     {
+        $defaults = [
+            Role::STUDENT => 'Enrolled learner',
+            Role::INSTRUCTOR => 'Teaches assigned courses and mentors assigned students',
+            Role::ADMIN => 'Runs the platform and authors courses',
+        ];
+
         return Role::firstOrCreate(
             ['name' => $roleName],
-            ['display_name' => Str::headline($roleName)],
+            [
+                'display_name' => Str::headline($roleName),
+                'description' => $defaults[$roleName] ?? null,
+            ],
         )->id;
     }
 }

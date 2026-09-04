@@ -14,6 +14,8 @@ export interface User {
     is_public?: boolean;
     role: Role;
     role_id: string;
+    assigned_instructor_id?: string | null;
+    assigned_instructor?: Pick<User, 'id' | 'full_name' | 'email'> | null;
     locale: string;
     preferences?: Record<string, unknown>;
     two_factor_enabled: boolean;

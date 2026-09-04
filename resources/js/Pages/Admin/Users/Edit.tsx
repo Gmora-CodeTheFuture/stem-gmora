@@ -10,16 +10,22 @@ import { FormEventHandler } from 'react';
 interface Props extends PageProps {
     targetUser: User;
     roles: Role[];
+    instructors: Array<Pick<User, 'id' | 'full_name' | 'email'>>;
 }
 
-export default function EditUser({ targetUser, roles }: Props) {
+export default function EditUser({ targetUser, roles, instructors }: Props) {
+    const selectedRole = roles.find((role) => role.id === targetUser.role_id);
     const { data, setData, patch, errors, processing } = useForm({
         full_name: targetUser.full_name,
         email: targetUser.email,
         role_id: targetUser.role_id,
         bio: targetUser.bio || '',
         headline: (targetUser as any).headline || '',
+        assigned_instructor_id: targetUser.assigned_instructor_id || '',
     });
+
+    const selectedRoleName = roles.find((role) => role.id === data.role_id)?.name ?? selectedRole?.name;
+    const showInstructorAssignment = selectedRoleName === 'student';
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -67,6 +73,26 @@ export default function EditUser({ targetUser, roles }: Props) {
                             </select>
                             <InputError className="mt-2" message={errors.role_id} />
                         </div>
+
+                        {showInstructorAssignment && (
+                            <div>
+                                <InputLabel htmlFor="assigned_instructor_id" value="Assigned instructor" />
+                                <select
+                                    id="assigned_instructor_id"
+                                    value={data.assigned_instructor_id}
+                                    onChange={(e) => setData('assigned_instructor_id', e.target.value)}
+                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm"
+                                >
+                                    <option value="">Unassigned</option>
+                                    {instructors.map((instructor) => (
+                                        <option key={instructor.id} value={instructor.id}>
+                                            {instructor.full_name} ({instructor.email})
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError className="mt-2" message={errors.assigned_instructor_id} />
+                            </div>
+                        )}
 
                         <div>
                             <InputLabel htmlFor="headline" value="Headline" />

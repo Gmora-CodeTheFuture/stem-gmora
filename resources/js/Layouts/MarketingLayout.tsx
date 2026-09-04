@@ -7,6 +7,10 @@ import { PageProps } from '@/types';
 /**
  * The public shell. Marketing pages share this menubar; signed-in users still
  * reach the dashboard from here without a second navigation model.
+ *
+ * Theme follows the same `dark` class as the rest of the app so a visitor who
+ * already toggled dark mode in the dashboard does not land on a half-light
+ * marketing page.
  */
 export default function MarketingLayout({
     children,
@@ -34,24 +38,22 @@ export default function MarketingLayout({
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-white text-surface-900 font-sans">
+        <div className="min-h-screen flex flex-col bg-surface-50 text-surface-900 dark:bg-surface-950 dark:text-surface-50 font-sans">
             {/* ── Navigation ────────────────────────────────────── */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-surface-200 h-16">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-surface-900/95 backdrop-blur border-b border-surface-200 dark:border-surface-800 h-16">
                 <nav className="max-w-[1440px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
-                    
-                    {/* Left: Logo and Links */}
                     <div className="flex items-center gap-8 h-full">
                         <Link href="/" className="flex items-center">
                             <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
                             <img src="/logo-dark.svg" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
                         </Link>
-                        
+
                         <div className={`items-center h-full ${nav ? 'hidden lg:flex' : 'hidden'}`}>
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.name}
                                     href={link.href}
-                                    className="px-4 h-full flex items-center text-sm font-semibold text-surface-600 hover:text-surface-900 hover:bg-surface-50 transition-colors border-b-2 border-transparent hover:border-surface-300"
+                                    className="px-4 h-full flex items-center text-sm font-semibold text-surface-600 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors border-b-2 border-transparent hover:border-surface-300 dark:hover:border-surface-600"
                                 >
                                     {link.name}
                                 </Link>
@@ -59,37 +61,36 @@ export default function MarketingLayout({
                         </div>
                     </div>
 
-                    {/* Right: Search and Auth */}
                     <div className="hidden md:flex items-center gap-4">
                         {nav && (
                             <form onSubmit={submitSearch} className="relative w-64">
                                 <Search className="w-4 h-4 text-surface-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                                <input 
+                                <input
                                     type="search"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Search courses"
                                     aria-label="Search courses"
-                                    className="w-full pl-9 pr-4 py-1.5 bg-white border border-surface-300 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-surface-900 focus:border-surface-900"
+                                    className="w-full pl-9 pr-4 py-1.5 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-700 text-surface-900 dark:text-surface-100 rounded-full text-sm placeholder:text-surface-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                                 />
                             </form>
                         )}
 
                         {auth?.user ? (
-                            <Link href="/dashboard" className="px-5 py-1.5 rounded-full bg-surface-900 text-white text-sm font-bold hover:bg-surface-800 transition-colors">
+                            <Link href="/dashboard" className="px-5 py-1.5 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-sm font-bold hover:bg-surface-800 dark:hover:bg-surface-100 transition-colors">
                                 Dashboard
                             </Link>
                         ) : (
                             <div className="flex items-center gap-2">
                                 <Link
                                     href="/login"
-                                    className="px-4 py-1.5 text-sm font-bold text-surface-900 hover:bg-surface-50 rounded-full transition-colors"
+                                    className="px-4 py-1.5 text-sm font-bold text-surface-900 dark:text-surface-100 hover:bg-surface-50 dark:hover:bg-surface-800 rounded-full transition-colors"
                                 >
                                     Sign In
                                 </Link>
-                                <Link 
-                                    href="/register" 
-                                    className="px-5 py-1.5 rounded-full bg-surface-900 text-white text-sm font-bold hover:bg-surface-800 transition-colors"
+                                <Link
+                                    href="/register"
+                                    className="px-5 py-1.5 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-sm font-bold hover:bg-surface-800 dark:hover:bg-surface-100 transition-colors"
                                 >
                                     Register
                                 </Link>
@@ -97,58 +98,56 @@ export default function MarketingLayout({
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Menu"
-                        className={`p-2 rounded-lg text-surface-600 ${nav ? 'lg:hidden' : 'hidden'}`}
+                        className={`p-2 rounded-lg text-surface-600 dark:text-surface-300 ${nav ? 'lg:hidden' : 'hidden'}`}
                     >
                         {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
                 </nav>
 
-                {/* Mobile Menu */}
                 <AnimatePresence>
                     {nav && mobileMenuOpen && (
                         <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="lg:hidden bg-white border-b border-surface-200 absolute top-16 left-0 right-0"
+                            className="lg:hidden bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 absolute top-16 left-0 right-0"
                         >
                             <div className="px-4 py-4 space-y-2">
                                 <form onSubmit={submitSearch} className="relative mb-4">
                                     <Search className="w-4 h-4 text-surface-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                                    <input 
+                                    <input
                                         type="search"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         placeholder="Search courses"
                                         aria-label="Search courses"
-                                        className="w-full pl-9 pr-4 py-2 bg-white border border-surface-300 rounded-full text-sm focus:outline-none"
+                                        className="w-full pl-9 pr-4 py-2 bg-white dark:bg-surface-800 border border-surface-300 dark:border-surface-700 text-surface-900 dark:text-surface-100 rounded-full text-sm focus:outline-none"
                                     />
                                 </form>
                                 {navLinks.map((link) => (
                                     <Link
                                         key={link.name}
                                         href={link.href}
-                                        className="block px-4 py-3 rounded-lg text-sm font-bold text-surface-700 hover:bg-surface-50"
+                                        className="block px-4 py-3 rounded-lg text-sm font-bold text-surface-700 dark:text-surface-200 hover:bg-surface-50 dark:hover:bg-surface-800"
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
                                         {link.name}
                                     </Link>
                                 ))}
-                                <hr className="border-surface-200 my-2" />
+                                <hr className="border-surface-200 dark:border-surface-800 my-2" />
                                 {auth?.user ? (
-                                    <Link href="/dashboard" className="block w-full text-center py-2.5 rounded-full bg-surface-900 text-white text-sm font-bold">
+                                    <Link href="/dashboard" className="block w-full text-center py-2.5 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-sm font-bold">
                                         Dashboard
                                     </Link>
                                 ) : (
                                     <div className="flex flex-col gap-2">
-                                        <Link href="/register" className="block w-full text-center py-2.5 rounded-full bg-surface-900 text-white text-sm font-bold">
+                                        <Link href="/register" className="block w-full text-center py-2.5 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 text-sm font-bold">
                                             Register
                                         </Link>
-                                        <Link href="/login" className="block w-full text-center py-2.5 rounded-full border border-surface-300 text-surface-900 text-sm font-bold">
+                                        <Link href="/login" className="block w-full text-center py-2.5 rounded-full border border-surface-300 dark:border-surface-600 text-surface-900 dark:text-surface-100 text-sm font-bold">
                                             Sign In
                                         </Link>
                                     </div>
@@ -159,45 +158,43 @@ export default function MarketingLayout({
                 </AnimatePresence>
             </header>
 
-            {/* ── Main Content ──────────────────────────────────── */}
             <main className="flex-1 pt-16">
                 {children}
             </main>
 
-            {/* ── Footer ────────────────────────────────────────── */}
-            <footer className="bg-surface-900 text-white py-12 border-t-4 border-primary-500 mt-20">
+            <footer className="bg-white dark:bg-surface-900 text-surface-900 dark:text-white py-12 border-t border-surface-200 dark:border-surface-800 mt-20">
                 <div className="max-w-[1440px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="col-span-2 md:col-span-1">
                         <Link href="/" className="flex items-center mb-6">
                             <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
                             <img src="/logo-dark.svg" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
                         </Link>
-                        <p className="text-sm text-surface-400">
+                        <p className="text-sm text-surface-500 dark:text-surface-400">
                             The World's STEM Education Platform. Learn, build, and innovate with us.
                         </p>
                     </div>
                     <div>
                         <h4 className="font-bold mb-4">Platform</h4>
-                        <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="/courses" className="hover:text-white">Courses</Link></li>
-                            <li><Link href="/#stem" className="hover:text-white">What is STEM</Link></li>
-                            <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
+                        <ul className="space-y-2 text-sm text-surface-500 dark:text-surface-400">
+                            <li><Link href="/courses" className="hover:text-surface-900 dark:hover:text-white">Courses</Link></li>
+                            <li><Link href="/#stem" className="hover:text-surface-900 dark:hover:text-white">What is STEM</Link></li>
+                            <li><Link href="/blog" className="hover:text-surface-900 dark:hover:text-white">Blog</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-bold mb-4">Company</h4>
-                        <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="/#vision" className="hover:text-white">Our vision</Link></li>
-                            <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
-                            <li><Link href="/terms" className="hover:text-white">Terms</Link></li>
-                            <li><a href="mailto:hello@gmorastem.com" className="hover:text-white">Contact</a></li>
+                        <ul className="space-y-2 text-sm text-surface-500 dark:text-surface-400">
+                            <li><Link href="/#vision" className="hover:text-surface-900 dark:hover:text-white">Our vision</Link></li>
+                            <li><Link href="/privacy" className="hover:text-surface-900 dark:hover:text-white">Privacy</Link></li>
+                            <li><Link href="/terms" className="hover:text-surface-900 dark:hover:text-white">Terms</Link></li>
+                            <li><a href="mailto:hello@gmorastem.com" className="hover:text-surface-900 dark:hover:text-white">Contact</a></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-bold mb-4">Learners</h4>
-                        <ul className="space-y-2 text-sm text-surface-400">
-                            <li><Link href="/login" className="hover:text-white">Sign in</Link></li>
-                            <li><Link href="/register" className="hover:text-white">Create an account</Link></li>
+                        <ul className="space-y-2 text-sm text-surface-500 dark:text-surface-400">
+                            <li><Link href="/login" className="hover:text-surface-900 dark:hover:text-white">Sign in</Link></li>
+                            <li><Link href="/register" className="hover:text-surface-900 dark:hover:text-white">Create an account</Link></li>
                         </ul>
                     </div>
                 </div>

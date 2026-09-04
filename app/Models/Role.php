@@ -66,12 +66,12 @@ class Role extends Model
     }
 
     /**
-     * Two roles, and that is the whole model. Everyone either learns here or
-     * runs the place; courses are authored by admins, so the tiers that used to
-     * sit between them (instructor, teaching assistant, course manager) only
-     * ever added permission checks nobody exercised.
+     * Three roles: students learn, instructors teach assigned courses and
+     * mentor assigned students, and admins run the platform.
      */
     public const STUDENT = 'student';
+
+    public const INSTRUCTOR = 'instructor';
 
     public const ADMIN = 'admin';
 }

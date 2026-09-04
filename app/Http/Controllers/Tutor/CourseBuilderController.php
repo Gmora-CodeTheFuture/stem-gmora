@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,15 +27,16 @@ class CourseBuilderController extends Controller
     ) {}
 
     /**
-     * Every course, in one place. Admins are peers who all author the
-     * platform's courses, so there is no useful line between "mine" and "all" —
-     * this replaced the separate admin course console.
+     * Admins see every course. Instructors only see courses assigned to them.
      */
     public function index(Request $request): Response
     {
+        $user = $request->user();
+
         $courses = Course::query()
             ->with('instructor:id,full_name')
             ->withCount('enrollments')
+            ->when(! $user->isAdmin(), fn ($q) => $q->where('instructor_id', $user->id))
             ->when($request->string('search')->toString(), fn ($q, $search) => $q->whereLike('title', "%{$search}%"))
             ->when($request->string('status')->toString(), fn ($q, $status) => $q->where('status', $status))
             ->when($request->string('category')->toString(), fn ($q, $category) => $q->where('category', $category))
@@ -46,16 +48,32 @@ class CourseBuilderController extends Controller
             'courses' => $courses,
             'categories' => Course::select('category')->distinct()->orderBy('category')->pluck('category'),
             'filters' => $request->only(['search', 'status', 'category']),
+            'canCreate' => $user->isAdmin(),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Tutor/Courses/Create');
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $instructors = User::query()
+            ->whereHas('role', fn ($q) => $q->where('name', Role::INSTRUCTOR))
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'email']);
+
+        return Inertia::render('Tutor/Courses/Create', [
+            'instructors' => $instructors,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $request->merge([
+            'instructor_id' => $request->input('instructor_id') ?: null,
+        ]);
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:500'],
@@ -66,9 +84,21 @@ class CourseBuilderController extends Controller
             'price' => ['required', 'numeric', 'min:0'],
             'currency' => ['required', 'string', 'max:3'],
             'thumbnail_url' => ['nullable', 'string'],
+            'instructor_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query->whereExists(function ($inner) {
+                        $inner->selectRaw('1')
+                            ->from('roles')
+                            ->whereColumn('roles.id', 'users.role_id')
+                            ->whereIn('roles.name', [Role::INSTRUCTOR, Role::ADMIN]);
+                    });
+                }),
+            ],
         ]);
 
-        $validated['instructor_id'] = $request->user()->id;
+        $validated['instructor_id'] = $validated['instructor_id'] ?? $request->user()->id;
         $validated['slug'] = $this->content->uniqueSlug($validated['title']);
         $validated['status'] = Course::STATUS_DRAFT;
 
@@ -115,6 +145,13 @@ class CourseBuilderController extends Controller
             // so nobody discovers the blockers only at publish time.
             'readiness' => $this->readiness->for($course),
             'canPublishDirectly' => $request->user()->isAdmin(),
+            'instructors' => $request->user()->isAdmin()
+                ? User::query()
+                    ->whereHas('role', fn ($q) => $q->whereIn('name', [Role::INSTRUCTOR, Role::ADMIN]))
+                    ->orderBy('full_name')
+                    ->get(['id', 'full_name', 'email'])
+                : [],
+            'canAssignInstructor' => $request->user()->isAdmin(),
         ]);
     }
 
@@ -122,7 +159,7 @@ class CourseBuilderController extends Controller
     {
         $this->authorizeTutor($request, $course);
 
-        $validated = $request->validate([
+        $rules = [
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:500'],
             'description' => ['nullable', 'string'],
@@ -132,7 +169,24 @@ class CourseBuilderController extends Controller
             'price' => ['required', 'numeric', 'min:0'],
             'currency' => ['required', 'string', 'max:3'],
             'thumbnail_url' => ['nullable', 'string'],
-        ]);
+        ];
+
+        if ($request->user()->isAdmin()) {
+            $rules['instructor_id'] = [
+                'required',
+                'uuid',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query->whereExists(function ($inner) {
+                        $inner->selectRaw('1')
+                            ->from('roles')
+                            ->whereColumn('roles.id', 'users.role_id')
+                            ->whereIn('roles.name', [Role::INSTRUCTOR, Role::ADMIN]);
+                    });
+                }),
+            ];
+        }
+
+        $validated = $request->validate($rules);
 
         $course->update($validated);
 
@@ -236,7 +290,7 @@ class CourseBuilderController extends Controller
     }
 
     /**
-     * Ensure the tutor owns this course (admins bypass).
+     * Ensure the instructor owns this course (admins bypass).
      */
     private function authorizeTutor(Request $request, Course $course): void
     {

@@ -4,10 +4,14 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
-import { PageProps } from '@/types';
+import { PageProps, User } from '@/types';
 import { FormEventHandler } from 'react';
 
-export default function CreateCourse({ auth }: PageProps) {
+interface Props extends PageProps {
+    instructors?: Array<Pick<User, 'id' | 'full_name' | 'email'>>;
+}
+
+export default function CreateCourse({ instructors = [] }: Props) {
     const { data, setData, post, errors, processing } = useForm({
         title: '',
         subtitle: '',
@@ -18,6 +22,7 @@ export default function CreateCourse({ auth }: PageProps) {
         price: 0.00,
         currency: 'USD',
         thumbnail_url: '',
+        instructor_id: '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -56,6 +61,26 @@ export default function CreateCourse({ auth }: PageProps) {
                                 value={data.description} onChange={(e) => setData('description', e.target.value)} rows={4} placeholder="What will students learn?" />
                             <InputError className="mt-2" message={errors.description} />
                         </div>
+
+                        {instructors.length > 0 && (
+                            <div>
+                                <InputLabel htmlFor="instructor_id" value="Assigned instructor" />
+                                <select
+                                    id="instructor_id"
+                                    value={data.instructor_id}
+                                    onChange={(e) => setData('instructor_id', e.target.value)}
+                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                >
+                                    <option value="">Assign to me (admin)</option>
+                                    {instructors.map((instructor) => (
+                                        <option key={instructor.id} value={instructor.id}>
+                                            {instructor.full_name} ({instructor.email})
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError className="mt-2" message={errors.instructor_id} />
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>

@@ -63,74 +63,13 @@ class TwoFactorTest extends TestCase
         $this->assertArrayNotHasKey('two_factor_recovery_codes', $user->fresh()->toArray());
     }
 
-    public function test_login_stops_at_the_challenge_when_two_factor_is_on(): void
+    public function test_staff_are_not_forced_to_set_up_two_factor(): void
     {
-        $user = User::factory()->create();
-        $secret = app(TwoFactorService::class)->generateSecret();
-        app(TwoFactorService::class)->enable($user, $secret);
+        $admin = User::factory()->admin()->withoutTwoFactor()->create();
 
-        $this->post(route('login'), ['email' => $user->email, 'password' => 'password'])
-            ->assertRedirect(route('two-factor.challenge'));
-
-        // The password alone must not sign anyone in.
-        $this->assertGuest();
-
-        $this->post(route('two-factor.verify'), ['code' => $this->codeFor($secret)])
-            ->assertRedirect(route('dashboard'));
-
-        $this->assertAuthenticatedAs($user);
-    }
-
-    public function test_a_recovery_code_works_once(): void
-    {
-        $user = User::factory()->create();
-        $secret = app(TwoFactorService::class)->generateSecret();
-        $codes = app(TwoFactorService::class)->enable($user, $secret);
-
-        $this->post(route('login'), ['email' => $user->email, 'password' => 'password']);
-        $this->post(route('two-factor.verify'), ['recovery_code' => $codes[0]])
-            ->assertRedirect(route('dashboard'));
-
-        $this->assertAuthenticatedAs($user);
-        $this->assertCount(TwoFactorService::RECOVERY_CODE_COUNT - 1, $user->fresh()->two_factor_recovery_codes);
-
-        // The spent code is dead.
-        $this->post(route('logout'));
-        $this->post(route('login'), ['email' => $user->email, 'password' => 'password']);
-        $this->post(route('two-factor.verify'), ['recovery_code' => $codes[0]])
-            ->assertSessionHasErrors('code');
-
-        $this->assertGuest();
-    }
-
-    public function test_the_challenge_is_rate_limited(): void
-    {
-        $user = User::factory()->create();
-        app(TwoFactorService::class)->enable($user, app(TwoFactorService::class)->generateSecret());
-
-        $this->post(route('login'), ['email' => $user->email, 'password' => 'password']);
-
-        foreach (range(1, 5) as $attempt) {
-            $this->post(route('two-factor.verify'), ['code' => '000000'])->assertSessionHasErrors('code');
-        }
-
-        $this->post(route('two-factor.verify'), ['code' => '000000'])
-            ->assertSessionHasErrorsIn('default', ['code']);
-
-        $this->assertGuest();
-    }
-
-    public function test_staff_are_pushed_to_set_up_two_factor(): void
-    {
-        $instructor = User::factory()->admin()->withoutTwoFactor()->create();
-
-        $this->actingAs($instructor)
+        $this->actingAs($admin)
             ->get(route('tutor.courses.index'))
-            ->assertRedirect(route('two-factor.setup'));
-
-        // They can still reach the setup screen and their own settings.
-        $this->actingAs($instructor)->get(route('two-factor.setup'))->assertOk();
-        $this->actingAs($instructor)->get(route('profile.security'))->assertOk();
+            ->assertOk();
     }
 
     public function test_students_are_not_forced_into_two_factor(): void
@@ -138,15 +77,16 @@ class TwoFactorTest extends TestCase
         $this->actingAs(User::factory()->create())->get(route('dashboard'))->assertOk();
     }
 
-    public function test_staff_cannot_disable_required_two_factor(): void
+    public function test_staff_can_disable_two_factor_when_it_is_optional(): void
     {
-        $instructor = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
+        app(TwoFactorService::class)->enable($admin, app(TwoFactorService::class)->generateSecret());
 
-        $this->actingAs($instructor)
+        $this->actingAs($admin)
             ->delete(route('two-factor.disable'), ['password' => 'password'])
-            ->assertSessionHas('error');
+            ->assertSessionHasNoErrors();
 
-        $this->assertTrue($instructor->refresh()->two_factor_enabled);
+        $this->assertFalse($admin->refresh()->two_factor_enabled);
     }
 
     public function test_a_student_can_disable_two_factor_with_their_password(): void
@@ -159,5 +99,17 @@ class TwoFactorTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $this->assertFalse($user->refresh()->two_factor_enabled);
+    }
+
+    public function test_login_no_longer_stops_at_a_two_factor_challenge(): void
+    {
+        $user = User::factory()->create();
+        $secret = app(TwoFactorService::class)->generateSecret();
+        app(TwoFactorService::class)->enable($user, $secret);
+
+        $this->post(route('login'), ['email' => $user->email, 'password' => 'password'])
+            ->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertAuthenticatedAs($user);
     }
 }

@@ -74,20 +74,31 @@ class UserManagementController extends Controller
 
     public function show(User $user): Response
     {
-        $user->load(['role', 'stat', 'badges', 'enrollments.course:id,title,slug', 'certificates.course:id,title']);
+        $user->load([
+            'role',
+            'stat',
+            'badges',
+            'enrollments.course:id,title,slug',
+            'certificates.course:id,title',
+            'assignedInstructor:id,full_name,email',
+            'assignedStudents:id,full_name,email',
+            'courses:id,title,slug,status',
+        ]);
 
         return Inertia::render('Admin/Users/Show', [
             'targetUser' => $user,
+            'instructors' => $this->instructors(),
         ]);
     }
 
     public function edit(Request $request, User $user): Response
     {
-        $user->load('role');
+        $user->load(['role', 'assignedInstructor:id,full_name']);
 
         return Inertia::render('Admin/Users/Edit', [
             'targetUser' => $user,
             'roles' => $this->assignableRoles($request),
+            'instructors' => $this->instructors(),
         ]);
     }
 
@@ -95,12 +106,28 @@ class UserManagementController extends Controller
     {
         $this->assertMayManage($request, $user);
 
+        $request->merge([
+            'assigned_instructor_id' => $request->input('assigned_instructor_id') ?: null,
+        ]);
+
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role_id' => ['required', 'exists:roles,id'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'headline' => ['nullable', 'string', 'max:255'],
+            'assigned_instructor_id' => [
+                'nullable',
+                'uuid',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query->whereExists(function ($inner) {
+                        $inner->selectRaw('1')
+                            ->from('roles')
+                            ->whereColumn('roles.id', 'users.role_id')
+                            ->where('roles.name', Role::INSTRUCTOR);
+                    });
+                }),
+            ],
         ]);
 
         $previousRole = $user->role;
@@ -111,14 +138,25 @@ class UserManagementController extends Controller
             $this->assertMayAssignRole($request, $newRole, $user);
         }
 
+        // Only students keep a mentor assignment.
+        if ($newRole?->name !== Role::STUDENT) {
+            $validated['assigned_instructor_id'] = null;
+        }
+
+        $previousInstructor = $user->assigned_instructor_id;
         $user->update($validated);
 
-        // Role changes are the highest-value mutation in the system, and are
-        // explicitly required to be auditable (Plan §5.5).
         if ($roleChanged) {
             AuditLog::record('user.role_changed', 'user', $user->id, [
                 'from' => $previousRole?->name,
                 'to' => $newRole?->name,
+            ], $request->user()->id);
+        }
+
+        if (($validated['assigned_instructor_id'] ?? null) !== $previousInstructor) {
+            AuditLog::record('student.instructor_assigned', 'user', $user->id, [
+                'from' => $previousInstructor,
+                'to' => $user->assigned_instructor_id,
             ], $request->user()->id);
         }
 
@@ -190,5 +228,14 @@ class UserManagementController extends Controller
     private function adminCount(): int
     {
         return User::whereHas('role', fn ($q) => $q->where('name', Role::ADMIN))->count();
+    }
+
+    /** @return Collection<int, User> */
+    private function instructors()
+    {
+        return User::query()
+            ->whereHas('role', fn ($q) => $q->where('name', Role::INSTRUCTOR))
+            ->orderBy('full_name')
+            ->get(['id', 'full_name', 'email']);
     }
 }

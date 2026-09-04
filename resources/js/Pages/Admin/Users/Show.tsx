@@ -1,10 +1,15 @@
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Award, BookOpen, Edit, Flame, Mail, Shield } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, Award, BookOpen, Edit, Flame, Mail, Shield, Users } from 'lucide-react';
+import { FormEventHandler } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import InputLabel from '@/Components/InputLabel';
 import { Certificate, Course, Enrollment, PageProps, Role, User } from '@/types';
 
 interface TargetUser extends User {
     role: Role;
+    assigned_instructor?: Pick<User, 'id' | 'full_name' | 'email'> | null;
+    assigned_students?: Array<Pick<User, 'id' | 'full_name' | 'email'>>;
+    courses?: Array<Pick<Course, 'id' | 'title' | 'slug' | 'status'>>;
     stat?: { xp: number; level: number; current_streak: number; longest_streak: number } | null;
     badges?: Array<{ id: string; name: string; description: string; pivot?: { earned_at: string } }>;
     enrollments?: Array<Enrollment & { course?: Course }>;
@@ -13,10 +18,22 @@ interface TargetUser extends User {
 
 interface Props extends PageProps {
     targetUser: TargetUser;
+    instructors: Array<Pick<User, 'id' | 'full_name' | 'email'>>;
 }
 
-export default function UserShow({ targetUser }: Props) {
+export default function UserShow({ targetUser, instructors }: Props) {
     const stat = targetUser.stat;
+    const isStudent = targetUser.role?.name === 'student';
+    const isInstructor = targetUser.role?.name === 'instructor';
+
+    const assignForm = useForm({
+        assigned_instructor_id: targetUser.assigned_instructor_id || '',
+    });
+
+    const assignInstructor: FormEventHandler = (e) => {
+        e.preventDefault();
+        assignForm.patch(route('admin.users.assign-instructor', targetUser.id));
+    };
 
     return (
         <DashboardLayout>
@@ -88,24 +105,105 @@ export default function UserShow({ targetUser }: Props) {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-5 items-start">
-                <div className="card p-6">
-                    <h2 className="text-base font-semibold text-surface-900 dark:text-white mb-4">Enrollments</h2>
-
-                    {targetUser.enrollments?.length ? (
-                        <ul className="divide-y divide-surface-100 dark:divide-surface-800">
-                            {targetUser.enrollments.map((enrollment) => (
-                                <li key={enrollment.id} className="py-3 flex items-center gap-3">
-                                    <BookOpen className="w-4 h-4 text-surface-400 shrink-0" />
-                                    <span className="flex-1 text-sm text-surface-900 dark:text-white truncate">
-                                        {enrollment.course?.title}
-                                    </span>
-                                    <span className="badge-muted capitalize">{enrollment.status}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-sm text-surface-500">No enrollments.</p>
+                <div className="space-y-5">
+                    {isStudent && (
+                        <div className="card p-6">
+                            <h2 className="text-base font-semibold text-surface-900 dark:text-white mb-4">
+                                Assigned instructor
+                            </h2>
+                            <form onSubmit={assignInstructor} className="space-y-3">
+                                <div>
+                                    <InputLabel htmlFor="assigned_instructor_id" value="Instructor" />
+                                    <select
+                                        id="assigned_instructor_id"
+                                        value={assignForm.data.assigned_instructor_id}
+                                        onChange={(e) => assignForm.setData('assigned_instructor_id', e.target.value)}
+                                        className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                    >
+                                        <option value="">Unassigned</option>
+                                        {instructors.map((instructor) => (
+                                            <option key={instructor.id} value={instructor.id}>
+                                                {instructor.full_name} ({instructor.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {targetUser.assigned_instructor && (
+                                    <p className="text-sm text-surface-500">
+                                        Currently: {targetUser.assigned_instructor.full_name}
+                                    </p>
+                                )}
+                                <button type="submit" className="btn-primary text-sm" disabled={assignForm.processing}>
+                                    Save assignment
+                                </button>
+                            </form>
+                        </div>
                     )}
+
+                    {isInstructor && (
+                        <div className="card p-6">
+                            <h2 className="text-base font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+                                <Users className="w-4 h-4" /> Assigned students
+                            </h2>
+                            {targetUser.assigned_students?.length ? (
+                                <ul className="divide-y divide-surface-100 dark:divide-surface-800">
+                                    {targetUser.assigned_students.map((student) => (
+                                        <li key={student.id} className="py-3">
+                                            <Link
+                                                href={`/admin/users/${student.id}`}
+                                                className="text-sm text-primary-600 hover:underline"
+                                            >
+                                                {student.full_name}
+                                            </Link>
+                                            <p className="text-xs text-surface-500">{student.email}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-surface-500">No students assigned.</p>
+                            )}
+
+                            {!!targetUser.courses?.length && (
+                                <div className="mt-6 pt-6 border-t border-surface-100 dark:border-surface-800">
+                                    <h3 className="text-sm font-semibold text-surface-900 dark:text-white mb-3">
+                                        Teaching courses
+                                    </h3>
+                                    <ul className="space-y-2">
+                                        {targetUser.courses.map((course) => (
+                                            <li key={course.id}>
+                                                <Link
+                                                    href={`/tutor/courses/${course.id}/edit`}
+                                                    className="text-sm text-primary-600 hover:underline"
+                                                >
+                                                    {course.title}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="card p-6">
+                        <h2 className="text-base font-semibold text-surface-900 dark:text-white mb-4">Enrollments</h2>
+
+                        {targetUser.enrollments?.length ? (
+                            <ul className="divide-y divide-surface-100 dark:divide-surface-800">
+                                {targetUser.enrollments.map((enrollment) => (
+                                    <li key={enrollment.id} className="py-3 flex items-center gap-3">
+                                        <BookOpen className="w-4 h-4 text-surface-400 shrink-0" />
+                                        <span className="flex-1 text-sm text-surface-900 dark:text-white truncate">
+                                            {enrollment.course?.title}
+                                        </span>
+                                        <span className="badge-muted capitalize">{enrollment.status}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm text-surface-500">No enrollments.</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="space-y-5">

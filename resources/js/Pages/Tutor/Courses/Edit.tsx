@@ -5,7 +5,7 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import QuizBuilderPanel from '@/Components/Tutor/QuizBuilderPanel';
-import { PageProps, Course, Module, Lesson, Assignment, LiveSession } from '@/types';
+import { PageProps, Course, Module, Lesson, Assignment, LiveSession, User } from '@/types';
 import { FormEventHandler, useState } from 'react';
 import { Plus, GripVertical, Trash2, Video, FileText, CheckCircle, AlertCircle, Clock, Globe, Upload, Pencil, HelpCircle, Radio, ClipboardCheck } from 'lucide-react';
 
@@ -20,6 +20,8 @@ interface Props extends PageProps {
     course: Course;
     readiness: { checks: ReadinessCheck[]; blocking: number };
     canPublishDirectly: boolean;
+    instructors?: Array<Pick<User, 'id' | 'full_name' | 'email'>>;
+    canAssignInstructor?: boolean;
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -29,7 +31,7 @@ const STATUS_STYLE: Record<string, string> = {
     archived: 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400',
 };
 
-export default function EditCourse({ course, readiness, canPublishDirectly }: Props) {
+export default function EditCourse({ course, readiness, canPublishDirectly, instructors = [], canAssignInstructor = false }: Props) {
     const [activeTab, setActiveTab] = useState<'details' | 'curriculum' | 'assignments'>('details');
 
     const { data, setData, patch, errors, processing } = useForm({
@@ -41,6 +43,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
         language: course.language,
         price: course.price,
         currency: course.currency,
+        instructor_id: course.instructor_id,
     });
 
     const submitDetails: FormEventHandler = (e) => {
@@ -393,6 +396,26 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                 <textarea id="description" className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
                                     value={data.description} onChange={(e) => setData('description', e.target.value)} rows={5} />
                             </div>
+
+                            {canAssignInstructor && (
+                                <div>
+                                    <InputLabel htmlFor="instructor_id" value="Assigned instructor *" />
+                                    <select
+                                        id="instructor_id"
+                                        value={data.instructor_id}
+                                        onChange={(e) => setData('instructor_id', e.target.value)}
+                                        className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                        required
+                                    >
+                                        {instructors.map((instructor) => (
+                                            <option key={instructor.id} value={instructor.id}>
+                                                {instructor.full_name} ({instructor.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError className="mt-2" message={errors.instructor_id} />
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>

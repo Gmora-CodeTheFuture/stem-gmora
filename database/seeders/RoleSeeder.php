@@ -15,6 +15,7 @@ class RoleSeeder extends Seeder
     {
         $roles = [
             ['name' => Role::STUDENT, 'display_name' => 'Student', 'description' => 'Enrolled learner'],
+            ['name' => Role::INSTRUCTOR, 'display_name' => 'Instructor', 'description' => 'Teaches assigned courses and mentors assigned students'],
             ['name' => Role::ADMIN, 'display_name' => 'Admin', 'description' => 'Runs the platform and authors courses'],
         ];
 

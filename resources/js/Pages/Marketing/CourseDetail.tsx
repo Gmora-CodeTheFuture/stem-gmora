@@ -49,7 +49,7 @@ export default function CourseDetail({ course, enrollment }: Props) {
             <Head title={`${course.title} — Gmora STEM`} />
 
             {/* ── Hero ─────────────────────────────────────────── */}
-            <section className="pt-28 md:pt-36 pb-14 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+            <section className="pt-28 md:pt-36 pb-14 bg-surface-50 dark:bg-surface-950 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide grid lg:grid-cols-[1fr_360px] gap-10 items-start">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
@@ -136,7 +136,7 @@ export default function CourseDetail({ course, enrollment }: Props) {
             </section>
 
             {/* ── Body ─────────────────────────────────────────── */}
-            <section className="section pt-14">
+            <section className="section pt-14 bg-surface-50 dark:bg-surface-950">
                 <div className="container-wide grid lg:grid-cols-[1fr_320px] gap-10 items-start">
                     <div className="min-w-0">
                         <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-3">

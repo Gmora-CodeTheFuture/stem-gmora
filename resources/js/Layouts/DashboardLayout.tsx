@@ -170,9 +170,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     };
 
     const isAdmin = auth?.user?.role?.name === 'admin';
-    // Two roles: you either learn here or you run the place. Authoring and
-    // administration are the same job now, so they share one list.
-    const isStudent = !isAdmin;
+    const isInstructor = auth?.user?.role?.name === 'instructor';
+    const isStudent = !isAdmin && !isInstructor;
     const unread = notifications_count ?? 0;
 
     const navigation = [
@@ -189,6 +188,16 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
     ];
 
+    const instructorNav = isInstructor ? [
+        { name: 'Home', href: '/instructor', icon: Home, exact: true },
+        { name: 'My courses', href: '/instructor/courses', icon: BookOpen },
+        { name: 'My students', href: '/instructor/students', icon: Users },
+        { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
+        { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+        { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unread },
+        { name: 'Support', href: '/support', icon: LifeBuoy },
+    ] : [];
+
     // Ordered by how the work actually flows: build it, review it, then the
     // people and the platform around it.
     const adminNav = isAdmin ? [
@@ -197,6 +206,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
         { name: 'Approvals', href: '/admin/approvals', icon: ClipboardCheck },
         { name: 'Users', href: '/admin/users', icon: Users },
+        { name: 'Instructors', href: '/admin/instructors', icon: GraduationCap },
         { name: 'Enrollments', href: '/admin/enrollments', icon: UserCheck },
         { name: 'Support queue', href: '/admin/support', icon: LifeBuoy },
         { name: 'Badges', href: '/admin/badges', icon: Trophy },
@@ -217,7 +227,14 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
             { name: 'Support', href: '/admin/support', icon: LifeBuoy },
         ]
-        : navigation;
+        : isInstructor
+            ? [
+                { name: 'Home', href: '/instructor', icon: Home, exact: true },
+                { name: 'Courses', href: '/instructor/courses', icon: BookOpen },
+                { name: 'Students', href: '/instructor/students', icon: Users },
+                { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
+            ]
+            : navigation;
 
     const path = typeof window === 'undefined' ? '' : window.location.pathname;
     const isActive = (href: string, exact = false) =>
@@ -311,6 +328,19 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                             </div>
 
                             <div className="space-y-1">{yourWork.map(navLink)}</div>
+                        </>
+                    )}
+
+                    {isInstructor && instructorNav.length > 0 && (
+                        <>
+                            <div className={`pt-2 pb-2 ${expanded ? 'px-6' : 'px-0 text-center'}`}>
+                                {expanded ? (
+                                    <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Teaching</p>
+                                ) : (
+                                    <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
+                                )}
+                            </div>
+                            <div className="space-y-1">{instructorNav.map(navLink)}</div>
                         </>
                     )}
 

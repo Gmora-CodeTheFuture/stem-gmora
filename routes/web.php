@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BadgeManagementController;
 use App\Http\Controllers\Admin\ContentBlockController;
 use App\Http\Controllers\Admin\CourseApprovalController;
 use App\Http\Controllers\Admin\EnrollmentManagementController;
+use App\Http\Controllers\Admin\InstructorManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
 use App\Http\Controllers\Admin\PostManagementController;
 use App\Http\Controllers\Admin\PromoCodeController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiscussionController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EventRegistrationController;
+use App\Http\Controllers\Instructor\DashboardController as InstructorDashboardController;
 use App\Http\Controllers\Instructor\GradingController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\LearningController;
@@ -243,12 +245,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Instructor
+    | Instructor portal + grading
     |----------------------------------------------------------------------
     */
-    Route::middleware('role:admin')
+    Route::middleware('role:instructor,admin')
         ->prefix('instructor')
         ->group(function () {
+            Route::get('/', [InstructorDashboardController::class, 'home'])->name('instructor.home');
+            Route::get('/courses', [InstructorDashboardController::class, 'courses'])->name('instructor.courses');
+            Route::get('/students', [InstructorDashboardController::class, 'students'])->name('instructor.students');
+
             Route::patch('/submissions/{submission}', [GradingController::class, 'grade'])
                 ->name('instructor.grade-submission');
             Route::patch('/quiz-attempts/{attempt}', [GradingController::class, 'gradeAttempt'])
@@ -292,6 +298,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::patch('/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
         Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
         Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('admin.users.reset-password');
+
+        // Instructors
+        Route::get('/instructors', [InstructorManagementController::class, 'index'])->name('admin.instructors.index');
+        Route::post('/instructors', [InstructorManagementController::class, 'store'])->name('admin.instructors.store');
+        Route::patch('/users/{user}/assign-instructor', [InstructorManagementController::class, 'assignStudent'])
+            ->name('admin.users.assign-instructor');
 
         // Review queue
         Route::get('/approvals', [CourseApprovalController::class, 'index'])->name('admin.approvals.index');
@@ -352,7 +364,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 | Tutor Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified', 'role:admin'])
+Route::middleware(['auth', 'verified', 'role:admin,instructor'])
     ->prefix('tutor')
     ->group(function () {
         // Courses

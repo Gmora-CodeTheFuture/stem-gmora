@@ -8,6 +8,7 @@ interface Props extends PageProps {
     courses: Paginated<Course & { enrollments_count: number; instructor?: Pick<User, 'id' | 'full_name'> }>;
     categories: string[];
     filters: { search?: string; status?: string; category?: string };
+    canCreate?: boolean;
 }
 
 const STATUSES = ['draft', 'pending_review', 'published', 'archived'];
@@ -19,7 +20,7 @@ const statusColors: Record<string, string> = {
     archived: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
 };
 
-export default function CoursesIndex({ courses, categories, filters }: Props) {
+export default function CoursesIndex({ courses, categories, filters, canCreate = true }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
 
     const apply = (patch: Record<string, string>) =>
@@ -37,7 +38,9 @@ export default function CoursesIndex({ courses, categories, filters }: Props) {
 
             <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
                 <h1 className="text-2xl font-semibold text-surface-900 dark:text-white">Courses</h1>
-                <Link href="/tutor/courses/create" className="btn-primary text-sm">+ New course</Link>
+                {canCreate && (
+                    <Link href="/tutor/courses/create" className="btn-primary text-sm">+ New course</Link>
+                )}
             </div>
 
             <div className="flex items-center gap-3 mb-5 flex-wrap">

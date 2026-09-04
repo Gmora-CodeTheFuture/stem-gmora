@@ -42,7 +42,7 @@ export default function Courses({ courses, categories, filters }: Props) {
         <MarketingLayout nav>
             <Head title="Courses — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-10 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+            <section className="pt-28 md:pt-36 pb-10 bg-surface-50 dark:bg-surface-950 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide text-center">
                     <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-4">
                         Explore the <span className="text-primary-600 dark:text-primary-400">Course Catalog</span>
@@ -65,7 +65,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                 </div>
             </section>
 
-            <section className="section pt-10">
+            <section className="section pt-10 bg-surface-50 dark:bg-surface-950">
                 <div className="container-wide">
                     {/* Filters */}
                     <div className="flex flex-wrap items-center gap-2 mb-8">
@@ -76,7 +76,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                                     filters.category === category
                                         ? 'bg-primary-600 border-primary-600 text-white'
-                                        : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
+                                        : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
                                 }`}
                             >
                                 {category}
@@ -92,7 +92,7 @@ export default function Courses({ courses, categories, filters }: Props) {
                                 className={`px-3.5 py-1.5 rounded-full text-sm font-medium capitalize border transition-colors ${
                                     filters.difficulty === level
                                         ? 'bg-surface-900 border-surface-900 text-white dark:bg-white dark:border-white dark:text-surface-900'
-                                        : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-surface-400'
+                                        : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-surface-400'
                                 }`}
                             >
                                 {level}
@@ -102,9 +102,9 @@ export default function Courses({ courses, categories, filters }: Props) {
 
                     {courses.data.length === 0 ? (
                         <div className="card p-12 text-center">
-                            <BookOpen className="w-10 h-10 text-surface-300 mx-auto mb-3" />
+                            <BookOpen className="w-10 h-10 text-surface-300 dark:text-surface-600 mx-auto mb-3" />
                             <h2 className="text-lg font-semibold text-surface-900 dark:text-white">No courses found</h2>
-                            <p className="text-surface-500 mt-1">Try a different search or clear your filters.</p>
+                            <p className="text-surface-500 dark:text-surface-400 mt-1">Try a different search or clear your filters.</p>
                         </div>
                     ) : (
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

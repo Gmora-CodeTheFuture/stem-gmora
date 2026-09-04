@@ -13,7 +13,7 @@ export default function VerifyCertificate({ code, certificate }: Props) {
         <MarketingLayout>
             <Head title="Verify certificate — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-20 min-h-[70vh] bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+            <section className="pt-28 md:pt-36 pb-20 min-h-[70vh] bg-surface-50 dark:bg-surface-950 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide max-w-xl">
                     <div className="card p-8 text-center">
                         {certificate ? (

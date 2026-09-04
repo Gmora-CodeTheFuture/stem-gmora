@@ -37,7 +37,7 @@ export default function BlogIndex({ posts, categories, filters }: Props) {
         <MarketingLayout nav>
             <Head title="Blog — Gmora STEM" />
 
-            <section className="pt-28 md:pt-36 pb-12 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">
+            <section className="pt-28 md:pt-36 pb-12 bg-surface-50 dark:bg-surface-950 border-b border-surface-200 dark:border-surface-800">
                 <div className="container-wide text-center max-w-2xl">
                     <h1 className="text-3xl md:text-5xl font-semibold text-surface-900 dark:text-white mb-4">
                         The Gmora <span className="text-primary-600 dark:text-primary-400">blog</span>
@@ -66,7 +66,7 @@ export default function BlogIndex({ posts, categories, filters }: Props) {
                 </div>
             </section>
 
-            <section className="section pt-10">
+            <section className="section pt-10 bg-surface-50 dark:bg-surface-950">
                 <div className="container-wide">
                     {(categories.length > 0 || filters.tag) && (
                         <div className="flex items-center gap-2 flex-wrap mb-8">
@@ -75,7 +75,7 @@ export default function BlogIndex({ posts, categories, filters }: Props) {
                                 className={`px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
                                     !filters.category && !filters.tag
                                         ? 'bg-primary-600 border-primary-600 text-white'
-                                        : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
+                                        : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
                                 }`}
                             >
                                 All
@@ -88,7 +88,7 @@ export default function BlogIndex({ posts, categories, filters }: Props) {
                                     className={`px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
                                         filters.category === category
                                             ? 'bg-primary-600 border-primary-600 text-white'
-                                            : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
+                                            : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
                                     }`}
                                 >
                                     {category}

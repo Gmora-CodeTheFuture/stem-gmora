@@ -79,10 +79,10 @@ export default function Welcome({ content, figures }: Props) {
     ];
 
     const disciplines = [
-        { letter: 'S', name: 'Science', body: content.stem.science, icon: FlaskConical, colorClass: 'text-red-500' },
-        { letter: 'T', name: 'Technology', body: content.stem.technology, icon: Cpu, colorClass: 'text-yellow-400' },
-        { letter: 'E', name: 'Engineering', body: content.stem.engineering, icon: Wrench, colorClass: 'text-blue-500' },
-        { letter: 'M', name: 'Mathematics', body: content.stem.maths, icon: Sigma, colorClass: 'text-green-500' },
+        { letter: 'S', name: 'Science', body: content.stem.science, icon: FlaskConical, colorClass: 'text-red-500', hoverBg: 'hover:bg-red-500' },
+        { letter: 'T', name: 'Technology', body: content.stem.technology, icon: Cpu, colorClass: 'text-yellow-400', hoverBg: 'hover:bg-yellow-400' },
+        { letter: 'E', name: 'Engineering', body: content.stem.engineering, icon: Wrench, colorClass: 'text-blue-500', hoverBg: 'hover:bg-blue-500' },
+        { letter: 'M', name: 'Mathematics', body: content.stem.maths, icon: Sigma, colorClass: 'text-green-500', hoverBg: 'hover:bg-green-500' },
     ];
 
     const navClasses = navTheme === 'dark' 
@@ -222,10 +222,10 @@ export default function Welcome({ content, figures }: Props) {
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-px bg-black/10 border border-black/10">
-                                    {disciplines.map((d, i) => (
-                                        <div key={d.name} className="bg-white p-8 md:p-12 group hover:bg-black transition-colors duration-500 relative overflow-hidden">
-                                            <div 
-                                                className={`font-sans text-[120px] leading-none font-bold opacity-30 mb-6 group-hover:opacity-60 transition-all duration-500 z-0 ${d.colorClass}`}
+                                    {disciplines.map((d) => (
+                                        <div key={d.name} className={`bg-white p-8 md:p-12 group ${d.hoverBg} transition-colors duration-500 relative overflow-hidden`}>
+                                            <div
+                                                className={`font-sans text-[120px] leading-none font-bold opacity-30 mb-6 group-hover:opacity-100 group-hover:text-white transition-all duration-500 z-0 ${d.colorClass}`}
                                             >
                                                 {d.letter}
                                             </div>
@@ -233,7 +233,7 @@ export default function Welcome({ content, figures }: Props) {
                                                 <h3 className="font-sans text-xl md:text-2xl font-bold uppercase tracking-wide mb-4 text-black group-hover:text-white transition-colors duration-500">
                                                     {d.name}
                                                 </h3>
-                                                <p className="font-sans text-sm text-black/50 group-hover:text-white/60 leading-relaxed transition-colors duration-500">
+                                                <p className="font-sans text-sm text-black/50 group-hover:text-white/80 leading-relaxed transition-colors duration-500">
                                                     {d.body}
                                                 </p>
                                             </div>

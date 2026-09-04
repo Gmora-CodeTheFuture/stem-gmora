@@ -22,9 +22,13 @@ use Inertia\Response;
  */
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
+
+        if ($user->isInstructor()) {
+            return redirect()->route('instructor.home');
+        }
 
         return Inertia::render('Dashboard', DashboardCache::remember(
             $user->id,

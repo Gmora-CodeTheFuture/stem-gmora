@@ -30,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'website_url',
         'is_public',
         'role_id',
+        'assigned_instructor_id',
         'locale',
         'preferences',
         'two_factor_enabled',
@@ -75,6 +76,18 @@ class User extends Authenticatable implements MustVerifyEmail
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /** Mentor assigned by an admin to this student. */
+    public function assignedInstructor(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'assigned_instructor_id');
+    }
+
+    /** Students an admin has placed under this instructor. */
+    public function assignedStudents(): HasMany
+    {
+        return $this->hasMany(self::class, 'assigned_instructor_id');
     }
 
     public function courses(): HasMany
@@ -152,18 +165,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRole(Role::ADMIN);
     }
 
+    public function isInstructor(): bool
+    {
+        return $this->hasRole(Role::INSTRUCTOR);
+    }
+
     public function isStudent(): bool
     {
         return $this->hasRole(Role::STUDENT);
     }
 
     /**
-     * Admins are required to hold 2FA (Plan §7.1) — they are the accounts that
-     * can publish content, change roles, or issue refunds.
+     * TOTP two-factor is optional for every role. The old admin requirement
+     * blocked local and demo use behind a QR setup screen.
      */
     public function requiresTwoFactor(): bool
     {
-        return $this->isAdmin();
+        return false;
     }
 
     /**

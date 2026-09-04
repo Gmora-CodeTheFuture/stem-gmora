@@ -35,20 +35,17 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
-        // Accounts holding 2FA are not signed in yet: the password step only
-        // earns them the challenge (Plan §7.1).
-        if ($user->two_factor_enabled) {
-            Auth::guard('web')->logout();
-
-            $request->session()->put(TwoFactorChallengeController::SESSION_USER, $user->id);
-            $request->session()->put(TwoFactorChallengeController::SESSION_REMEMBER, $request->boolean('remember'));
-
-            return redirect()->route('two-factor.challenge');
-        }
-
         $request->session()->regenerate();
 
         $sessions->record($request, $user);
+
+        if ($user->isInstructor()) {
+            return redirect()->intended(route('instructor.home', absolute: false));
+        }
+
+        if ($user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

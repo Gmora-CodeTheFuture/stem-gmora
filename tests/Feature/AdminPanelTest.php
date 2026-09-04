@@ -46,6 +46,7 @@ class AdminPanelTest extends TestCase
             route('admin.users.index'),
             route('admin.users.show', $this->secondAdmin),
             route('admin.users.edit', $this->secondAdmin),
+            route('admin.instructors.index'),
             route('tutor.courses.index'),
             route('tutor.courses.create'),
             route('tutor.courses.edit', $course),

@@ -12,8 +12,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RoleSeeder::class);
 
-        // Create demo admin — admins author courses, so there is no separate
-        // instructor account any more.
         $adminRole = Role::where('name', Role::ADMIN)->first();
         User::firstOrCreate(
             ['email' => 'admin@gmorastem.com'],
@@ -25,7 +23,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Create demo student
+        $instructorRole = Role::where('name', Role::INSTRUCTOR)->first();
+        $instructor = User::firstOrCreate(
+            ['email' => 'instructor@gmorastem.com'],
+            [
+                'full_name' => 'Demo Instructor',
+                'password' => bcrypt('password'),
+                'role_id' => $instructorRole->id,
+                'email_verified_at' => now(),
+            ]
+        );
+
         $studentRole = Role::where('name', Role::STUDENT)->first();
         User::firstOrCreate(
             ['email' => 'student@gmorastem.com'],
@@ -33,6 +41,7 @@ class DatabaseSeeder extends Seeder
                 'full_name' => 'Demo Student',
                 'password' => bcrypt('password'),
                 'role_id' => $studentRole->id,
+                'assigned_instructor_id' => $instructor->id,
                 'email_verified_at' => now(),
             ]
         );

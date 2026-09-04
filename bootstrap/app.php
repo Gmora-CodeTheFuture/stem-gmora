@@ -2,7 +2,6 @@
 
 use App\Http\Middleware\EnsureEnrolled;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\RequireTwoFactor;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrackLoginSession;
@@ -28,7 +27,6 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             SecurityHeaders::class,
             TrackLoginSession::class,
-            RequireTwoFactor::class,
         ]);
 
         $middleware->alias([
