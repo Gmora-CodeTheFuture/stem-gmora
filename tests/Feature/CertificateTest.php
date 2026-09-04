@@ -137,4 +137,31 @@ class CertificateTest extends TestCase
             ->assertOk()
             ->assertSee($certificate->certificate_code);
     }
+
+    public function test_admin_marking_enrollment_completed_issues_a_certificate(): void
+    {
+        Storage::fake('local');
+
+        $student = User::factory()->create();
+        $admin = User::factory()->admin()->create();
+        $course = Course::factory()->create();
+        $enrollment = Enrollment::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => Enrollment::STATUS_ACTIVE,
+        ]);
+
+        $this->actingAs($admin)->patch(route('admin.enrollments.update', $enrollment), [
+            'status' => Enrollment::STATUS_COMPLETED,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'status' => Enrollment::STATUS_COMPLETED,
+        ]);
+        $this->assertDatabaseHas('certificates', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+    }
 }

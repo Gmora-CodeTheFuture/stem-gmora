@@ -6,13 +6,18 @@ import { expect, test } from '@playwright/test';
  */
 
 const student = { email: 'student@gmorastem.com', password: 'password' };
+const admin = { email: 'admin@gmorastem.com', password: 'password' };
 
-async function signIn(page: import('@playwright/test').Page) {
+async function signIn(page: import('@playwright/test').Page, user = student) {
     await page.goto('/login');
-    await page.getByLabel('Email').fill(student.email);
-    await page.getByLabel('Password', { exact: true }).fill(student.password);
+    await page.getByLabel('Email').fill(user.email);
+    await page.getByLabel('Password', { exact: true }).fill(user.password);
     await page.getByRole('button', { name: /log in/i }).click();
-    await page.waitForURL('**/dashboard');
+    if (user === admin) {
+        await page.waitForURL((url) => url.pathname === '/admin' || url.pathname === '/dashboard');
+    } else {
+        await page.waitForURL('**/dashboard');
+    }
 }
 
 test.describe('visitor', () => {
@@ -103,6 +108,30 @@ test.describe('on a phone', () => {
 
             expect(overflow, `${path} overflows horizontally`).toBeLessThanOrEqual(1);
         }
+    });
+
+    test('marketing pages never scroll sideways', async ({ page }) => {
+        for (const path of ['/', '/courses']) {
+            await page.goto(path);
+            const overflow = await page.evaluate(
+                () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+            );
+
+            expect(overflow, `${path} overflows horizontally`).toBeLessThanOrEqual(1);
+        }
+    });
+
+    test('admin tab bar includes Overview', async ({ page }) => {
+        await signIn(page, admin);
+
+        // Land on a dashboard shell page so the tab bar mounts.
+        if (!page.url().includes('/admin')) {
+            await page.goto('/admin');
+        }
+
+        const tabBar = page.getByRole('navigation', { name: 'Primary' });
+        await expect(tabBar).toBeVisible();
+        await expect(tabBar.locator('a[href="/admin"]')).toBeVisible();
     });
 });
 

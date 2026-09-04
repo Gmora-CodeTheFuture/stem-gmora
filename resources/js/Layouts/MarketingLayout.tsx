@@ -1,20 +1,20 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PropsWithChildren, useState } from 'react';
+import { FormEventHandler, PropsWithChildren, useState } from 'react';
 import { Menu, X, Search } from 'lucide-react';
 import { PageProps } from '@/types';
 
 /**
- * The public shell. The menubar belongs to the homepage only — every other
- * page in the product navigates by the sidebar, and a signed-in user should
- * never meet a second navigation.
+ * The public shell. Marketing pages share this menubar; signed-in users still
+ * reach the dashboard from here without a second navigation model.
  */
 export default function MarketingLayout({
     children,
-    nav = false,
+    nav = true,
 }: PropsWithChildren<{ nav?: boolean }>) {
     const { auth } = usePage<PageProps>().props;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Every entry must resolve — Programs, Mentorship and Community sat here
     // pointing at routes that were never built, so the main navigation of the
@@ -25,6 +25,13 @@ export default function MarketingLayout({
         { name: 'Courses', href: '/courses' },
         { name: 'Blog', href: '/blog' },
     ];
+
+    const submitSearch: FormEventHandler = (e) => {
+        e.preventDefault();
+        const search = searchQuery.trim();
+        router.get('/courses', search ? { search } : {});
+        setMobileMenuOpen(false);
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-white text-surface-900 font-sans">
@@ -54,14 +61,19 @@ export default function MarketingLayout({
 
                     {/* Right: Search and Auth */}
                     <div className="hidden md:flex items-center gap-4">
-                        <div className={`relative w-64 ${nav ? '' : 'hidden'}`}>
-                            <Search className="w-4 h-4 text-surface-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input 
-                                type="text"
-                                placeholder="Search"
-                                className="w-full pl-9 pr-4 py-1.5 bg-white border border-surface-300 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-surface-900 focus:border-surface-900"
-                            />
-                        </div>
+                        {nav && (
+                            <form onSubmit={submitSearch} className="relative w-64">
+                                <Search className="w-4 h-4 text-surface-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input 
+                                    type="search"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search courses"
+                                    aria-label="Search courses"
+                                    className="w-full pl-9 pr-4 py-1.5 bg-white border border-surface-300 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-surface-900 focus:border-surface-900"
+                                />
+                            </form>
+                        )}
 
                         {auth?.user ? (
                             <Link href="/dashboard" className="px-5 py-1.5 rounded-full bg-surface-900 text-white text-sm font-bold hover:bg-surface-800 transition-colors">
@@ -105,14 +117,17 @@ export default function MarketingLayout({
                             className="lg:hidden bg-white border-b border-surface-200 absolute top-16 left-0 right-0"
                         >
                             <div className="px-4 py-4 space-y-2">
-                                <div className="relative mb-4">
+                                <form onSubmit={submitSearch} className="relative mb-4">
                                     <Search className="w-4 h-4 text-surface-500 absolute left-3 top-1/2 -translate-y-1/2" />
                                     <input 
-                                        type="text"
-                                        placeholder="Search"
+                                        type="search"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search courses"
+                                        aria-label="Search courses"
                                         className="w-full pl-9 pr-4 py-2 bg-white border border-surface-300 rounded-full text-sm focus:outline-none"
                                     />
-                                </div>
+                                </form>
                                 {navLinks.map((link) => (
                                     <Link
                                         key={link.name}
@@ -161,9 +176,6 @@ export default function MarketingLayout({
                             The World's STEM Education Platform. Learn, build, and innovate with us.
                         </p>
                     </div>
-                    {/* Only destinations that exist. Careers, Terms and Privacy
-                        were placeholders pointing at "#" — they belong here once
-                        the pages are written, not before. */}
                     <div>
                         <h4 className="font-bold mb-4">Platform</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
@@ -176,6 +188,8 @@ export default function MarketingLayout({
                         <h4 className="font-bold mb-4">Company</h4>
                         <ul className="space-y-2 text-sm text-surface-400">
                             <li><Link href="/#vision" className="hover:text-white">Our vision</Link></li>
+                            <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
+                            <li><Link href="/terms" className="hover:text-white">Terms</Link></li>
                             <li><a href="mailto:hello@gmorastem.com" className="hover:text-white">Contact</a></li>
                         </ul>
                     </div>

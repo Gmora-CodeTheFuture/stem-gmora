@@ -4,9 +4,10 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
-import { PageProps, Course, Module, Lesson } from '@/types';
+import QuizBuilderPanel from '@/Components/Tutor/QuizBuilderPanel';
+import { PageProps, Course, Module, Lesson, Assignment, LiveSession } from '@/types';
 import { FormEventHandler, useState } from 'react';
-import { Plus, GripVertical, Trash2, Video, FileText, CheckCircle, AlertCircle, Clock, Globe, Upload, Pencil } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Video, FileText, CheckCircle, AlertCircle, Clock, Globe, Upload, Pencil, HelpCircle, Radio, ClipboardCheck } from 'lucide-react';
 
 interface ReadinessCheck {
     label: string;
@@ -29,7 +30,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default function EditCourse({ course, readiness, canPublishDirectly }: Props) {
-    const [activeTab, setActiveTab] = useState<'details' | 'curriculum'>('details');
+    const [activeTab, setActiveTab] = useState<'details' | 'curriculum' | 'assignments'>('details');
 
     const { data, setData, patch, errors, processing } = useForm({
         title: course.title,
@@ -172,6 +173,50 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
             { title: lesson.title, type: lesson.type, is_published: !lesson.is_published },
             { preserveScroll: true },
         );
+    };
+
+    // Assignments (course-level)
+    const blankAssignment = { title: '', description: '', deadline_at: '', max_marks: 100, is_published: true };
+    const [assignmentForm, setAssignmentForm] = useState(blankAssignment);
+    const [editingAssignment, setEditingAssignment] = useState<(typeof blankAssignment & { id: string }) | null>(null);
+
+    const saveAssignment: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (editingAssignment) {
+            router.patch(`/tutor/assignments/${editingAssignment.id}`, {
+                title: editingAssignment.title,
+                description: editingAssignment.description,
+                deadline_at: editingAssignment.deadline_at || null,
+                max_marks: editingAssignment.max_marks,
+                is_published: editingAssignment.is_published,
+            }, { preserveScroll: true, onSuccess: () => setEditingAssignment(null) });
+            return;
+        }
+        router.post(`/tutor/courses/${course.id}/assignments`, {
+            ...assignmentForm,
+            deadline_at: assignmentForm.deadline_at || null,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => setAssignmentForm(blankAssignment),
+        });
+    };
+
+    const deleteAssignment = (id: string) => {
+        if (confirm('Delete this assignment?')) {
+            router.delete(`/tutor/assignments/${id}`, { preserveScroll: true });
+        }
+    };
+
+    const saveLiveSession = (lesson: Lesson, session: Partial<LiveSession>) => {
+        router.patch(`/tutor/lessons/${lesson.id}/live-session`, {
+            title: session.title || lesson.title,
+            scheduled_start: session.scheduled_start,
+            duration_minutes: session.duration_minutes ?? 60,
+            zoom_join_url: session.zoom_join_url || null,
+            zoom_meeting_id: session.zoom_meeting_id || null,
+            zoom_passcode: session.zoom_passcode || null,
+            recording_url: session.recording_url || null,
+        }, { preserveScroll: true });
     };
 
     // Reordering. The grip handles have always been there but nothing was
@@ -317,12 +362,15 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                     </ul>
                 </div>
 
-                <div className="flex border-b border-surface-200 dark:border-surface-800 mb-6">
-                    <button onClick={() => setActiveTab('details')} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === 'details' ? 'border-primary-600 text-primary-600 dark:text-primary-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}`}>
+                <div className="flex border-b border-surface-200 dark:border-surface-800 mb-6 overflow-x-auto">
+                    <button onClick={() => setActiveTab('details')} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'details' ? 'border-primary-600 text-primary-600 dark:text-primary-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}`}>
                         Course Details
                     </button>
-                    <button onClick={() => setActiveTab('curriculum')} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === 'curriculum' ? 'border-primary-600 text-primary-600 dark:text-primary-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}`}>
+                    <button onClick={() => setActiveTab('curriculum')} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'curriculum' ? 'border-primary-600 text-primary-600 dark:text-primary-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}`}>
                         Curriculum Builder
+                    </button>
+                    <button onClick={() => setActiveTab('assignments')} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'assignments' ? 'border-primary-600 text-primary-600 dark:text-primary-400' : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'}`}>
+                        Assignments
                     </button>
                 </div>
 
@@ -493,6 +541,8 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                                         <option value="youtube">YouTube Video</option>
                                                         <option value="pdf">PDF Document</option>
                                                         <option value="html">HTML Presentation</option>
+                                                        <option value="quiz">Quiz</option>
+                                                        <option value="live">Live Session</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -557,6 +607,21 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                                 </div>
                                             )}
 
+                                            {editingLesson.type === 'quiz' && lesson.quiz && (
+                                                <QuizBuilderPanel quiz={lesson.quiz} />
+                                            )}
+
+                                            {editingLesson.type === 'quiz' && !lesson.quiz && (
+                                                <p className="text-sm text-amber-600">Save this lesson as type Quiz, then reopen to configure questions.</p>
+                                            )}
+
+                                            {editingLesson.type === 'live' && (
+                                                <LiveSessionFields
+                                                    lesson={lesson}
+                                                    onSave={(session) => saveLiveSession(lesson, session)}
+                                                />
+                                            )}
+
                                             <div className="flex items-center justify-between pt-2">
                                                 <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400">
                                                     <input type="checkbox" checked={editingLesson.is_free_preview} onChange={(e) => setEditingLesson({ ...editingLesson, is_free_preview: e.target.checked })} className="rounded text-primary-600 focus:ring-primary-500" />
@@ -588,7 +653,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                                 >
                                                     <GripVertical className="w-4 h-4" />
                                                 </button>
-                                                {lesson.type === 'youtube' ? <Video className="w-4 h-4 text-blue-500" /> : lesson.type === 'html' ? <Globe className="w-4 h-4 text-violet-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
+                                                {lesson.type === 'youtube' ? <Video className="w-4 h-4 text-blue-500" /> : lesson.type === 'html' ? <Globe className="w-4 h-4 text-violet-500" /> : lesson.type === 'quiz' ? <HelpCircle className="w-4 h-4 text-amber-500" /> : lesson.type === 'live' ? <Radio className="w-4 h-4 text-rose-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
                                                 <span className="text-sm font-medium text-surface-900 dark:text-white">{lesson.title}</span>
                                                 {lesson.is_free_preview && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">Free</span>}
                                                 {!lesson.is_published && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Draft</span>}
@@ -646,24 +711,40 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                                                         <option value="youtube">YouTube Video</option>
                                                         <option value="pdf">PDF Document</option>
                                                         <option value="html">HTML Presentation</option>
+                                                        <option value="quiz">Quiz</option>
+                                                        <option value="live">Live Session</option>
                                                     </select>
                                                 </div>
                                             </div>
-                                            {lessonData.type !== 'html' && (
+                                            {lessonData.type !== 'html' && lessonData.type !== 'quiz' && lessonData.type !== 'live' && (
                                             <div>
                                                 <InputLabel value={lessonData.type === 'youtube' ? 'YouTube Video ID' : 'PDF URL'} />
                                                 <TextInput className="mt-1 block w-full" value={lessonData.content_ref} onChange={(e) => setLessonData({ ...lessonData, content_ref: e.target.value })} placeholder={lessonData.type === 'youtube' ? 'Paste the YouTube link' : 'https://...'} />
                                             </div>
                                             )}
+                                            {lessonData.type !== 'quiz' && lessonData.type !== 'live' && (
                                             <div>
                                                 <InputLabel value="Duration (minutes)" />
                                                 <TextInput type="number" min="0" className="mt-1 block w-full" value={lessonData.duration_minutes} onChange={(e) => setLessonData({ ...lessonData, duration_minutes: Number(e.target.value) })} />
                                                 <p className="text-xs text-surface-500 mt-1">Required before the course can be published.</p>
                                             </div>
+                                            )}
                                             {lessonData.type === 'html' && (
                                             <div className="mt-2 text-sm text-surface-500 dark:text-surface-400 bg-violet-50 dark:bg-violet-950/30 p-3 rounded-lg flex items-start gap-2">
                                                 <Globe className="w-4 h-4 mt-0.5 shrink-0 text-violet-500" />
                                                 <span>After adding this lesson, you can upload a <strong>.zip</strong> file containing your HTML presentation (with images, CSS, JS).</span>
+                                            </div>
+                                            )}
+                                            {lessonData.type === 'quiz' && (
+                                            <div className="text-sm text-surface-500 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg flex items-start gap-2">
+                                                <HelpCircle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
+                                                <span>After adding, open the lesson to configure questions and publish the quiz.</span>
+                                            </div>
+                                            )}
+                                            {lessonData.type === 'live' && (
+                                            <div className="text-sm text-surface-500 bg-rose-50 dark:bg-rose-950/30 p-3 rounded-lg flex items-start gap-2">
+                                                <Radio className="w-4 h-4 mt-0.5 shrink-0 text-rose-500" />
+                                                <span>After adding, open the lesson to set the Zoom link and schedule.</span>
                                             </div>
                                             )}
                                             <div className="flex items-center justify-between pt-2">
@@ -709,7 +790,157 @@ export default function EditCourse({ course, readiness, canPublishDirectly }: Pr
                         )}
                     </div>
                 )}
+
+                {activeTab === 'assignments' && (
+                    <div className="space-y-4">
+                        <p className="text-sm text-surface-500">Assignments appear on the student calendar when they have a deadline. Students submit from Assignments in their dashboard.</p>
+
+                        {(course.assignments ?? []).map((assignment: Assignment) => (
+                            <div key={assignment.id} className="card p-4">
+                                {editingAssignment?.id === assignment.id ? (
+                                    <form onSubmit={saveAssignment} className="space-y-3">
+                                        <TextInput className="block w-full" value={editingAssignment.title} onChange={(e) => setEditingAssignment({ ...editingAssignment, title: e.target.value })} required />
+                                        <textarea className="block w-full rounded-md border-surface-300 dark:border-surface-700 dark:bg-surface-900 text-sm" rows={3} value={editingAssignment.description} onChange={(e) => setEditingAssignment({ ...editingAssignment, description: e.target.value })} />
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div>
+                                                <InputLabel value="Deadline" />
+                                                <TextInput type="datetime-local" className="mt-1 block w-full" value={editingAssignment.deadline_at} onChange={(e) => setEditingAssignment({ ...editingAssignment, deadline_at: e.target.value })} />
+                                            </div>
+                                            <div>
+                                                <InputLabel value="Max marks" />
+                                                <TextInput type="number" min={1} className="mt-1 block w-full" value={editingAssignment.max_marks} onChange={(e) => setEditingAssignment({ ...editingAssignment, max_marks: Number(e.target.value) })} />
+                                            </div>
+                                            <label className="flex items-end gap-2 text-sm pb-2">
+                                                <input type="checkbox" checked={editingAssignment.is_published} onChange={(e) => setEditingAssignment({ ...editingAssignment, is_published: e.target.checked })} className="rounded text-primary-600" />
+                                                Published
+                                            </label>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button type="button" onClick={() => setEditingAssignment(null)} className="text-sm text-surface-600">Cancel</button>
+                                            <PrimaryButton>Save</PrimaryButton>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <ClipboardCheck className="w-4 h-4 text-primary-500" />
+                                                <h3 className="font-semibold text-surface-900 dark:text-white">{assignment.title}</h3>
+                                                {!assignment.is_published && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Draft</span>}
+                                            </div>
+                                            {assignment.description && <p className="text-sm text-surface-500 mt-1">{assignment.description}</p>}
+                                            <p className="text-xs text-surface-400 mt-2">
+                                                {assignment.max_marks} marks
+                                                {assignment.deadline_at ? ` · due ${new Date(assignment.deadline_at).toLocaleString()}` : ' · no deadline'}
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button
+                                                type="button"
+                                                className="btn-icon"
+                                                onClick={() => setEditingAssignment({
+                                                    id: assignment.id,
+                                                    title: assignment.title,
+                                                    description: assignment.description ?? '',
+                                                    deadline_at: assignment.deadline_at ? assignment.deadline_at.slice(0, 16) : '',
+                                                    max_marks: assignment.max_marks,
+                                                    is_published: assignment.is_published,
+                                                })}
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <button type="button" className="btn-icon text-red-500" onClick={() => deleteAssignment(assignment.id)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+
+                        <form onSubmit={saveAssignment} className="card p-5 space-y-4 border-2 border-dashed border-surface-300 dark:border-surface-700">
+                            <h3 className="font-semibold flex items-center gap-2"><Plus className="w-4 h-4" /> New assignment</h3>
+                            <div>
+                                <InputLabel value="Title" />
+                                <TextInput className="mt-1 block w-full" value={assignmentForm.title} onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })} required />
+                            </div>
+                            <div>
+                                <InputLabel value="Brief" />
+                                <textarea className="mt-1 block w-full rounded-md border-surface-300 dark:border-surface-700 dark:bg-surface-900 text-sm" rows={3} value={assignmentForm.description} onChange={(e) => setAssignmentForm({ ...assignmentForm, description: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <InputLabel value="Deadline" />
+                                    <TextInput type="datetime-local" className="mt-1 block w-full" value={assignmentForm.deadline_at} onChange={(e) => setAssignmentForm({ ...assignmentForm, deadline_at: e.target.value })} />
+                                </div>
+                                <div>
+                                    <InputLabel value="Max marks" />
+                                    <TextInput type="number" min={1} className="mt-1 block w-full" value={assignmentForm.max_marks} onChange={(e) => setAssignmentForm({ ...assignmentForm, max_marks: Number(e.target.value) })} />
+                                </div>
+                            </div>
+                            <PrimaryButton>Create assignment</PrimaryButton>
+                        </form>
+                    </div>
+                )}
             </div>
         </DashboardLayout>
+    );
+}
+
+function LiveSessionFields({
+    lesson,
+    onSave,
+}: {
+    lesson: Lesson;
+    onSave: (session: Partial<LiveSession>) => void;
+}) {
+    const existing = lesson.live_session;
+    const toLocal = (iso?: string) => (iso ? iso.slice(0, 16) : '');
+    const [form, setForm] = useState({
+        title: existing?.title || lesson.title,
+        scheduled_start: toLocal(existing?.scheduled_start),
+        duration_minutes: existing?.duration_minutes ?? 60,
+        zoom_join_url: existing?.zoom_join_url ?? '',
+        zoom_meeting_id: existing?.zoom_meeting_id ?? '',
+        zoom_passcode: existing?.zoom_passcode ?? '',
+        recording_url: existing?.recording_url ?? '',
+    });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        onSave(form);
+    };
+
+    return (
+        <form onSubmit={submit} className="p-3 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 space-y-3">
+            <h5 className="text-sm font-semibold">Live session</h5>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                    <InputLabel value="Session title" />
+                    <TextInput className="mt-1 block w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                </div>
+                <div>
+                    <InputLabel value="Starts at" />
+                    <TextInput type="datetime-local" className="mt-1 block w-full" value={form.scheduled_start} onChange={(e) => setForm({ ...form, scheduled_start: e.target.value })} required />
+                </div>
+                <div>
+                    <InputLabel value="Duration (minutes)" />
+                    <TextInput type="number" min={5} className="mt-1 block w-full" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} />
+                </div>
+                <div className="sm:col-span-2">
+                    <InputLabel value="Zoom join URL" />
+                    <TextInput className="mt-1 block w-full" value={form.zoom_join_url} onChange={(e) => setForm({ ...form, zoom_join_url: e.target.value })} placeholder="https://zoom.us/j/..." />
+                </div>
+                <div>
+                    <InputLabel value="Meeting ID" />
+                    <TextInput className="mt-1 block w-full" value={form.zoom_meeting_id} onChange={(e) => setForm({ ...form, zoom_meeting_id: e.target.value })} />
+                </div>
+                <div>
+                    <InputLabel value="Passcode" />
+                    <TextInput className="mt-1 block w-full" value={form.zoom_passcode} onChange={(e) => setForm({ ...form, zoom_passcode: e.target.value })} />
+                </div>
+            </div>
+            <PrimaryButton type="submit">Save live session</PrimaryButton>
+        </form>
     );
 }

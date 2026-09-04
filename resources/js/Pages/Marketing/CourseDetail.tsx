@@ -45,7 +45,7 @@ export default function CourseDetail({ course, enrollment }: Props) {
         setOpenModules((open) => (open.includes(id) ? open.filter((m) => m !== id) : [...open, id]));
 
     return (
-        <MarketingLayout>
+        <MarketingLayout nav>
             <Head title={`${course.title} — Gmora STEM`} />
 
             {/* ── Hero ─────────────────────────────────────────── */}
@@ -96,15 +96,26 @@ export default function CourseDetail({ course, enrollment }: Props) {
                                 <PlayCircle className="w-4 h-4" />
                                 Continue learning
                             </Link>
-                        ) : (
+                        ) : isFree ? (
                             <button onClick={enroll} disabled={enrolling} className="btn-primary w-full">
-                                {enrolling ? 'Enrolling…' : isFree ? 'Enroll for free' : 'Enroll now'}
+                                {enrolling ? 'Enrolling…' : 'Enroll for free'}
                             </button>
+                        ) : (
+                            <Link
+                                href={
+                                    auth?.user
+                                        ? `/support?course=${encodeURIComponent(course.slug)}&category=billing&subject=${encodeURIComponent(`Request access to ${course.title}`)}&body=${encodeURIComponent(`I'd like access to the paid course "${course.title}".`)}`
+                                        : route('login')
+                                }
+                                className="btn-primary w-full"
+                            >
+                                Request access
+                            </Link>
                         )}
 
                         {!isFree && !isActive && (
                             <p className="text-xs text-surface-400 mt-3 text-center">
-                                Card checkout is not available yet.
+                                Paid access is granted by an admin.
                             </p>
                         )}
 

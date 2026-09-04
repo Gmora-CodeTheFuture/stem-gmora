@@ -56,11 +56,11 @@ export default function SupportShow({ ticket, messages }: Props) {
             <Head title={`${ticket.reference} — support`} />
 
             <Link
-                href={route('support.index')}
+                href={ticket.is_staff_view ? '/admin/support' : route('support.index')}
                 className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors mb-6"
             >
                 <ArrowLeft className="w-4 h-4" />
-                All tickets
+                {ticket.is_staff_view ? 'Support queue' : 'All tickets'}
             </Link>
 
             <div className="card p-5 mb-5 flex items-center gap-3 flex-wrap">

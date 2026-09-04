@@ -259,6 +259,35 @@ class QuizTest extends TestCase
         ]);
     }
 
+    public function test_passing_the_final_quiz_issues_a_certificate(): void
+    {
+        $this->course->update(['total_lessons' => 1]);
+        $module = Module::factory()->create(['course_id' => $this->course->id]);
+        $lesson = Lesson::factory()->create([
+            'module_id' => $module->id,
+            'type' => Lesson::TYPE_QUIZ,
+            'content_ref' => null,
+        ]);
+        $this->quiz->update(['lesson_id' => $lesson->id]);
+
+        $question = $this->addQuestion();
+        $attempt = $this->startAttempt();
+
+        $this->actingAs($this->student)->post(route('quiz.submit', $attempt), [
+            'answers' => [$question->id => [0]],
+        ]);
+
+        $this->assertDatabaseHas('enrollments', [
+            'user_id' => $this->student->id,
+            'course_id' => $this->course->id,
+            'status' => Enrollment::STATUS_COMPLETED,
+        ]);
+        $this->assertDatabaseHas('certificates', [
+            'user_id' => $this->student->id,
+            'course_id' => $this->course->id,
+        ]);
+    }
+
     public function test_results_reveal_the_answer_key_after_grading(): void
     {
         $question = $this->addQuestion(['explanation' => 'Because it is right.']);

@@ -39,7 +39,7 @@ export default function Courses({ courses, categories, filters }: Props) {
     };
 
     return (
-        <MarketingLayout>
+        <MarketingLayout nav>
             <Head title="Courses — Gmora STEM" />
 
             <section className="pt-28 md:pt-36 pb-10 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">

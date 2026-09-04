@@ -32,6 +32,9 @@ class Payment extends Model
 
     public const PROVIDER_PAYPAL = 'paypal';
 
+    /** Admin-granted paid access — no card processor involved. */
+    public const PROVIDER_MANUAL = 'manual';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_COMPLETED = 'completed';

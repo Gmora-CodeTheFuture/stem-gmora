@@ -1,9 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { CreditCard, TrendingUp, RotateCcw, Search } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps, Paginated } from '@/types';
 import { useState } from 'react';
-import { router } from '@inertiajs/react';
 
 interface Payment {
     id: string;
@@ -24,6 +23,13 @@ interface Props extends PageProps {
 
 export default function PaymentsIndex({ payments, summary, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
+
+    const applyFilters = (overrides: Record<string, string> = {}) => {
+        router.get('/admin/payments', { search, status: filters.status || '', ...overrides }, {
+            preserveState: true,
+            replace: true,
+        });
+    };
 
     return (
         <DashboardLayout>
@@ -54,6 +60,33 @@ export default function PaymentsIndex({ payments, summary, filters }: Props) {
                     </div>
                     <p className="text-2xl font-bold text-surface-900 dark:text-white">${summary.total_refunds.toLocaleString()}</p>
                 </div>
+            </div>
+
+            <div className="card p-4 mb-6 flex flex-wrap items-center gap-3">
+                <form
+                    onSubmit={(e) => { e.preventDefault(); applyFilters(); }}
+                    className="flex items-center gap-2 flex-1 min-w-[200px]"
+                >
+                    <Search className="w-4 h-4 text-surface-400" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search by student name..."
+                        className="flex-1 bg-transparent border-0 text-sm text-surface-900 dark:text-white placeholder-surface-400 focus:ring-0 focus:outline-none"
+                    />
+                </form>
+                <select
+                    value={filters.status || ''}
+                    onChange={(e) => applyFilters({ status: e.target.value })}
+                    className="text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-1.5 text-surface-700 dark:text-surface-300"
+                >
+                    <option value="">All statuses</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="refunded">Refunded</option>
+                    <option value="failed">Failed</option>
+                </select>
             </div>
 
             {/* Table */}

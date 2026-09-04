@@ -1,8 +1,10 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Plus, Search, UserPlus } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
 import { PageProps, Paginated } from '@/types';
-import { useState } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 interface Enrollment {
     id: string;
@@ -12,9 +14,24 @@ interface Enrollment {
     course: { id: string; title: string; slug: string };
 }
 
+interface GrantUser {
+    id: string;
+    full_name: string;
+    email: string;
+}
+
+interface GrantCourse {
+    id: string;
+    title: string;
+    price: number;
+    currency: string;
+}
+
 interface Props extends PageProps {
     enrollments: Paginated<Enrollment>;
     filters: { search?: string; status?: string };
+    users: GrantUser[];
+    courses: GrantCourse[];
 }
 
 const statusColors: Record<string, string> = {
@@ -24,21 +41,129 @@ const statusColors: Record<string, string> = {
     suspended: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
 };
 
-export default function EnrollmentsIndex({ enrollments, filters }: Props) {
+export default function EnrollmentsIndex({ enrollments, filters, users, courses }: Props) {
     const [search, setSearch] = useState(filters.search || '');
+    const [showGrant, setShowGrant] = useState(false);
+
+    const grantForm = useForm({
+        user_id: '',
+        course_id: '',
+        record_payment: true as boolean,
+    });
+
+    const selectedCourse = courses.find((c) => c.id === grantForm.data.course_id);
+    const isPaid = selectedCourse ? Number(selectedCourse.price) > 0 : false;
 
     const applyFilters = (overrides: Record<string, string>) => {
         router.get('/admin/enrollments', { search, ...overrides }, { preserveState: true, replace: true });
+    };
+
+    const submitGrant: FormEventHandler = (e) => {
+        e.preventDefault();
+        grantForm.post('/admin/enrollments', {
+            onSuccess: () => {
+                grantForm.reset();
+                grantForm.setData('record_payment', true);
+                setShowGrant(false);
+            },
+        });
     };
 
     return (
         <DashboardLayout>
             <Head title="Enrollments — Admin" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
                 <h1 className="text-2xl font-semibold text-surface-900 dark:text-white">Enrollments</h1>
-                <span className="text-sm text-surface-500">{enrollments.total} total</span>
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-surface-500">{enrollments.total} total</span>
+                    <button
+                        type="button"
+                        onClick={() => setShowGrant((open) => !open)}
+                        className="btn-primary text-sm flex items-center gap-1"
+                    >
+                        <UserPlus className="w-4 h-4" /> Grant access
+                    </button>
+                </div>
             </div>
+
+            {showGrant && (
+                <div className="card p-6 mb-6">
+                    <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Grant enrollment
+                    </h2>
+                    <form onSubmit={submitGrant} className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="user_id" value="Student" />
+                                <select
+                                    id="user_id"
+                                    value={grantForm.data.user_id}
+                                    onChange={(e) => grantForm.setData('user_id', e.target.value)}
+                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                    required
+                                >
+                                    <option value="">Select user…</option>
+                                    {users.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.full_name} ({user.email})
+                                        </option>
+                                    ))}
+                                </select>
+                                {grantForm.errors.user_id && (
+                                    <p className="text-xs text-red-500 mt-1">{grantForm.errors.user_id}</p>
+                                )}
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="course_id" value="Published course" />
+                                <select
+                                    id="course_id"
+                                    value={grantForm.data.course_id}
+                                    onChange={(e) => grantForm.setData('course_id', e.target.value)}
+                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                    required
+                                >
+                                    <option value="">Select course…</option>
+                                    {courses.map((course) => (
+                                        <option key={course.id} value={course.id}>
+                                            {course.title}
+                                            {Number(course.price) > 0
+                                                ? ` — ${course.currency} ${course.price}`
+                                                : ' — Free'}
+                                        </option>
+                                    ))}
+                                </select>
+                                {grantForm.errors.course_id && (
+                                    <p className="text-xs text-red-500 mt-1">{grantForm.errors.course_id}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {isPaid && (
+                            <label className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-300">
+                                <input
+                                    type="checkbox"
+                                    checked={grantForm.data.record_payment}
+                                    onChange={(e) => grantForm.setData('record_payment', e.target.checked)}
+                                    className="rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                                />
+                                Record completed payment ({selectedCourse?.currency} {selectedCourse?.price})
+                            </label>
+                        )}
+
+                        <div className="flex items-center gap-3">
+                            <PrimaryButton disabled={grantForm.processing}>Grant</PrimaryButton>
+                            <button
+                                type="button"
+                                onClick={() => { setShowGrant(false); grantForm.reset(); }}
+                                className="text-sm text-surface-500 hover:text-surface-700"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             <div className="card p-4 mb-6 flex flex-wrap items-center gap-3">
                 <form onSubmit={(e) => { e.preventDefault(); applyFilters({}); }} className="flex items-center gap-2 flex-1 min-w-[200px]">

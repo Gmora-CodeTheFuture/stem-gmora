@@ -21,6 +21,12 @@ interface Props extends PageProps {
     tickets: Ticket[];
     categories: string[];
     courses: Array<{ id: string; title: string }>;
+    draft?: {
+        subject: string;
+        body: string;
+        category: string;
+        course_id: string;
+    } | null;
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -34,10 +40,15 @@ function when(iso: string | null): string {
     return iso ? new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
 }
 
-export default function SupportIndex({ tickets, categories, courses }: Props) {
-    const [composing, setComposing] = useState(tickets.length === 0);
+export default function SupportIndex({ tickets, categories, courses, draft }: Props) {
+    const [composing, setComposing] = useState(tickets.length === 0 || Boolean(draft));
 
-    const form = useForm({ subject: '', body: '', category: 'general', course_id: '' });
+    const form = useForm({
+        subject: draft?.subject ?? '',
+        body: draft?.body ?? '',
+        category: draft?.category ?? 'general',
+        course_id: draft?.course_id ?? '',
+    });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();

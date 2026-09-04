@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Module;
+use App\Models\Payment;
 use App\Models\Progress;
 use App\Models\Question;
 use App\Models\Quiz;
@@ -127,11 +128,25 @@ class ReportsTest extends TestCase
                 ->where('assessment.quiz_average', 60));
     }
 
-    public function test_revenue_is_reported_as_unavailable_rather_than_zero(): void
+    public function test_revenue_sums_completed_payments_and_notes_checkout_gap(): void
     {
+        $course = Course::factory()->create();
+        $student = User::factory()->create();
+
+        Payment::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'provider' => Payment::PROVIDER_MANUAL,
+            'amount' => 49.5,
+            'currency' => 'USD',
+            'status' => Payment::STATUS_COMPLETED,
+        ]);
+
         $this->actingAs($this->admin)
             ->get(route('admin.reports.index'))
             ->assertOk()
-            ->assertSee('No payment provider is connected');
+            ->assertInertia(fn ($page) => $page
+                ->where('revenue.total', 49.5)
+                ->where('notes.checkout', fn ($note) => str_contains($note, 'Card checkout is not connected')));
     }
 }

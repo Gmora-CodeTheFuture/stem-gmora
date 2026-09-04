@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
+use App\Models\User;
+use App\Notifications\SupportTicketCreated;
 use App\Notifications\SupportTicketReplied;
 use App\Services\SupportStaff;
 use Illuminate\Http\RedirectResponse;
@@ -30,6 +33,8 @@ class SupportController extends Controller
             ->map(fn (SupportTicket $ticket) => $this->summary($ticket))
             ->all();
 
+        $draft = $this->draftFromQuery($request);
+
         return Inertia::render('Support/Index', [
             'tickets' => $tickets,
             'categories' => SupportTicket::CATEGORIES,
@@ -40,6 +45,7 @@ class SupportController extends Controller
                 ->filter()
                 ->values()
                 ->all(),
+            'draft' => $draft,
         ]);
     }
 
@@ -49,12 +55,14 @@ class SupportController extends Controller
 
         $ticket->load(['messages.author:id,full_name', 'assignee:id,full_name', 'course:id,title']);
 
+        $isStaffView = SupportStaff::includes($request->user());
+
         return Inertia::render('Support/Show', [
             'ticket' => [
                 ...$this->summary($ticket),
                 'assignee' => $ticket->assignee?->full_name,
                 'course' => $ticket->course?->title,
-                'is_staff_view' => false,
+                'is_staff_view' => $isStaffView,
             ],
             'messages' => $ticket->messages
                 ->sortBy('created_at')
@@ -92,6 +100,10 @@ class SupportController extends Controller
             'body' => $validated['body'],
             'from_staff' => false,
         ]);
+
+        User::whereHas('role', fn ($q) => $q->whereIn('name', SupportStaff::ROLES))
+            ->whereKeyNot($request->user()->id)
+            ->each(fn ($admin) => $admin->notify(new SupportTicketCreated($ticket)));
 
         return redirect()->route('support.show', $ticket)
             ->with('success', "Ticket {$ticket->reference} raised. We'll get back to you here.");
@@ -153,6 +165,50 @@ class SupportController extends Controller
             'last_reply_at' => $ticket->last_reply_at?->toIso8601String(),
             'created_at' => $ticket->created_at->toIso8601String(),
             'is_closed' => $ticket->isClosed(),
+        ];
+    }
+
+    /**
+     * Prefills from marketing CTAs (e.g. paid-course access requests).
+     *
+     * @return array{subject: string, body: string, category: string, course_id: string}|null
+     */
+    private function draftFromQuery(Request $request): ?array
+    {
+        $subject = (string) $request->input('subject', '');
+        $body = (string) $request->input('body', '');
+        $category = (string) $request->input('category', 'general');
+        $courseId = '';
+
+        if ($slug = $request->input('course')) {
+            $course = Course::where('slug', $slug)->first(['id', 'title']);
+            if ($course) {
+                $courseId = $course->id;
+                if ($subject === '') {
+                    $subject = "Request access to {$course->title}";
+                }
+                if ($body === '') {
+                    $body = "I'd like access to the paid course \"{$course->title}\".";
+                }
+                if (! in_array($category, SupportTicket::CATEGORIES, true)) {
+                    $category = 'billing';
+                }
+            }
+        }
+
+        if ($subject === '' && $body === '' && $courseId === '') {
+            return null;
+        }
+
+        if (! in_array($category, SupportTicket::CATEGORIES, true)) {
+            $category = 'general';
+        }
+
+        return [
+            'subject' => $subject,
+            'body' => $body,
+            'category' => $category,
+            'course_id' => $courseId,
         ];
     }
 

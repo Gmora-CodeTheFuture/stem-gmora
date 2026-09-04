@@ -1,8 +1,11 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Search, Edit, Trash2, RotateCcw } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Search, Edit, Trash2, RotateCcw, Plus, UserPlus } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import InputLabel from '@/Components/InputLabel';
+import TextInput from '@/Components/TextInput';
+import PrimaryButton from '@/Components/PrimaryButton';
 import { PageProps, Paginated, User, Role } from '@/types';
-import { useState } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 interface Props extends PageProps {
     users: Paginated<User & { enrollments_count: number }>;
@@ -12,19 +15,127 @@ interface Props extends PageProps {
 
 export default function UsersIndex({ users, roles, filters }: Props) {
     const [search, setSearch] = useState(filters.search || '');
+    const [showCreate, setShowCreate] = useState(false);
+
+    const createForm = useForm({
+        full_name: '',
+        email: '',
+        role_id: roles.find((r) => r.name === 'student')?.id || roles[0]?.id || '',
+        password: '',
+    });
 
     const applyFilters = (overrides: Record<string, string>) => {
         router.get('/admin/users', { search, ...overrides }, { preserveState: true, replace: true });
+    };
+
+    const submitCreate: FormEventHandler = (e) => {
+        e.preventDefault();
+        createForm.post('/admin/users', {
+            onSuccess: () => {
+                createForm.reset();
+                setShowCreate(false);
+            },
+        });
     };
 
     return (
         <DashboardLayout>
             <Head title="Users — Admin" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
                 <h1 className="text-2xl font-semibold text-surface-900 dark:text-white">Users</h1>
-                <span className="text-sm text-surface-500">{users.total} total</span>
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-surface-500">{users.total} total</span>
+                    <button
+                        type="button"
+                        onClick={() => setShowCreate((open) => !open)}
+                        className="btn-primary text-sm flex items-center gap-1"
+                    >
+                        <UserPlus className="w-4 h-4" /> Create user
+                    </button>
+                </div>
             </div>
+
+            {showCreate && (
+                <div className="card p-6 mb-6">
+                    <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> New user
+                    </h2>
+                    <form onSubmit={submitCreate} className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="full_name" value="Full name" />
+                                <TextInput
+                                    id="full_name"
+                                    className="mt-1 block w-full"
+                                    value={createForm.data.full_name}
+                                    onChange={(e) => createForm.setData('full_name', e.target.value)}
+                                    required
+                                />
+                                {createForm.errors.full_name && (
+                                    <p className="text-xs text-red-500 mt-1">{createForm.errors.full_name}</p>
+                                )}
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="email" value="Email" />
+                                <TextInput
+                                    id="email"
+                                    type="email"
+                                    className="mt-1 block w-full"
+                                    value={createForm.data.email}
+                                    onChange={(e) => createForm.setData('email', e.target.value)}
+                                    required
+                                />
+                                {createForm.errors.email && (
+                                    <p className="text-xs text-red-500 mt-1">{createForm.errors.email}</p>
+                                )}
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="role_id" value="Role" />
+                                <select
+                                    id="role_id"
+                                    value={createForm.data.role_id}
+                                    onChange={(e) => createForm.setData('role_id', e.target.value)}
+                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                    required
+                                >
+                                    {roles.map((role) => (
+                                        <option key={role.id} value={role.id}>{role.display_name}</option>
+                                    ))}
+                                </select>
+                                {createForm.errors.role_id && (
+                                    <p className="text-xs text-red-500 mt-1">{createForm.errors.role_id}</p>
+                                )}
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="password" value="Temporary password" />
+                                <TextInput
+                                    id="password"
+                                    type="password"
+                                    className="mt-1 block w-full"
+                                    value={createForm.data.password}
+                                    onChange={(e) => createForm.setData('password', e.target.value)}
+                                    required
+                                    minLength={8}
+                                />
+                                {createForm.errors.password && (
+                                    <p className="text-xs text-red-500 mt-1">{createForm.errors.password}</p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <PrimaryButton disabled={createForm.processing}>Create</PrimaryButton>
+                            <button
+                                type="button"
+                                onClick={() => { setShowCreate(false); createForm.reset(); }}
+                                className="text-sm text-surface-500 hover:text-surface-700"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="card p-4 mb-6 flex flex-wrap items-center gap-3">
@@ -71,7 +182,12 @@ export default function UsersIndex({ users, roles, filters }: Props) {
                                             {user.full_name.charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="font-medium text-surface-900 dark:text-white">{user.full_name}</p>
+                                            <Link
+                                                href={`/admin/users/${user.id}`}
+                                                className="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400"
+                                            >
+                                                {user.full_name}
+                                            </Link>
                                             <p className="text-xs text-surface-500">{user.email}</p>
                                         </div>
                                     </div>

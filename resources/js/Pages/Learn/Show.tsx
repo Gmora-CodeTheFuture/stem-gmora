@@ -34,7 +34,12 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
     const [openModules, setOpenModules] = useState<string[]>(modules.map((m) => m.id));
     const [curriculumOpen, setCurriculumOpen] = useState(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('gmora_curriculum_open') !== 'false';
+            const stored = localStorage.getItem('gmora_curriculum_open');
+            if (stored !== null) {
+                return stored === 'true';
+            }
+            // Below lg the curriculum covers the lesson — start closed.
+            return window.innerWidth >= 1024;
         }
         return true;
     });
@@ -169,11 +174,11 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3 mt-auto pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-auto pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0">
                             {prevLessonId && (
                                 <Link
                                     href={route('learn.lesson', [course.slug, prevLessonId])}
-                                    className="btn-secondary"
+                                    className="btn-secondary w-full sm:w-auto justify-center"
                                 >
                                     Previous lesson
                                 </Link>
@@ -183,12 +188,12 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                                 isComplete ? (
                                     <Link
                                         href={route('learn.lesson', [course.slug, nextLessonId])}
-                                        className="btn-secondary"
+                                        className="btn-secondary w-full sm:w-auto justify-center"
                                     >
                                         Next lesson
                                     </Link>
                                 ) : (
-                                    <button disabled className="btn-secondary opacity-50 cursor-not-allowed">
+                                    <button disabled className="btn-secondary w-full sm:w-auto justify-center opacity-50 cursor-not-allowed">
                                         Next lesson
                                     </button>
                                 )
@@ -197,12 +202,12 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             <button
                                 onClick={markComplete}
                                 disabled={isComplete}
-                                className={isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}
+                                className={`w-full sm:w-auto justify-center ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
                             >
                                 <CheckCircle2 className="w-4 h-4" />
                                 {isComplete ? 'Completed' : 'Mark as complete'}
                             </button>
-                            <span className="text-sm text-surface-400">
+                            <span className="text-sm text-surface-400 text-center sm:text-left">
                                 {formatDuration(currentLesson.duration_seconds)}
                             </span>
                         </div>
@@ -282,9 +287,12 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                         <p className="text-surface-500 dark:text-surface-400 mb-6 relative">
                             You've completed <strong>{course.title}</strong>. Outstanding work!
                         </p>
-                        <div className="flex gap-3 relative">
-                            <Link href={route('dashboard.courses')} className="btn-secondary flex-1">
+                        <div className="flex flex-col sm:flex-row gap-3 relative">
+                            <Link href={route('dashboard.courses')} className="btn-secondary flex-1 justify-center">
                                 Go to dashboard
+                            </Link>
+                            <Link href={route('dashboard.certificates')} className="btn-primary flex-1 justify-center">
+                                View certificates
                             </Link>
                         </div>
                     </div>

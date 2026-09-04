@@ -73,7 +73,7 @@ class LinkIntegrityTest extends TestCase
 
     public function test_the_public_pages_the_navigation_offers_all_load(): void
     {
-        foreach (['/', '/courses', '/blog'] as $path) {
+        foreach (['/', '/courses', '/blog', '/privacy', '/terms'] as $path) {
             $this->get($path)->assertOk();
         }
     }

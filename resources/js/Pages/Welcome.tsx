@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Award, BookOpen, Users, ArrowRight, PlayCircle, Sigma, Cpu, FlaskConical, Wrench, Menu
+    Award, BookOpen, Users, ArrowRight, PlayCircle, Sigma, Cpu, FlaskConical, Wrench, Menu, X
 } from 'lucide-react';
 import { ParallaxComponent } from '@/Components/ui/parallax-scrolling';
 
@@ -22,6 +22,7 @@ interface Props {
 export default function Welcome({ content, figures }: Props) {
     const [isNavVisible, setIsNavVisible] = useState(true);
     const [navTheme, setNavTheme] = useState<'light'|'dark'>('dark');
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         let scrollTimeout: NodeJS.Timeout;
@@ -58,6 +59,17 @@ export default function Welcome({ content, figures }: Props) {
             observer.disconnect();
         };
     }, []);
+
+    useEffect(() => {
+        if (!mobileMenuOpen) return;
+        const previous = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previous;
+        };
+    }, [mobileMenuOpen]);
+
+    const closeMobileMenu = () => setMobileMenuOpen(false);
 
     const stats = [
         { value: figures.courses, label: 'COURSES', icon: BookOpen },
@@ -105,11 +117,30 @@ export default function Welcome({ content, figures }: Props) {
                                 Initialize
                             </Link>
                         </div>
-                        <button className={`md:hidden p-2 -mr-2 transition-colors duration-300 ${linkHoverClass}`} aria-label="Menu">
-                            <Menu className="w-6 h-6" />
+                        <button
+                            type="button"
+                            className={`md:hidden p-2 -mr-2 transition-colors duration-300 ${linkHoverClass}`}
+                            aria-label="Menu"
+                            aria-expanded={mobileMenuOpen}
+                            onClick={() => setMobileMenuOpen((open) => !open)}
+                        >
+                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>
                     </div>
                 </div>
+
+                {mobileMenuOpen && (
+                    <div className={`md:hidden border-t ${navTheme === 'dark' ? 'border-white/10 bg-black' : 'border-black/10 bg-white'}`}>
+                        <nav className="max-w-[1440px] mx-auto px-6 py-4 flex flex-col gap-1 font-sans text-sm uppercase tracking-widest">
+                            <a href="#stem" onClick={closeMobileMenu} className={`py-3 transition-colors ${linkHoverClass}`}>Curriculum</a>
+                            <a href="#vision" onClick={closeMobileMenu} className={`py-3 transition-colors ${linkHoverClass}`}>Directives</a>
+                            <Link href="/login" onClick={closeMobileMenu} className={`py-3 transition-colors ${linkHoverClass}`}>Login</Link>
+                            <Link href="/register" onClick={closeMobileMenu} className={`mt-2 px-4 py-3 text-center font-bold ${buttonClass}`}>
+                                Register
+                            </Link>
+                        </nav>
+                    </div>
+                )}
             </header>
 
             {/* Global Grid Background for content below hero */}
@@ -212,6 +243,28 @@ export default function Welcome({ content, figures }: Props) {
                             </div>
                         </section>
 
+                        {/* ── Vision ──────────────────────────────── */}
+                        <section data-theme="light" id="vision" className="py-32 relative z-10 border-b border-black/10 bg-white">
+                            <div className="max-w-[1440px] mx-auto px-6">
+                                <div className="max-w-2xl mb-16">
+                                    <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
+                                        {content.vision.title}
+                                    </h2>
+                                    <p className="font-sans text-sm text-black/60 leading-relaxed border-l border-black/20 pl-4">
+                                        {content.vision.body}
+                                    </p>
+                                </div>
+                                <div className="grid md:grid-cols-3 gap-px bg-black/10 border border-black/10">
+                                    {[content.vision.point_one, content.vision.point_two, content.vision.point_three].map((point, i) => (
+                                        <div key={i} className="bg-white p-8 md:p-10">
+                                            <span className="font-sans text-xs text-black/40 tracking-widest mb-6 block">DIR_0{i + 1}</span>
+                                            <p className="font-sans text-sm text-black/70 leading-relaxed">{point}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
                         {/* ── Closing CTA ──────────────────────────────── */}
                         <section data-theme="light" className="py-32 relative z-10 bg-white">
                             <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
@@ -257,8 +310,8 @@ export default function Welcome({ content, figures }: Props) {
                                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 font-sans text-xs text-white/40 tracking-widest uppercase">
                                     <span>© {new Date().getFullYear()} Gmora. All rights reserved.</span>
                                     <div className="flex gap-8">
-                                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-                                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
+                                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
                                     </div>
                                 </div>
                             </div>

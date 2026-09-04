@@ -13,12 +13,21 @@ interface Badge {
     description: string;
     type: string;
     icon_url?: string;
+    criteria?: { metric?: string; threshold?: number } | null;
     users_count: number;
 }
 
 interface Props extends PageProps {
     badges: Badge[];
 }
+
+const METRICS = [
+    { value: 'level', label: 'Level' },
+    { value: 'streak', label: 'Streak (days)' },
+    { value: 'courses_completed', label: 'Courses completed' },
+    { value: 'lessons_completed', label: 'Lessons completed' },
+    { value: 'certificates', label: 'Certificates' },
+];
 
 export default function BadgesIndex({ badges }: Props) {
     const [showForm, setShowForm] = useState(false);
@@ -29,6 +38,7 @@ export default function BadgesIndex({ badges }: Props) {
         description: '',
         type: 'achievement',
         icon_url: '',
+        criteria: { metric: 'level', threshold: 1 },
     });
 
     const submit: FormEventHandler = (e) => {
@@ -41,7 +51,16 @@ export default function BadgesIndex({ badges }: Props) {
     };
 
     const startEdit = (badge: Badge) => {
-        setData({ name: badge.name, description: badge.description, type: badge.type, icon_url: badge.icon_url || '' });
+        setData({
+            name: badge.name,
+            description: badge.description,
+            type: badge.type,
+            icon_url: badge.icon_url || '',
+            criteria: {
+                metric: badge.criteria?.metric || 'level',
+                threshold: badge.criteria?.threshold ?? 1,
+            },
+        });
         setEditingId(badge.id);
         setShowForm(true);
     };
@@ -67,6 +86,7 @@ export default function BadgesIndex({ badges }: Props) {
                             <div>
                                 <InputLabel htmlFor="name" value="Name" />
                                 <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
+                                {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                             </div>
                             <div>
                                 <InputLabel htmlFor="type" value="Type" />
@@ -84,6 +104,36 @@ export default function BadgesIndex({ badges }: Props) {
                             <InputLabel htmlFor="description" value="Description" />
                             <textarea id="description" className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
                                 value={data.description} onChange={(e) => setData('description', e.target.value)} rows={2} required />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="metric" value="Criteria metric" />
+                                <select
+                                    id="metric"
+                                    value={data.criteria.metric}
+                                    onChange={(e) => setData('criteria', { ...data.criteria, metric: e.target.value })}
+                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
+                                >
+                                    {METRICS.map((metric) => (
+                                        <option key={metric.value} value={metric.value}>{metric.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="threshold" value="Threshold" />
+                                <TextInput
+                                    id="threshold"
+                                    type="number"
+                                    min={1}
+                                    className="mt-1 block w-full"
+                                    value={data.criteria.threshold}
+                                    onChange={(e) => setData('criteria', {
+                                        ...data.criteria,
+                                        threshold: Number(e.target.value) || 1,
+                                    })}
+                                    required
+                                />
+                            </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <PrimaryButton disabled={processing}>{editingId ? 'Update' : 'Create'}</PrimaryButton>
@@ -104,8 +154,13 @@ export default function BadgesIndex({ badges }: Props) {
                         <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-surface-900 dark:text-white">{badge.name}</h3>
                             <p className="text-xs text-surface-500 mt-0.5 line-clamp-2">{badge.description}</p>
-                            <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center gap-3 mt-2 flex-wrap">
                                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-surface-100 dark:bg-surface-800 text-surface-500 font-medium">{badge.type}</span>
+                                {badge.criteria?.metric && (
+                                    <span className="text-[11px] text-surface-400">
+                                        {badge.criteria.metric} ≥ {badge.criteria.threshold}
+                                    </span>
+                                )}
                                 <span className="text-xs text-surface-400">{badge.users_count} earned</span>
                             </div>
                         </div>

@@ -41,6 +41,37 @@ class UserManagementController extends Controller
         ]);
     }
 
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'full_name' => ['required', 'string', 'max:255'],
+            'role_id' => ['required', 'exists:roles,id'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        $role = Role::findOrFail($validated['role_id']);
+
+        $user = User::create([
+            'email' => $validated['email'],
+            'full_name' => $validated['full_name'],
+            'role_id' => $role->id,
+            'password' => $validated['password'],
+        ]);
+
+        // Admin-created accounts skip the verification email — the invite
+        // itself is the proof of delivery.
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        AuditLog::record('user.created', 'user', $user->id, [
+            'email' => $user->email,
+            'role' => $role->name,
+        ], $request->user()->id);
+
+        return Redirect::back()
+            ->with('success', "User \"{$user->full_name}\" created.");
+    }
+
     public function show(User $user): Response
     {
         $user->load(['role', 'stat', 'badges', 'enrollments.course:id,title,slug', 'certificates.course:id,title']);

@@ -6,10 +6,13 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Module;
+use App\Models\Payment;
+use App\Models\PromoCode;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\VideoAccessToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AdminPanelTest extends TestCase
@@ -48,6 +51,7 @@ class AdminPanelTest extends TestCase
             route('tutor.courses.edit', $course),
             route('admin.enrollments.index'),
             route('admin.payments.index'),
+            route('admin.promo-codes.index'),
             route('admin.badges.index'),
         ] as $url) {
             $this->actingAs($this->admin)->get($url)->assertOk();
@@ -214,5 +218,111 @@ class AdminPanelTest extends TestCase
 
         $this->assertSame(2, Course::count());
         $this->assertSame(2, Course::pluck('slug')->unique()->count());
+    }
+
+    public function test_admin_can_create_a_user(): void
+    {
+        $studentRole = Role::firstOrCreate(
+            ['name' => Role::STUDENT],
+            ['display_name' => 'Student'],
+        );
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.users.store'), [
+                'full_name' => 'New Learner',
+                'email' => 'new.learner@example.com',
+                'role_id' => $studentRole->id,
+                'password' => 'secret-pass',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $user = User::where('email', 'new.learner@example.com')->firstOrFail();
+
+        $this->assertSame('New Learner', $user->full_name);
+        $this->assertTrue(Hash::check('secret-pass', $user->password));
+        $this->assertNotNull($user->email_verified_at);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'user.created',
+            'entity_id' => $user->id,
+            'actor_id' => $this->admin->id,
+        ]);
+    }
+
+    public function test_granting_paid_enrollment_records_a_manual_payment(): void
+    {
+        $course = Course::factory()->paid(79)->create([
+            'status' => Course::STATUS_PUBLISHED,
+            'total_enrollments' => 0,
+        ]);
+        $student = User::factory()->create();
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.enrollments.store'), [
+                'user_id' => $student->id,
+                'course_id' => $course->id,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('payments', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'provider' => Payment::PROVIDER_MANUAL,
+            'status' => Payment::STATUS_COMPLETED,
+            'amount' => 79,
+        ]);
+    }
+
+    public function test_granting_paid_enrollment_can_skip_payment_recording(): void
+    {
+        $course = Course::factory()->paid()->create(['status' => Course::STATUS_PUBLISHED]);
+        $student = User::factory()->create();
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.enrollments.store'), [
+                'user_id' => $student->id,
+                'course_id' => $course->id,
+                'record_payment' => false,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertDatabaseHas('enrollments', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => Enrollment::STATUS_ACTIVE,
+        ]);
+    }
+
+    public function test_promo_code_crud(): void
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.promo-codes.store'), [
+                'code' => 'stem10',
+                'type' => 'percentage',
+                'value' => 10,
+                'currency' => 'USD',
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $code = PromoCode::where('code', 'STEM10')->firstOrFail();
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.promo-codes.update', $code), [
+                'code' => 'STEM10',
+                'type' => 'percentage',
+                'value' => 15,
+                'currency' => 'USD',
+                'is_active' => true,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('15.00', $code->refresh()->value);
+
+        $this->actingAs($this->admin)
+            ->delete(route('admin.promo-codes.destroy', $code))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('promo_codes', ['id' => $code->id]);
     }
 }

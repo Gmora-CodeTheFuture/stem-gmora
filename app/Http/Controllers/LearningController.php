@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Events\ExperienceEarned;
-use App\Jobs\GenerateCertificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\Progress;
+use App\Services\CourseCompletion;
 use App\Services\DashboardCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +21,8 @@ use Inertia\Response;
  */
 class LearningController extends Controller
 {
+    public function __construct(private readonly CourseCompletion $completion) {}
+
     /** Course player, optionally deep-linked to a lesson. */
     public function show(Request $request, Course $course, ?Lesson $lesson = null): Response
     {
@@ -128,45 +130,11 @@ class LearningController extends Controller
             );
         }
 
-        $this->rollUpCourseCompletion($enrollment);
+        $this->completion->rollUp($enrollment);
 
         DashboardCache::forget($request->user()->id);
 
         return back();
-    }
-
-    /**
-     * Course-level roll-up: 100% completion flips the enrollment and queues
-     * the certificate job (Plan §8.8).
-     */
-    private function rollUpCourseCompletion(Enrollment $enrollment): void
-    {
-        $total = $this->publishedLessonCount($enrollment->course_id);
-
-        if ($total === 0) {
-            return;
-        }
-
-        $completed = $enrollment->progress()->where('status', Progress::STATUS_COMPLETED)->count();
-
-        if ($completed < $total || $enrollment->status === Enrollment::STATUS_COMPLETED) {
-            return;
-        }
-
-        $enrollment->update([
-            'status' => Enrollment::STATUS_COMPLETED,
-            'completed_at' => now(),
-        ]);
-
-        GenerateCertificate::dispatch($enrollment->id);
-
-        if ($enrollment->user) {
-            ExperienceEarned::dispatch(
-                $enrollment->user,
-                (int) config('gamification.xp.course_completed'),
-                'course_completed',
-            );
-        }
     }
 
     private function completionPercentage(Enrollment $enrollment, int $totalLessons): float
@@ -178,12 +146,5 @@ class LearningController extends Controller
         $completed = $enrollment->progress()->where('status', Progress::STATUS_COMPLETED)->count();
 
         return round($completed / $totalLessons * 100, 1);
-    }
-
-    private function publishedLessonCount(string $courseId): int
-    {
-        return Lesson::where('is_published', true)
-            ->whereHas('module', fn ($q) => $q->where('course_id', $courseId)->where('is_published', true))
-            ->count();
     }
 }

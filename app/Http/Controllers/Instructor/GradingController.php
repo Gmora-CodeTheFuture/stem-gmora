@@ -8,7 +8,11 @@ use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\QuizAttempt;
 use App\Models\Submission;
+use App\Notifications\QuizGraded;
 use App\Notifications\SubmissionGraded;
+use App\Services\CourseCompletion;
+use App\Services\DashboardCache;
+use App\Services\GradingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -26,6 +30,11 @@ use Inertia\Response;
  */
 class GradingController extends Controller
 {
+    public function __construct(
+        private readonly CourseCompletion $completion,
+        private readonly GradingService $grading,
+    ) {}
+
     public function index(Request $request): Response
     {
         $courseIds = $this->gradableCourseIds($request);
@@ -150,6 +159,20 @@ class GradingController extends Controller
         AuditLog::record('quiz_attempt.graded', 'quiz_attempt', $attempt->id, [
             'points_earned' => $validated['points_earned'],
         ], $request->user()->id);
+
+        $attempt->loadMissing(['quiz', 'user']);
+        $this->completion->syncQuizLesson($attempt);
+
+        if ($this->grading->hasPassed($attempt->quiz, $attempt) && $attempt->user) {
+            ExperienceEarned::dispatch(
+                $attempt->user,
+                (int) config('gamification.xp.quiz_passed'),
+                'quiz_passed',
+            );
+        }
+
+        $attempt->user?->notify(new QuizGraded($attempt->fresh('quiz')));
+        DashboardCache::forget($attempt->user_id);
 
         return back()->with('success', 'Attempt graded.');
     }

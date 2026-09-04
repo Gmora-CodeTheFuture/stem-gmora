@@ -7,7 +7,9 @@ use App\Models\Discussion;
 use App\Models\DiscussionReply;
 use App\Models\Lesson;
 use App\Notifications\DiscussionReplied;
+use App\Notifications\DiscussionStarted;
 use App\Services\ContentVersion;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -117,7 +119,19 @@ class DiscussionController extends Controller
             'course_id' => $course->id,
             'user_id' => $request->user()->id,
             'last_activity_at' => now(),
-        ]);
+        ])->load('author');
+
+        $recipients = User::query()
+            ->where(function ($q) use ($course) {
+                $q->whereKey($course->instructor_id)
+                    ->orWhereHas('role', fn ($r) => $r->where('name', \App\Models\Role::ADMIN));
+            })
+            ->whereKeyNot($request->user()->id)
+            ->get();
+
+        foreach ($recipients as $recipient) {
+            $recipient->notify(new DiscussionStarted($discussion));
+        }
 
         return redirect()->route('discussions.show', $discussion)
             ->with('success', 'Your question has been posted.');

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CourseApprovalController;
 use App\Http\Controllers\Admin\EnrollmentManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
 use App\Http\Controllers\Admin\PostManagementController;
+use App\Http\Controllers\Admin\PromoCodeController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\SecurityConsoleController;
 use App\Http\Controllers\Admin\SupportQueueController;
@@ -32,9 +33,12 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SupportController;
+use App\Http\Controllers\Tutor\AssignmentController as TutorAssignmentController;
 use App\Http\Controllers\Tutor\CourseBuilderController;
 use App\Http\Controllers\Tutor\LessonController;
+use App\Http\Controllers\Tutor\LiveSessionController;
 use App\Http\Controllers\Tutor\ModuleController;
+use App\Http\Controllers\Tutor\QuizController as TutorQuizController;
 use App\Http\Controllers\Tutor\StudentController;
 use App\Models\Certificate;
 use App\Models\Course;
@@ -73,6 +77,64 @@ Route::get('/courses/{slug}', [CourseCatalogController::class, 'show'])->name('c
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+
+Route::get('/privacy', function () {
+    return Inertia::render('Marketing/Legal', [
+        'title' => 'Privacy Policy',
+        'updated' => 'September 2026',
+        'sections' => [
+            [
+                'heading' => 'What we collect',
+                'body' => "We collect account details you provide (name, email, password), learning activity such as enrollments and progress, and basic technical data needed to keep the platform secure and reliable.",
+            ],
+            [
+                'heading' => 'How we use it',
+                'body' => "We use this information to run your account, deliver courses, issue certificates, improve the product, and communicate about your learning. We do not sell personal data.",
+            ],
+            [
+                'heading' => 'Sharing',
+                'body' => "We share data only with service providers who help us operate the platform (for example hosting and email), or when required by law. Instructors and admins see the course activity needed to teach and support you.",
+            ],
+            [
+                'heading' => 'Your choices',
+                'body' => "You can update your profile, request a copy of your data, or ask us to delete your account by contacting support. Some records may be retained where we are legally required to keep them.",
+            ],
+            [
+                'heading' => 'Contact',
+                'body' => 'Questions about privacy: support@gmorastem.com',
+            ],
+        ],
+    ]);
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return Inertia::render('Marketing/Legal', [
+        'title' => 'Terms of Service',
+        'updated' => 'September 2026',
+        'sections' => [
+            [
+                'heading' => 'Using Gmora STEM',
+                'body' => 'By creating an account or using the site you agree to these terms. You must provide accurate information and keep your login secure. You are responsible for activity under your account.',
+            ],
+            [
+                'heading' => 'Courses and content',
+                'body' => 'Course materials are licensed for your personal learning. You may not redistribute, resell, or publicly share paid content without permission. Certificates reflect completion of the stated requirements.',
+            ],
+            [
+                'heading' => 'Acceptable use',
+                'body' => "Do not misuse the platform: no scraping, attacks, harassment, or attempts to access other users' data. We may suspend accounts that violate these rules.",
+            ],
+            [
+                'heading' => 'Availability',
+                'body' => 'We aim for reliable service but do not guarantee uninterrupted access. Features may change as the product evolves.',
+            ],
+            [
+                'heading' => 'Contact',
+                'body' => 'Questions about these terms: hello@gmorastem.com',
+            ],
+        ],
+    ]);
+})->name('terms');
 
 // Public User Portfolio
 Route::get('/u/{user}', [ProfileController::class, 'show'])->name('portfolio.show');
@@ -224,6 +286,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
         // Users
         Route::get('/users', [UserManagementController::class, 'index'])->name('admin.users.index');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('admin.users.store');
         Route::get('/users/{user}', [UserManagementController::class, 'show'])->name('admin.users.show');
         Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('admin.users.edit');
         Route::patch('/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
@@ -244,6 +307,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])
 
         // Payments
         Route::get('/payments', [PaymentManagementController::class, 'index'])->name('admin.payments.index');
+
+        // Promo codes
+        Route::get('/promo-codes', [PromoCodeController::class, 'index'])->name('admin.promo-codes.index');
+        Route::post('/promo-codes', [PromoCodeController::class, 'store'])->name('admin.promo-codes.store');
+        Route::patch('/promo-codes/{promoCode}', [PromoCodeController::class, 'update'])->name('admin.promo-codes.update');
+        Route::delete('/promo-codes/{promoCode}', [PromoCodeController::class, 'destroy'])->name('admin.promo-codes.destroy');
 
         // Support queue
         Route::get('/support', [SupportQueueController::class, 'index'])->name('admin.support.index');
@@ -309,6 +378,18 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('/modules/{module}/lessons/reorder', [LessonController::class, 'reorder'])->name('tutor.lessons.reorder');
         Route::post('/lessons/{lesson}/presentation', [PresentationController::class, 'upload'])->name('tutor.lessons.presentation.upload');
         Route::post('/lessons/{lesson}/pdf', [LessonController::class, 'uploadPdf'])->name('tutor.lessons.pdf.upload');
+        Route::patch('/lessons/{lesson}/live-session', [LiveSessionController::class, 'update'])->name('tutor.lessons.live-session');
+
+        // Quizzes
+        Route::patch('/quizzes/{quiz}', [TutorQuizController::class, 'update'])->name('tutor.quizzes.update');
+        Route::post('/quizzes/{quiz}/questions', [TutorQuizController::class, 'storeQuestion'])->name('tutor.questions.store');
+        Route::patch('/questions/{question}', [TutorQuizController::class, 'updateQuestion'])->name('tutor.questions.update');
+        Route::delete('/questions/{question}', [TutorQuizController::class, 'destroyQuestion'])->name('tutor.questions.destroy');
+
+        // Assignments
+        Route::post('/courses/{course}/assignments', [TutorAssignmentController::class, 'store'])->name('tutor.assignments.store');
+        Route::patch('/assignments/{assignment}', [TutorAssignmentController::class, 'update'])->name('tutor.assignments.update');
+        Route::delete('/assignments/{assignment}', [TutorAssignmentController::class, 'destroy'])->name('tutor.assignments.destroy');
 
         // Students
         Route::get('/courses/{course}/students', [StudentController::class, 'index'])->name('tutor.students.index');

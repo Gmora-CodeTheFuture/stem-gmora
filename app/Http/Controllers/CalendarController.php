@@ -8,6 +8,8 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Event;
 use App\Models\LiveSession;
+use App\Models\User;
+use App\Notifications\CalendarEventPublished;
 use App\Services\ContentVersion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -90,6 +92,16 @@ class CalendarController extends Controller
             'title' => $event->title,
             'starts_at' => $event->starts_at->toIso8601String(),
         ], $request->user()->id);
+
+        if ($event->is_published && $event->course_id) {
+            $userIds = Enrollment::where('course_id', $event->course_id)
+                ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
+                ->pluck('user_id');
+
+            User::whereIn('id', $userIds)
+                ->whereKeyNot($request->user()->id)
+                ->each(fn (User $student) => $student->notify(new CalendarEventPublished($event)));
+        }
 
         return back()->with('success', 'Event published to the calendar.');
     }

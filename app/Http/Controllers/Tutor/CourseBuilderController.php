@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Notifications\CourseSubmittedForReview;
 use App\Services\CourseContentService;
 use App\Services\CourseReadiness;
+use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -83,8 +86,9 @@ class CourseBuilderController extends Controller
             'modules' => fn ($q) => $q->orderBy('order_index'),
             'modules.lessons' => fn ($q) => $q->orderBy('order_index'),
             'modules.lessons.liveSession',
-            'modules.lessons.quiz:id,lesson_id,title,is_published',
+            'modules.lessons.quiz.questions',
             'modules.lessons.presentation:id,lesson_id,original_filename',
+            'assignments' => fn ($q) => $q->orderByDesc('created_at'),
         ]);
 
         // `content_ref` is hidden from every student-facing response; the tutor
@@ -99,6 +103,9 @@ class CourseBuilderController extends Controller
                     'has_pdf',
                     $lesson->type === Lesson::TYPE_PDF && filled($lesson->getRawOriginal('content_ref')),
                 );
+
+                // Authors need the answer key while editing questions.
+                $lesson->quiz?->questions?->each->makeVisible('correct_answer');
             });
         });
 
@@ -216,6 +223,13 @@ class CourseBuilderController extends Controller
             'from' => $previous,
             'to' => $validated['status'],
         ], $request->user()->id);
+
+        if ($validated['status'] === Course::STATUS_PENDING_REVIEW
+            && $previous !== Course::STATUS_PENDING_REVIEW) {
+            User::whereHas('role', fn ($q) => $q->where('name', Role::ADMIN))
+                ->whereKeyNot($request->user()->id)
+                ->each(fn (User $admin) => $admin->notify(new CourseSubmittedForReview($course)));
+        }
 
         return Redirect::back()
             ->with('success', "Course status changed to \"{$validated['status']}\".");

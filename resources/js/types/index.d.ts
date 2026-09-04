@@ -50,6 +50,7 @@ export interface Course {
     total_enrollments: number;
     average_rating?: number;
     modules?: Module[];
+    assignments?: Assignment[];
     created_at: string;
     updated_at: string;
 }
@@ -84,7 +85,7 @@ export interface Lesson {
     content_ref?: string | null;
     has_presentation?: boolean;
     has_pdf?: boolean;
-    quiz?: { id: string; title: string } | null;
+    quiz?: Quiz | null;
     progress?: Pick<Progress, 'status' | 'watch_percentage'> | null;
 }
 
@@ -112,6 +113,9 @@ export interface LiveSession {
     scheduled_start: string;
     duration_minutes: number;
     zoom_join_url?: string;
+    zoom_meeting_id?: string;
+    zoom_passcode?: string;
+    recording_url?: string;
 }
 
 // ─── Learning ───────────────────────────────────────────────────
@@ -136,6 +140,22 @@ export interface Progress {
     completed_at?: string;
 }
 
+/**
+ * Author-facing question shape (includes the answer key).
+ */
+export type QuestionType = 'mcq' | 'true_false' | 'fill_blank' | 'code' | 'matching' | 'ordering' | 'essay';
+
+export interface AuthorQuestion {
+    id: string;
+    type: QuestionType;
+    body: string;
+    points: number;
+    order_index: number;
+    options?: Array<{ text: string; is_correct?: boolean }>;
+    correct_answer?: number[] | string[] | null;
+    explanation?: string | null;
+}
+
 export interface Quiz {
     id: string;
     course_id: string;
@@ -147,10 +167,8 @@ export interface Quiz {
     max_attempts: number;
     passing_score: number;
     is_published: boolean;
-    questions?: Question[];
+    questions?: AuthorQuestion[];
 }
-
-export type QuestionType = 'mcq' | 'true_false' | 'fill_blank' | 'code' | 'matching' | 'ordering' | 'essay';
 
 /**
  * The shape a client actually receives (Question::forStudent). The answer key

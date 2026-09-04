@@ -29,7 +29,7 @@ function when(iso: string | null): string {
 
 export default function BlogShow({ post, related }: Props) {
     return (
-        <MarketingLayout>
+        <MarketingLayout nav>
             <Head title={`${post.title} — Gmora STEM`}>
                 {post.excerpt && <meta name="description" content={post.excerpt} />}
             </Head>

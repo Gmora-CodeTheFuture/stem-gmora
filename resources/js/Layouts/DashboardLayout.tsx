@@ -2,10 +2,10 @@ import axios from 'axios';
 import { Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, ReactNode, useEffect, useRef, useState } from 'react';
 import {
-    Award, Bell, BookOpen, Calendar, ClipboardCheck, GraduationCap, Home,
+    Award, Bell, BookOpen, Calendar, ClipboardCheck, Download, GraduationCap, Home,
     LifeBuoy, LogOut, Menu, Moon, Search, Settings, Sun, X,
     LayoutDashboard, Users, CreditCard, Trophy, Wrench, PenSquare, UserCheck, ShieldCheck, BarChart3,
-    PlayCircle, MessageSquare, CheckCircle2
+    PlayCircle, MessageSquare, CheckCircle2, Tag
 } from 'lucide-react';
 import { PageProps } from '@/types';
 
@@ -17,6 +17,7 @@ interface DashboardLayoutProps {
 }
 
 const SIDEBAR_KEY = 'sidebar:open';
+const INSTALL_DISMISS_KEY = 'pwa:install-dismissed';
 
 export default function DashboardLayout({ header, children, noScroll = false }: DashboardLayoutProps) {
     const { auth, flash, notifications_count } = usePage<PageProps>().props;
@@ -40,6 +41,17 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<any>(null);
     const [isSearching, setIsSearching] = useState(false);
+    const [installPrompt, setInstallPrompt] = useState<{ prompt: () => Promise<void> } | null>(null);
+    const [installDismissed, setInstallDismissed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem(INSTALL_DISMISS_KEY) === 'true';
+        }
+        return false;
+    });
+    // `sidebarOpen` only means "collapsed to a rail" on a desktop. The drawer is
+    // always full width, so without this a user who collapsed the rail would
+    // find an icons-only menu with no labels on their phone.
+    const [isDesktop, setIsDesktop] = useState(true);
 
     const searchRef = useRef<HTMLInputElement | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -48,10 +60,16 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         setIsDark(document.documentElement.classList.contains('dark'));
     }, []);
 
-    // `sidebarOpen` only means "collapsed to a rail" on a desktop. The drawer is
-    // always full width, so without this a user who collapsed the rail would
-    // find an icons-only menu with no labels on their phone.
-    const [isDesktop, setIsDesktop] = useState(true);
+    useEffect(() => {
+        const onBeforeInstall = (e: Event) => {
+            e.preventDefault();
+            const event = e as Event & { prompt: () => Promise<void> };
+            setInstallPrompt({ prompt: () => event.prompt() });
+        };
+
+        window.addEventListener('beforeinstallprompt', onBeforeInstall);
+        return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+    }, []);
 
     useEffect(() => {
         const query = window.matchMedia('(min-width: 1024px)');
@@ -185,9 +203,21 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Blog', href: '/admin/posts', icon: PenSquare },
         { name: 'Website copy', href: '/admin/content', icon: Wrench },
         { name: 'Payments', href: '/admin/payments', icon: CreditCard },
+        { name: 'Promo codes', href: '/admin/promo-codes', icon: Tag },
         { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
         { name: 'Security', href: '/admin/security', icon: ShieldCheck },
     ] : [];
+
+    // Phone tab bar: students keep the learning destinations; admins get the
+    // four places they jump between most. Everything else stays in the drawer.
+    const mobileTabs = isAdmin
+        ? [
+            { name: 'Overview', href: '/admin', icon: LayoutDashboard, exact: true },
+            { name: 'Courses', href: '/tutor/courses', icon: BookOpen },
+            { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
+            { name: 'Support', href: '/admin/support', icon: LifeBuoy },
+        ]
+        : navigation;
 
     const path = typeof window === 'undefined' ? '' : window.location.pathname;
     const isActive = (href: string, exact = false) =>
@@ -543,6 +573,34 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 </div>
             </div>
 
+            {installPrompt && !installDismissed && (
+                <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:bottom-4 inset-x-4 z-40 max-w-md mx-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-surface-900 text-white shadow-lg">
+                    <Download className="w-5 h-5 shrink-0 text-primary-300" />
+                    <p className="flex-1 text-sm">Install Gmora STEM for quicker access.</p>
+                    <button
+                        type="button"
+                        className="text-sm font-semibold text-primary-300 hover:text-white shrink-0"
+                        onClick={async () => {
+                            await installPrompt.prompt();
+                            setInstallPrompt(null);
+                        }}
+                    >
+                        Install
+                    </button>
+                    <button
+                        type="button"
+                        className="p-1 text-white/60 hover:text-white shrink-0"
+                        aria-label="Dismiss install prompt"
+                        onClick={() => {
+                            localStorage.setItem(INSTALL_DISMISS_KEY, 'true');
+                            setInstallDismissed(true);
+                        }}
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
             {/* ── Mobile tab bar ──────────────────────────────────
                 The four places people move between constantly. Everything else
                 stays in the drawer — a tab bar stops being useful the moment it
@@ -552,8 +610,9 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 aria-label="Primary"
             >
                 <div className="flex items-stretch">
-                    {navigation.map((item) => {
+                    {mobileTabs.map((item) => {
                         const active = isActive(item.href, item.exact);
+                        const badge = 'badge' in item ? item.badge : undefined;
 
                         return (
                             <Link
@@ -569,9 +628,9 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                                 <span className="relative">
                                     <item.icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
 
-                                    {item.badge !== undefined && item.badge > 0 && (
+                                    {badge !== undefined && badge > 0 && (
                                         <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1 min-w-[16px] h-4 rounded-full flex items-center justify-center">
-                                            {item.badge > 9 ? '9+' : item.badge}
+                                            {badge > 9 ? '9+' : badge}
                                         </span>
                                     )}
                                 </span>

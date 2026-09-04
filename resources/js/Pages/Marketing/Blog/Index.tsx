@@ -34,7 +34,7 @@ export default function BlogIndex({ posts, categories, filters }: Props) {
         router.get(route('blog.index'), { ...filters, search, ...patch }, { preserveState: true, replace: true });
 
     return (
-        <MarketingLayout>
+        <MarketingLayout nav>
             <Head title="Blog — Gmora STEM" />
 
             <section className="pt-28 md:pt-36 pb-12 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800">

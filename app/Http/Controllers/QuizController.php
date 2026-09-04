@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Events\ExperienceEarned;
 use App\Models\AuditLog;
-use App\Models\Enrollment;
-use App\Models\Progress;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
+use App\Services\CourseCompletion;
+use App\Services\DashboardCache;
 use App\Services\GradingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,7 +21,10 @@ use Inertia\Response;
  */
 class QuizController extends Controller
 {
-    public function __construct(private readonly GradingService $grading) {}
+    public function __construct(
+        private readonly GradingService $grading,
+        private readonly CourseCompletion $completion,
+    ) {}
 
     /** Quiz intro: rules, attempts used, previous results. */
     public function show(Request $request, Quiz $quiz): Response
@@ -149,7 +151,7 @@ class QuizController extends Controller
 
         DB::transaction(function () use ($attempt, $answers) {
             $this->grading->grade($attempt, $answers);
-            $this->syncLessonProgress($attempt);
+            $this->completion->syncQuizLesson($attempt);
         });
 
         AuditLog::record('quiz.submitted', 'quiz_attempt', $attempt->id, [
@@ -165,6 +167,8 @@ class QuizController extends Controller
                 'quiz_passed',
             );
         }
+
+        DashboardCache::forget($request->user()->id);
 
         return redirect()->route('quiz.result', $attempt);
     }
@@ -205,38 +209,6 @@ class QuizController extends Controller
         ]);
     }
 
-    /**
-     * A passing attempt completes the quiz's lesson, so quizzes count toward
-     * course completion like any other lesson (Plan §8.8).
-     */
-    private function syncLessonProgress(QuizAttempt $attempt): void
-    {
-        $lessonId = $attempt->quiz->lesson_id;
-
-        if (! $lessonId || ! $this->grading->hasPassed($attempt->quiz, $attempt)) {
-            return;
-        }
-
-        $enrollment = Enrollment::where('user_id', $attempt->user_id)
-            ->where('course_id', $attempt->quiz->course_id)
-            ->where('status', Enrollment::STATUS_ACTIVE)
-            ->first();
-
-        if (! $enrollment) {
-            return;
-        }
-
-        Progress::updateOrCreate(
-            ['enrollment_id' => $enrollment->id, 'lesson_id' => $lessonId],
-            [
-                'status' => Progress::STATUS_COMPLETED,
-                'watch_percentage' => 100,
-                'completed_at' => now(),
-            ],
-        );
-    }
-
-    /** @return Collection<int, QuizAttempt> */
     /** True when this is the earliest passing attempt for the quiz. */
     private function isFirstPass(QuizAttempt $attempt): bool
     {

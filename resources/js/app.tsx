@@ -26,3 +26,12 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
+
+// App-shell service worker — static branding only; see public/sw.js.
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            // Registration failures are non-fatal (offline / private browsing).
+        });
+    });
+}

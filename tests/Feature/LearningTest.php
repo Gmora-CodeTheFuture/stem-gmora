@@ -61,13 +61,14 @@ class LearningTest extends TestCase
         $this->assertSame(1, $course->fresh()->total_enrollments);
     }
 
-    public function test_paid_course_enrollment_is_deferred_to_checkout(): void
+    public function test_paid_course_enrollment_requires_admin_grant(): void
     {
         $course = Course::factory()->paid()->create();
 
         $this->actingAs(User::factory()->create())
             ->post(route('enroll.store', $course->slug))
-            ->assertRedirect(route('courses.show', $course->slug));
+            ->assertRedirect(route('courses.show', $course->slug))
+            ->assertSessionHas('info');
 
         $this->assertDatabaseCount('enrollments', 0);
     }

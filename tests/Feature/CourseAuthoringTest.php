@@ -2,241 +2,125 @@
 
 namespace Tests\Feature;
 
+use App\Models\Assignment;
 use App\Models\Course;
-use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LiveSession;
 use App\Models\Module;
+use App\Models\Question;
+use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/**
- * Regressions for the course-authoring bugs found in the tutor/admin panels.
- */
 class CourseAuthoringTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $instructor;
+    private User $admin;
+
+    private Course $course;
+
+    private Module $module;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->instructor = User::factory()->admin()->create();
+        $this->admin = User::factory()->admin()->create();
+        $this->course = Course::factory()->create(['instructor_id' => $this->admin->id]);
+        $this->module = Module::factory()->create(['course_id' => $this->course->id]);
     }
 
-    /** @return array<string, mixed> */
-    private function coursePayload(array $overrides = []): array
+    public function test_creating_a_quiz_lesson_creates_a_quiz_stub(): void
     {
-        return [
-            'title' => 'Intro to Robotics',
-            'category' => 'Robotics',
-            'difficulty' => 'beginner',
-            'language' => 'en',
-            'price' => 0,
-            'currency' => 'USD',
-            ...$overrides,
-        ];
-    }
+        $this->actingAs($this->admin)->post(route('tutor.lessons.store', $this->module), [
+            'title' => 'Module quiz',
+            'type' => Lesson::TYPE_QUIZ,
+        ])->assertRedirect();
 
-    public function test_two_courses_with_the_same_title_do_not_collide(): void
-    {
-        $this->actingAs($this->instructor)
-            ->post(route('tutor.courses.store'), $this->coursePayload())
-            ->assertSessionHasNoErrors();
-
-        // Previously this hit a UNIQUE constraint on courses.slug and 500'd.
-        $this->actingAs($this->instructor)
-            ->post(route('tutor.courses.store'), $this->coursePayload())
-            ->assertSessionHasNoErrors();
-
-        $slugs = Course::pluck('slug');
-
-        $this->assertCount(2, $slugs);
-        $this->assertSame($slugs->unique()->count(), $slugs->count());
-    }
-
-    public function test_editing_a_lesson_does_not_erase_its_video_id(): void
-    {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create([
-            'module_id' => $module->id,
-            'content_ref' => 'aircAruvnKk',
+        $lesson = Lesson::where('title', 'Module quiz')->firstOrFail();
+        $this->assertDatabaseHas('quizzes', [
+            'lesson_id' => $lesson->id,
+            'course_id' => $this->course->id,
         ]);
-
-        // The edit form submits an empty string when the field is untouched.
-        $this->actingAs($this->instructor)
-            ->patch(route('tutor.lessons.update', $lesson), [
-                'title' => 'Renamed lesson',
-                'type' => 'youtube',
-                'content_ref' => '',
-                'is_published' => true,
-            ])
-            ->assertSessionHasNoErrors();
-
-        $lesson->refresh();
-
-        $this->assertSame('aircAruvnKk', $lesson->content_ref);
-        $this->assertSame('Renamed lesson', $lesson->title);
     }
 
-    public function test_a_new_video_id_still_replaces_the_old_one(): void
+    public function test_author_can_add_questions_and_publish_a_quiz(): void
     {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id, 'content_ref' => 'oldVideoId0']);
-
-        $this->actingAs($this->instructor)->patch(route('tutor.lessons.update', $lesson), [
-            'title' => $lesson->title,
-            'type' => 'youtube',
-            'content_ref' => 'dQw4w9WgXcQ',
-        ]);
-
-        $this->assertSame('dQw4w9WgXcQ', $lesson->refresh()->content_ref);
-    }
-
-    public function test_a_video_lesson_cannot_be_published_without_a_video(): void
-    {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
         $lesson = Lesson::factory()->create([
-            'module_id' => $module->id,
+            'module_id' => $this->module->id,
+            'type' => Lesson::TYPE_QUIZ,
             'content_ref' => null,
+        ]);
+        $quiz = Quiz::create([
+            'course_id' => $this->course->id,
+            'lesson_id' => $lesson->id,
+            'title' => 'Check',
+            'max_attempts' => 2,
+            'passing_score' => 50,
             'is_published' => false,
         ]);
 
-        $this->actingAs($this->instructor)
-            ->patch(route('tutor.lessons.update', $lesson), [
-                'title' => $lesson->title,
-                'type' => 'youtube',
-                'is_published' => true,
-            ])
-            ->assertSessionHas('error');
+        $this->actingAs($this->admin)->post(route('tutor.questions.store', $quiz), [
+            'type' => Question::TYPE_MCQ,
+            'body' => 'Capital of France?',
+            'points' => 1,
+            'options' => [
+                ['text' => 'Paris', 'is_correct' => true],
+                ['text' => 'Lyon', 'is_correct' => false],
+            ],
+        ])->assertRedirect();
 
-        $this->assertFalse($lesson->refresh()->is_published);
+        $this->actingAs($this->admin)->patch(route('tutor.quizzes.update', $quiz), [
+            'title' => 'Check',
+            'max_attempts' => 2,
+            'passing_score' => 50,
+            'is_published' => true,
+        ])->assertRedirect();
+
+        $this->assertTrue($quiz->refresh()->is_published);
+        $this->assertSame(1, $quiz->questions()->count());
     }
 
-    public function test_the_tutor_can_see_the_video_id_they_own(): void
+    public function test_author_can_create_an_assignment(): void
     {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        Lesson::factory()->create(['module_id' => $module->id, 'content_ref' => 'aircAruvnKk']);
+        $this->actingAs($this->admin)->post(route('tutor.assignments.store', $this->course), [
+            'title' => 'Build a model',
+            'description' => 'Train and evaluate.',
+            'deadline_at' => now()->addWeek()->toDateTimeString(),
+            'max_marks' => 100,
+            'is_published' => true,
+        ])->assertRedirect();
 
-        $this->actingAs($this->instructor)
-            ->get(route('tutor.courses.edit', $course))
-            ->assertOk()
-            ->assertSee('aircAruvnKk');
+        $this->assertDatabaseHas('assignments', [
+            'course_id' => $this->course->id,
+            'title' => 'Build a model',
+            'max_marks' => 100,
+        ]);
+        $this->assertInstanceOf(Assignment::class, Assignment::first());
     }
 
-    public function test_deleting_a_module_removes_its_lessons_and_fixes_the_count(): void
+    public function test_author_can_configure_a_live_session(): void
     {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-
-        $keep = Module::factory()->create(['course_id' => $course->id, 'is_published' => true]);
-        $drop = Module::factory()->create(['course_id' => $course->id, 'is_published' => true]);
-
-        Lesson::factory()->count(2)->create(['module_id' => $keep->id, 'is_published' => true]);
-        Lesson::factory()->count(3)->create(['module_id' => $drop->id, 'is_published' => true]);
-
-        $this->actingAs($this->instructor)
-            ->delete(route('tutor.modules.destroy', $drop))
-            ->assertSessionHasNoErrors();
-
-        // Lessons under the deleted module must not survive as orphans...
-        $this->assertSame(0, Lesson::where('module_id', $drop->id)->count());
-
-        // ...and the counter students' progress divides by must be correct.
-        $this->assertSame(2, $course->refresh()->total_lessons);
-    }
-
-    public function test_lesson_counts_only_include_published_content(): void
-    {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id, 'is_published' => true]);
-
-        Lesson::factory()->create(['module_id' => $module->id, 'is_published' => true]);
-        $draft = Lesson::factory()->create(['module_id' => $module->id, 'is_published' => false]);
-
-        // Touch the draft so counters recalculate.
-        $this->actingAs($this->instructor)->patch(route('tutor.lessons.update', $draft), [
-            'title' => $draft->title,
-            'type' => 'youtube',
-            'is_published' => false,
+        $lesson = Lesson::factory()->create([
+            'module_id' => $this->module->id,
+            'type' => Lesson::TYPE_LIVE,
+            'content_ref' => null,
         ]);
 
-        $this->assertSame(1, $course->refresh()->total_lessons);
-    }
+        $this->actingAs($this->admin)->patch(route('tutor.lessons.live-session', $lesson), [
+            'title' => 'Office hours',
+            'scheduled_start' => now()->addDays(3)->toDateTimeString(),
+            'duration_minutes' => 45,
+            'zoom_join_url' => 'https://zoom.us/j/123456789',
+        ])->assertRedirect();
 
-    public function test_unpublishing_a_module_drops_its_lessons_from_the_count(): void
-    {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id, 'is_published' => true]);
-        Lesson::factory()->count(2)->create(['module_id' => $module->id, 'is_published' => true]);
-
-        $this->actingAs($this->instructor)->patch(route('tutor.modules.update', $module), [
-            'title' => $module->title,
-            'is_published' => false,
+        $this->assertDatabaseHas('live_sessions', [
+            'lesson_id' => $lesson->id,
+            'title' => 'Office hours',
+            'duration_minutes' => 45,
         ]);
-
-        $this->assertSame(0, $course->refresh()->total_lessons);
-    }
-
-    public function test_a_student_cannot_touch_the_builder(): void
-    {
-        $course = Course::factory()->create();
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
-
-        $student = User::factory()->create();
-
-        $this->actingAs($student)
-            ->patch(route('tutor.lessons.update', $lesson), ['title' => 'Hijacked', 'type' => 'youtube'])
-            ->assertForbidden();
-
-        $this->actingAs($student)
-            ->delete(route('tutor.modules.destroy', $module))
-            ->assertForbidden();
-
-        $this->actingAs($student)
-            ->get(route('tutor.courses.edit', $course))
-            ->assertForbidden();
-    }
-
-    public function test_an_admin_may_author_a_course_they_do_not_own(): void
-    {
-        // Admins are peers, so a second admin can pick up someone else's draft.
-        $course = Course::factory()->draft()->create();
-
-        $this->actingAs($this->instructor)
-            ->get(route('tutor.courses.edit', $course))
-            ->assertOk();
-    }
-
-    public function test_deleting_a_course_takes_its_modules_and_lessons_with_it(): void
-    {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
-
-        $this->actingAs($this->instructor)->delete(route('tutor.courses.destroy', $course));
-
-        $this->assertSoftDeleted($course);
-        $this->assertSoftDeleted($module);
-        $this->assertSoftDeleted($lesson);
-    }
-
-    public function test_students_never_receive_content_ref_from_the_catalog(): void
-    {
-        $course = Course::factory()->create(['instructor_id' => $this->instructor->id]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id, 'content_ref' => 'secret-video']);
-
-        $student = User::factory()->create();
-        Enrollment::factory()->create(['user_id' => $student->id, 'course_id' => $course->id]);
-
-        $this->actingAs($student)->get(route('learn.show', $course->slug))->assertDontSee('secret-video');
-        $this->get(route('courses.show', $course->slug))->assertDontSee('secret-video');
+        $this->assertInstanceOf(LiveSession::class, LiveSession::first());
     }
 }

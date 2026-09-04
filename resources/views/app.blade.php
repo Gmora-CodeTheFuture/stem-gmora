@@ -7,6 +7,12 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
         <link rel="icon" type="image/svg+xml" href="/logo.svg?v=3">
+        <link rel="manifest" href="/manifest.webmanifest">
+        <link rel="apple-touch-icon" href="/logo.png">
+        <meta name="theme-color" content="#2563eb">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="Gmora STEM">
 
         {{-- Resolve the theme before first paint so dark mode never flashes white. --}}
         <script>

@@ -37,12 +37,21 @@ class LessonController extends Controller
 
         $maxOrder = $module->lessons()->max('order_index') ?? 0;
 
-        $module->lessons()->create([
+        $lesson = $module->lessons()->create([
             ...$validated,
-            'content_ref' => $validated['content_ref'] ?: null,
+            'content_ref' => ($validated['content_ref'] ?? '') ?: null,
             'order_index' => $maxOrder + 1,
             'is_published' => false,
         ]);
+
+        // Quiz and live lessons need their nested records before publish.
+        if ($lesson->type === Lesson::TYPE_QUIZ) {
+            QuizController::ensureForLesson($lesson->load('module'));
+        }
+
+        if ($lesson->type === Lesson::TYPE_LIVE) {
+            LiveSessionController::ensureForLesson($lesson);
+        }
 
         $this->content->syncCounters($course);
 

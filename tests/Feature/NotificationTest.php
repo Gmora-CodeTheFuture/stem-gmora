@@ -127,4 +127,17 @@ class NotificationTest extends TestCase
 
         $this->assertSame(0, $student->fresh()->unreadNotifications()->count());
     }
+
+    public function test_enrollment_notifies_the_student(): void
+    {
+        $course = Course::factory()->create(['price' => 0, 'status' => 'published']);
+        $student = User::factory()->create();
+
+        $this->actingAs($student)->post(route('enroll.store', $course))->assertRedirect();
+
+        $this->assertSame(
+            \App\Notifications\EnrollmentConfirmed::class,
+            $student->fresh()->notifications()->first()?->type,
+        );
+    }
 }

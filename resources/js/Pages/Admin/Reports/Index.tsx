@@ -40,7 +40,8 @@ interface Props extends PageProps {
         awaiting_grading: number;
         graded_last_period: number;
     };
-    unavailable: { revenue: string };
+    revenue: { total: number; period: number };
+    notes: { checkout: string };
 }
 
 /** A compact column chart — no chart library, no runtime cost. */
@@ -78,7 +79,7 @@ function Sparkbars({ points, label }: { points: Point[]; label: string }) {
 }
 
 export default function Reports({
-    days, headline, signups, enrollments, completions, courses, assessment, unavailable,
+    days, headline, signups, enrollments, completions, courses, assessment, revenue, notes,
 }: Props) {
     const tiles = [
         { label: 'Learners', value: headline.users, caption: `+${headline.new_users} new`, icon: Users },
@@ -151,7 +152,7 @@ export default function Reports({
                         <p className="text-sm text-surface-500">No published courses yet.</p>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="table-stack w-full text-sm">
                                 <thead>
                                     <tr className="text-left text-xs text-surface-400">
                                         <th className="pb-3 font-medium">Course</th>
@@ -163,13 +164,13 @@ export default function Reports({
                                 <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
                                     {courses.map((course) => (
                                         <tr key={course.id}>
-                                            <td className="py-3 pr-4 text-surface-900 dark:text-white">
+                                            <td className="py-3 pr-4 text-surface-900 dark:text-white" data-label="">
                                                 {course.title}
                                             </td>
-                                            <td className="py-3 text-right text-surface-600 dark:text-surface-300">
+                                            <td className="py-3 text-right text-surface-600 dark:text-surface-300" data-label="Enrolled">
                                                 {course.enrollments}
                                             </td>
-                                            <td className="py-3 text-right">
+                                            <td className="py-3 text-right" data-label="Avg progress">
                                                 <span className="inline-flex items-center gap-2 justify-end">
                                                     <span className="w-16 progress-track">
                                                         <span
@@ -182,7 +183,7 @@ export default function Reports({
                                                     </span>
                                                 </span>
                                             </td>
-                                            <td className="py-3 text-right text-surface-600 dark:text-surface-300">
+                                            <td className="py-3 text-right text-surface-600 dark:text-surface-300" data-label="Completed">
                                                 {course.completed} ({course.completion_rate}%)
                                             </td>
                                         </tr>
@@ -238,10 +239,30 @@ export default function Reports({
                             {headline.published_courses} published course
                             {headline.published_courses === 1 ? '' : 's'}.
                         </p>
+                    </div>
 
+                    <div className="card p-6">
+                        <h2 className="text-base font-semibold text-surface-900 dark:text-white mb-4 inline-flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Revenue
+                        </h2>
+                        <dl className="space-y-3 text-sm">
+                            <div className="flex items-center justify-between">
+                                <dt className="text-surface-500">All time</dt>
+                                <dd className="font-medium text-surface-900 dark:text-white">
+                                    ${revenue.total.toLocaleString()}
+                                </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <dt className="text-surface-500">Last {days} days</dt>
+                                <dd className="font-medium text-surface-900 dark:text-white">
+                                    ${revenue.period.toLocaleString()}
+                                </dd>
+                            </div>
+                        </dl>
                         <p className="flex items-start gap-2 text-xs text-surface-400 mt-4 pt-4 border-t border-surface-100 dark:border-surface-800">
                             <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            {unavailable.revenue}
+                            {notes.checkout}
                         </p>
                     </div>
                 </div>

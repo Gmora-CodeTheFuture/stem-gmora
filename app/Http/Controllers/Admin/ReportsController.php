@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Payment;
 use App\Models\Progress;
 use App\Models\QuizAttempt;
 use App\Models\Submission;
@@ -20,9 +21,8 @@ use Inertia\Response;
  * Platform reporting (Plan §10.3).
  *
  * Everything here is computed from real rows — enrollments, progress, quiz
- * attempts, submissions. Where a number cannot be known yet (revenue, since no
- * payment provider is connected), it is reported as such rather than shown as
- * a confident zero.
+ * attempts, submissions, and completed payments (including admin-granted
+ * manual ones). Card checkout is still not connected.
  */
 class ReportsController extends Controller
 {
@@ -48,6 +48,11 @@ class ReportsController extends Controller
     /** @return array<string, mixed> */
     private function build(Carbon $since, int $days): array
     {
+        $totalRevenue = Payment::where('status', Payment::STATUS_COMPLETED)->sum('amount');
+        $periodRevenue = Payment::where('status', Payment::STATUS_COMPLETED)
+            ->where('created_at', '>=', $since)
+            ->sum('amount');
+
         return [
             'headline' => $this->headline($since),
             'signups' => $this->dailySeries(User::query(), 'created_at', $since, $days),
@@ -60,9 +65,13 @@ class ReportsController extends Controller
             ),
             'courses' => $this->coursePerformance(),
             'assessment' => $this->assessment($since),
-            'unavailable' => [
-                // Stated plainly rather than reported as zero revenue.
-                'revenue' => 'No payment provider is connected yet, so revenue cannot be reported.',
+            'revenue' => [
+                'total' => round((float) $totalRevenue, 2),
+                'period' => round((float) $periodRevenue, 2),
+            ],
+            'notes' => [
+                // Card processors are not wired; totals include manual admin grants.
+                'checkout' => 'Card checkout is not connected yet. Revenue includes completed payments (including admin-granted manual ones).',
             ],
         ];
     }
