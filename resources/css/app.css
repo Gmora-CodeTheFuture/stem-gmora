@@ -75,6 +75,29 @@
     }
 }
 
+/*
+ * Homepage parallax uses Lenis, which writes scrollTop itself every frame.
+ * Native `scroll-behavior: smooth` then animates those writes a second time,
+ * so a wheel tick barely moves. Lenis tags <html> with these classes; turn
+ * native smoothing off only while it is in charge. Visuals are unchanged.
+ */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+
+html.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+html.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+html.lenis.lenis-scrolling iframe {
+    pointer-events: none;
+}
+
 @layer components {
     /* Buttons — solid fills, pill radius, no gradients or glows. */
     .btn-primary {

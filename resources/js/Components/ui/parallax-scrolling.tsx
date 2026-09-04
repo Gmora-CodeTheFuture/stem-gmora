@@ -42,13 +42,17 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
 
     const lenis = new Lenis();
     lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    const tick = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+    gsap.ticker.add(tick);
     gsap.ticker.lagSmoothing(0);
 
     return () => {
-      // Clean up GSAP and ScrollTrigger instances
       ScrollTrigger.getAll().forEach(st => st.kill());
       gsap.killTweensOf(triggerElement);
+      gsap.ticker.remove(tick);
+      gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();
     };
   }, []);
