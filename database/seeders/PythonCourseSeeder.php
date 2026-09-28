@@ -55,7 +55,7 @@ class PythonCourseSeeder extends Seeder
                 'price' => 0,
                 'currency' => 'USD',
                 'status' => Course::STATUS_PUBLISHED,
-                'thumbnail_url' => null,
+                'thumbnail_url' => '/images/python-course.webp',
             ]
         );
 

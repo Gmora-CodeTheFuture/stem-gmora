@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { LifeBuoy, MessageSquare } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SegmentedControl from '@/Components/SegmentedControl';
 import { Paginated, PageProps } from '@/types';
 
 interface TicketRow {
@@ -68,21 +69,15 @@ export default function SupportQueue({ tickets, filters, staff, counts }: Props)
             </div>
 
             <div className="flex flex-wrap items-center gap-3 mb-5">
-                <div className="inline-flex p-1 rounded-full bg-surface-100 dark:bg-surface-900 border border-surface-200 dark:border-surface-800">
-                    {STATUSES.map((status) => (
-                        <button
-                            key={status}
-                            onClick={() => apply({ status })}
-                            className={`px-3.5 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${
-                                filters.status === status
-                                    ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-card'
-                                    : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-                            }`}
-                        >
-                            {status}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    aria-label="Ticket status"
+                    value={filters.status}
+                    onChange={(status) => apply({ status })}
+                    items={STATUSES.map((status) => ({
+                        key: status,
+                        label: <span className="capitalize">{status}</span>,
+                    }))}
+                />
 
                 <select
                     value={filters.assignee ?? ''}

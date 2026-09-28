@@ -5,7 +5,7 @@
 (function () {
   const SOURCE = 'gmora-deck';
   const slides = Array.from(document.querySelectorAll('.slide'));
-  const dotsWrap = document.getElementById('dots');
+  const slidePos = document.getElementById('slidePos');
   const nextBtn = document.getElementById('nextBtn');
   const prevBtn = document.getElementById('prevBtn');
   const progressFill = document.querySelector('.progress-fill');
@@ -29,13 +29,16 @@
     } catch (_) { /* ignore */ }
   }
 
-  slides.forEach((_, i) => {
-    const b = document.createElement('button');
-    b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
-    b.addEventListener('click', () => goToSlide(i, true));
-    dotsWrap.appendChild(b);
-  });
-  const dotEls = Array.from(dotsWrap.children);
+  function setNextLabel(last) {
+    if (!nextBtn) return;
+    if (last && nextLesson && nextLesson !== 'null') {
+      nextBtn.innerHTML = 'Next lesson <span aria-hidden="true">→</span>';
+    } else if (last) {
+      nextBtn.innerHTML = 'Done <span aria-hidden="true">✓</span>';
+    } else {
+      nextBtn.innerHTML = 'Next <span aria-hidden="true">→</span>';
+    }
+  }
 
   function fragmentsOf(slideEl) {
     return Array.from(slideEl.querySelectorAll('.fragment'));
@@ -161,12 +164,19 @@
       }
     });
 
-    dotEls.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    if (slidePos) {
+      slidePos.textContent = (currentSlide + 1) + ' / ' + slides.length;
+      slidePos.setAttribute('aria-label', 'Slide ' + (currentSlide + 1) + ' of ' + slides.length);
+    }
 
-    prevBtn.disabled = isFirstStep() && (!prevLesson || prevLesson === 'null');
+    if (prevBtn) {
+      prevBtn.disabled = isFirstStep() && (!prevLesson || prevLesson === 'null');
+    }
     const last = isLastStep(frags);
-    nextBtn.innerHTML = last ? (nextLesson && nextLesson !== 'null' ? '→' : '🎉') : '→';
-    nextBtn.disabled = last && (!nextLesson || nextLesson === 'null');
+    setNextLabel(last);
+    if (nextBtn) {
+      nextBtn.disabled = last && (!nextLesson || nextLesson === 'null');
+    }
 
     emitProgress(frags);
   }
@@ -218,8 +228,8 @@
     }
   }
 
-  nextBtn.addEventListener('click', next);
-  prevBtn.addEventListener('click', prev);
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
   if (nextLessonBtn) {
     nextLessonBtn.addEventListener('click', () => {
       post({ type: 'deck-progress', percent: 100, complete: true, slide: currentSlide, slides: slides.length, frag: currentFrag, frags: 0 });
@@ -239,25 +249,72 @@
     });
   });
 
+  function isTypingTarget(el) {
+    if (!el || !(el instanceof Element)) return false;
+    const tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+  }
+
   document.addEventListener('keydown', (e) => {
-    if (['ArrowRight', ' '].includes(e.key)) { e.preventDefault(); next(); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
-    if (e.key === 'Home') goToSlide(0, false);
-    if (e.key === 'End') goToSlide(slides.length - 1, true);
-    if (e.key === 'f' || e.key === 'F') {
-      if (!e.metaKey && !e.ctrlKey && !e.altKey) toggleFullscreen();
+    if (isTypingTarget(e.target)) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      prev();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goToSlide(0, false);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goToSlide(slides.length - 1, true);
+    } else if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      toggleFullscreen();
     }
   });
 
+  // Capture keys even when the LMS parent page holds focus (iframe embeds).
+  window.addEventListener('message', (event) => {
+    if (event.origin !== window.location.origin) return;
+    const data = event.data;
+    if (!data || data.source !== 'gmora-lms' || data.type !== 'deck-key') return;
+    if (data.key === 'ArrowRight' || data.key === 'ArrowDown' || data.key === ' ') next();
+    else if (data.key === 'ArrowLeft' || data.key === 'ArrowUp') prev();
+    else if (data.key === 'Home') goToSlide(0, false);
+    else if (data.key === 'End') goToSlide(slides.length - 1, true);
+  });
+
+  try {
+    document.body.tabIndex = -1;
+    document.body.focus({ preventScroll: true });
+  } catch (_) { /* ignore */ }
+
+  function syncFullscreenButton() {
+    if (!fsBtn) return;
+    const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    fsBtn.textContent = active ? 'Exit fullscreen' : 'Fullscreen';
+    fsBtn.title = active ? 'Exit fullscreen (Esc or F)' : 'Fullscreen (F)';
+    fsBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    fsBtn.classList.toggle('is-active', active);
+  }
+
   function toggleFullscreen() {
     const root = document.documentElement;
-    if (!document.fullscreenElement) {
+    const active = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!active) {
       (root.requestFullscreen || root.webkitRequestFullscreen)?.call(root);
     } else {
       (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
     }
   }
-  if (fsBtn) fsBtn.addEventListener('click', toggleFullscreen);
+
+  if (fsBtn) {
+    fsBtn.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', syncFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', syncFullscreenButton);
+    syncFullscreenButton();
+  }
 
   /* ---------- Pyodide Run buttons ---------- */
   let pyodideReadyPromise = null;

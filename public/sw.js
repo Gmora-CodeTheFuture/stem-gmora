@@ -3,7 +3,7 @@
  * Never caches /api/, video tokens, or private lesson files.
  */
 const CACHE = 'gmora-shell-v1';
-const PRECACHE = ['/logo.svg', '/logo-dark.svg', '/manifest.webmanifest'];
+const PRECACHE = ['/logo.png', '/logo-dark.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -42,7 +42,7 @@ self.addEventListener('fetch', (event) => {
     // Navigations: network first, fall back to any cached shell page.
     if (request.mode === 'navigate') {
         event.respondWith(
-            fetch(request).catch(() => caches.match('/logo.svg').then(() => Response.error())),
+            fetch(request).catch(() => caches.match('/logo.png').then(() => Response.error())),
         );
         return;
     }

@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { Award, BookOpen, ClipboardCheck, Info, TrendingUp, UserPlus, Users } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SegmentedControl from '@/Components/SegmentedControl';
 import { PageProps } from '@/types';
 
 interface Point {
@@ -107,21 +108,16 @@ export default function Reports({
         <DashboardLayout header="Reports">
             <Head title="Reports — Admin" />
 
-            <div className="inline-flex p-1 rounded-full bg-surface-100 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 mb-6">
-                {[7, 30, 90].map((option) => (
-                    <button
-                        key={option}
-                        onClick={() => router.get(route('admin.reports.index'), { days: option })}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                            days === option
-                                ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-card'
-                                : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-                        }`}
-                    >
-                        {option} days
-                    </button>
-                ))}
-            </div>
+            <SegmentedControl
+                className="mb-6"
+                aria-label="Report period"
+                value={days}
+                onChange={(option) => router.get(route('admin.reports.index'), { days: option })}
+                items={[7, 30, 90].map((option) => ({
+                    key: option,
+                    label: `${option} days`,
+                }))}
+            />
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-surface-200 dark:bg-surface-800 rounded-3xl overflow-hidden border border-surface-200 dark:border-surface-800 mb-5">
                 {tiles.map((tile) => (

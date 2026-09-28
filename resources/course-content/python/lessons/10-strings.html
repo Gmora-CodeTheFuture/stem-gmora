@@ -198,11 +198,18 @@
 
   <footer class="controls">
     <div class="nav-wrapper">
-      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
-      <div class="dots" id="dots"></div>
-      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+      <button type="button" id="prevBtn" class="deck-nav-btn" aria-label="Previous slide">
+        <span aria-hidden="true">←</span> Previous
+      </button>
+      <div class="slide-pos" id="slidePos" aria-live="polite">1 / 1</div>
+      <button type="button" id="nextBtn" class="deck-nav-btn primary" aria-label="Next slide">
+        Next <span aria-hidden="true">→</span>
+      </button>
     </div>
     <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+    <div class="watermark" aria-hidden="true">
+      <img src="images/gmora-logo.png" alt="" class="slide-logo" />
+    </div>
   </footer>
 </div>
 

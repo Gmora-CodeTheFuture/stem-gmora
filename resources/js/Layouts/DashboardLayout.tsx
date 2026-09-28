@@ -290,7 +290,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 aria-label="Main navigation"
             >
                 {/* Brand / Toggle Header */}
-                <div className={`h-[88px] flex items-center shrink-0 ${expanded ? 'px-3 gap-2' : 'justify-center'}`}>
+                <div className={`min-h-[88px] flex items-center shrink-0 pt-4 pb-2 ${expanded ? 'px-3 gap-2' : 'justify-center'}`}>
                     {/* On a desktop this collapses the rail; in the mobile drawer
                         the same corner is where a close button belongs. */}
                     <button
@@ -307,8 +307,8 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                             href="/dashboard"
                             className="flex-1 flex items-center justify-center -ml-9 pointer-events-auto overflow-hidden whitespace-nowrap fade-in"
                         >
-                            <img src="/logo.svg" alt="Gmora STEM" className="h-16 w-auto object-contain dark:hidden block" />
-                            <img src="/logo-dark.svg" alt="Gmora STEM" className="h-16 w-auto object-contain hidden dark:block" />
+                            <img src="/logo.png" alt="Gmora STEM" className="h-14 w-auto max-w-[160px] object-contain dark:hidden block" />
+                            <img src="/logo-dark.png" alt="Gmora STEM" className="h-14 w-auto max-w-[160px] object-contain hidden dark:block" />
                         </Link>
                     )}
                 </div>

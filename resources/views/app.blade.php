@@ -6,7 +6,7 @@
         <meta name="color-scheme" content="light dark">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
-        <link rel="icon" type="image/svg+xml" href="/logo.svg?v=3">
+        <link rel="icon" type="image/png" href="/logo.png?v=4">
         <link rel="manifest" href="/manifest.webmanifest">
         <link rel="apple-touch-icon" href="/logo.png">
         <meta name="theme-color" content="#2563eb">

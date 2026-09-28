@@ -54,6 +54,7 @@ class LearningController extends Controller
         ]);
 
         $allLessons = $course->modules->flatMap->lessons;
+        $lessonIds = $allLessons->pluck('id');
         $current = $lesson?->is_published ? $lesson : null;
 
         if (! $current) {
@@ -88,7 +89,7 @@ class LearningController extends Controller
                 'quiz' => $current->quiz?->is_published ? $current->quiz->only(['id', 'title']) : null,
                 'progress' => $progress->get($current->id)?->only(['status', 'watch_percentage']),
             ],
-            'completionPercentage' => $this->completionPercentage($enrollment, $allLessons->count()),
+            'completionPercentage' => $this->completionPercentage($enrollment, $lessonIds),
         ]);
     }
 
@@ -137,13 +138,23 @@ class LearningController extends Controller
         return back();
     }
 
-    private function completionPercentage(Enrollment $enrollment, int $totalLessons): float
+    /**
+     * @param  \Illuminate\Support\Collection<int, string>  $lessonIds
+     */
+    private function completionPercentage(Enrollment $enrollment, $lessonIds): float
     {
+        $totalLessons = $lessonIds->count();
+
         if ($totalLessons === 0) {
             return 0.0;
         }
 
-        $completed = $enrollment->progress()->where('status', Progress::STATUS_COMPLETED)->count();
+        // Only count progress for lessons that still exist in the course, so
+        // soft-deleted reseed leftovers cannot inflate the outer percentage.
+        $completed = $enrollment->progress()
+            ->where('status', Progress::STATUS_COMPLETED)
+            ->whereIn('lesson_id', $lessonIds)
+            ->count();
 
         return round($completed / $totalLessons * 100, 1);
     }

@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { CheckCircle2, MessageSquare, Pin, Plus, Search, X } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SegmentedControl from '@/Components/SegmentedControl';
 import { Paginated, PageProps } from '@/types';
 
 interface Thread {
@@ -71,21 +72,13 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
             <Head title={`Discussions — ${course.title}`} />
 
             <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-6">
-                <div className="inline-flex p-1 rounded-full bg-surface-100 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 self-start">
-                    {FILTERS.map((item) => (
-                        <button
-                            key={item.key}
-                            onClick={() => apply({ filter: item.key })}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                filters.filter === item.key
-                                    ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-card'
-                                    : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-                            }`}
-                        >
-                            {item.label}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    className="self-start"
+                    aria-label="Discussion filters"
+                    value={filters.filter}
+                    onChange={(key) => apply({ filter: key })}
+                    items={FILTERS.map((item) => ({ key: item.key, label: item.label }))}
+                />
 
                 <form
                     onSubmit={(e) => {

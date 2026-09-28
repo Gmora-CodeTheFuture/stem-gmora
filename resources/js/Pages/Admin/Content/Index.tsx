@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Eye, EyeOff, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SegmentedControl from '@/Components/SegmentedControl';
 import { PageProps } from '@/types';
 
 type FieldDef = { label: string; type: 'text' | 'textarea' };
@@ -195,21 +196,16 @@ export default function ContentIndex({ sections, pages }: Props) {
         <DashboardLayout header="Website copy">
             <Head title="Website copy — Admin" />
 
-            <div className="inline-flex p-1 rounded-full bg-surface-100 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 mb-6">
-                {pages.map((name) => (
-                    <button
-                        key={name}
-                        onClick={() => setPage(name)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium capitalize transition-colors ${
-                            page === name
-                                ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-card'
-                                : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-                        }`}
-                    >
-                        {name}
-                    </button>
-                ))}
-            </div>
+            <SegmentedControl
+                className="mb-6"
+                aria-label="Website page"
+                value={page}
+                onChange={setPage}
+                items={pages.map((name) => ({
+                    key: name,
+                    label: <span className="capitalize">{name}</span>,
+                }))}
+            />
 
             <p className="text-sm text-surface-500 mb-5">
                 Edits go live immediately. Hiding a section falls back to the copy the site ships with, so a page is

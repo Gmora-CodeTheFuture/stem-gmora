@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { BookOpen, CheckCircle2, Clock, PlayCircle, Search, Users, X } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SegmentedControl from '@/Components/SegmentedControl';
 import { PageProps } from '@/types';
 
 interface CourseCard {
@@ -68,24 +69,32 @@ export default function DashboardCourses({ enrolled, catalog, categories, filter
 
             {/* ── Filter bar ─────────────────────────────────── */}
             <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-6">
-                <div className="inline-flex p-1 rounded-full bg-surface-100 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 self-start shrink-0">
-                    {(['enrolled', 'all'] as const).map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => apply({ filter: tab })}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                filters.filter === tab
-                                    ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-card'
-                                    : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-                            }`}
-                        >
-                            {tab === 'enrolled' ? 'My courses' : 'All courses'}
-                            <span className="ml-1.5 text-xs text-surface-400">
-                                {tab === 'enrolled' ? counts.enrolled : counts.all}
-                            </span>
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    className="self-start shrink-0"
+                    aria-label="Course list"
+                    value={filters.filter}
+                    onChange={(tab) => apply({ filter: tab })}
+                    items={[
+                        {
+                            key: 'enrolled',
+                            label: (
+                                <>
+                                    My courses
+                                    <span className="ml-1.5 text-xs text-surface-400">{counts.enrolled}</span>
+                                </>
+                            ),
+                        },
+                        {
+                            key: 'all',
+                            label: (
+                                <>
+                                    All courses
+                                    <span className="ml-1.5 text-xs text-surface-400">{counts.all}</span>
+                                </>
+                            ),
+                        },
+                    ]}
+                />
 
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />

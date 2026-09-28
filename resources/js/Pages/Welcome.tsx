@@ -89,7 +89,7 @@ export default function Welcome({ content, figures }: Props) {
         ? 'bg-black/90 border-white/10 text-white' 
         : 'bg-white border-black/10 text-black/70';
         
-    const logoSrc = navTheme === 'dark' ? '/logo-dark.svg' : '/logo.svg';
+    const logoSrc = navTheme === 'dark' ? '/logo-dark.png' : '/logo.png';
     const linkHoverClass = navTheme === 'dark' ? 'hover:text-white/70' : 'hover:text-black';
     const buttonClass = navTheme === 'dark'
         ? 'bg-white text-black hover:bg-white/80'
@@ -287,7 +287,7 @@ export default function Welcome({ content, figures }: Props) {
                             <div className="max-w-[1440px] mx-auto px-6">
                                 <div className="grid md:grid-cols-2 gap-12 border-b border-white/10 pb-12 mb-12">
                                     <div>
-                                        <img src="/logo-dark.svg" alt="Gmora STEM" className="h-16 w-auto mb-6" />
+                                        <img src="/logo-dark.png" alt="Gmora STEM" className="h-16 w-auto mb-6" />
                                         <p className="font-sans text-sm text-white/50 max-w-sm leading-relaxed">
                                             Gmora STEM is a premier educational platform dedicated to advancing the future of science, technology, engineering, and mathematics.
                                         </p>

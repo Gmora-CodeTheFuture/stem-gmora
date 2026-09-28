@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Flame, Medal, Trophy, Users } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SegmentedControl from '@/Components/SegmentedControl';
 import { PageProps } from '@/types';
 
 interface Row {
@@ -42,22 +43,21 @@ export default function Leaderboard({ board, rows, you, courses, selectedCourse 
             <Head title="Leaderboard — Gmora STEM" />
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                <div className="inline-flex p-1 rounded-full bg-surface-100 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 self-start">
-                    {BOARDS.map((item) => (
-                        <button
-                            key={item.key}
-                            onClick={() => go({ board: item.key })}
-                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                board === item.key
-                                    ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-card'
-                                    : 'text-surface-500 hover:text-surface-900 dark:hover:text-white'
-                            }`}
-                        >
-                            <item.icon className="w-4 h-4" />
-                            {item.label}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    className="self-start"
+                    aria-label="Leaderboard type"
+                    value={board}
+                    onChange={(key) => go({ board: key })}
+                    items={BOARDS.map((item) => ({
+                        key: item.key,
+                        label: (
+                            <span className="inline-flex items-center gap-1.5">
+                                <item.icon className="w-4 h-4" />
+                                {item.label}
+                            </span>
+                        ),
+                    }))}
+                />
 
                 {board === 'course' && courses.length > 0 && (
                     <select

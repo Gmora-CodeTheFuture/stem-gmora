@@ -49,7 +49,9 @@ class DashboardController extends Controller
             ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
             ->with('course:id,title,slug,thumbnail_url,category,total_lessons,duration_minutes')
             ->withCount([
-                'progress as completed_lessons_count' => fn ($q) => $q->where('status', Progress::STATUS_COMPLETED),
+                'progress as completed_lessons_count' => fn ($q) => $q
+                    ->where('status', Progress::STATUS_COMPLETED)
+                    ->whereHas('lesson', fn ($lesson) => $lesson->where('is_published', true)),
             ])
             ->get();
 

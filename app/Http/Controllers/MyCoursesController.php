@@ -45,7 +45,9 @@ class MyCoursesController extends Controller
             ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
             ->with('course.instructor:id,full_name')
             ->withCount([
-                'progress as completed_lessons_count' => fn ($q) => $q->where('status', Progress::STATUS_COMPLETED),
+                'progress as completed_lessons_count' => fn ($q) => $q
+                    ->where('status', Progress::STATUS_COMPLETED)
+                    ->whereHas('lesson', fn ($lesson) => $lesson->where('is_published', true)),
             ])
             ->get();
 

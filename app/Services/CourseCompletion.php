@@ -80,7 +80,14 @@ class CourseCompletion
             return;
         }
 
-        $completed = $enrollment->progress()->where('status', Progress::STATUS_COMPLETED)->count();
+        $completed = $enrollment->progress()
+            ->where('status', Progress::STATUS_COMPLETED)
+            ->whereHas(
+                'lesson',
+                fn ($q) => $q->where('is_published', true)
+                    ->whereHas('module', fn ($m) => $m->where('course_id', $enrollment->course_id)->where('is_published', true))
+            )
+            ->count();
 
         if ($completed < $total || $enrollment->status === Enrollment::STATUS_COMPLETED) {
             return;

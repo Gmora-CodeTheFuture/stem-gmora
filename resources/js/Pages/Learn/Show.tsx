@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ArrowLeft, CheckCircle2, ChevronDown, Circle, FileText,
-    Globe, HelpCircle, Maximize2, MessageSquare, PlayCircle, Radio, Video, PanelRight
+    Globe, HelpCircle, MessageSquare, PlayCircle, Radio, Video, PanelRight
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SecureVideoPlayer from '@/Components/SecureVideoPlayer';
@@ -66,7 +66,12 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
             router.patch(
                 route('learn.progress', currentLesson.id),
                 { watch_percentage: percentage, completed },
-                { preserveScroll: true, preserveState: true, only: completed ? undefined : [] },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    // Keep header %, curriculum checkmarks, and lesson state in sync.
+                    only: ['modules', 'currentLesson', 'completionPercentage'],
+                },
             );
         },
         [currentLesson.id],
@@ -130,6 +135,7 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
             {
                 preserveScroll: true,
                 preserveState: true,
+                only: ['modules', 'currentLesson', 'completionPercentage'],
                 onSuccess: () => {
                     if (nextLessonId) {
                         router.visit(route('learn.lesson', [course.slug, nextLessonId]));
@@ -147,182 +153,183 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
         <DashboardLayout header={course.title} noScroll={true}>
             <Head title={`${currentLesson.title} — ${course.title}`} />
 
-            <div className="mb-6 flex items-center justify-between gap-4 flex-wrap shrink-0">
-                <div className="flex items-center gap-4">
-                    <Link
-                        href={route('dashboard.courses')}
-                        className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        My Courses
-                    </Link>
+            <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+                <div className="mb-4 flex items-center justify-between gap-4 flex-wrap shrink-0">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href={route('dashboard.courses')}
+                            className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            My Courses
+                        </Link>
 
-                    <Link
-                        href={route('discussions.index', course.slug)}
-                        className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
-                    >
-                        <MessageSquare className="w-4 h-4" />
-                        Discussions
-                    </Link>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="w-40 progress-track">
-                        <div
-                            className="progress-fill"
-                            style={{ width: `${completionPercentage}%` }}
-                        />
+                        <Link
+                            href={route('discussions.index', course.slug)}
+                            className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
+                        >
+                            <MessageSquare className="w-4 h-4" />
+                            Discussions
+                        </Link>
                     </div>
-                    <span className="text-sm font-semibold text-surface-600 dark:text-surface-300 mr-2">
-                        {completionPercentage}% complete
-                    </span>
-                    <button
-                        onClick={toggleCurriculum}
-                        className={`p-2 rounded-lg transition-colors ${
-                            curriculumOpen 
-                                ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400' 
-                                : 'text-surface-500 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100 dark:hover:bg-surface-800'
-                        }`}
-                        title="Toggle curriculum sidebar"
-                        aria-label="Toggle curriculum sidebar"
-                    >
-                        <PanelRight className="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
 
-            <div className={`grid gap-6 h-full min-h-0 transition-all duration-300 ${curriculumOpen ? 'lg:grid-cols-[1fr_340px]' : 'lg:grid-cols-1 max-w-5xl mx-auto w-full'}`}>
-                {/* ── Player / lesson body ─────────────────────── */}
-                <div className="min-w-0 flex flex-col h-full pb-2">
-                    <div className="shrink-0">
-                        {currentLesson.type === 'youtube' && currentLesson.has_video ? (
-                            <SecureVideoPlayer
-                                key={currentLesson.id}
-                                lessonId={currentLesson.id}
-                                title={currentLesson.title}
-                                initialPercentage={Number(currentLesson.progress?.watch_percentage ?? 0)}
-                                onProgress={reportProgress}
+                    <div className="flex items-center gap-3">
+                        <div className="w-40 progress-track">
+                            <div
+                                className="progress-fill"
+                                style={{ width: `${completionPercentage}%` }}
                             />
-                        ) : currentLesson.type === 'live' ? (
-                            <LivePanel lesson={currentLesson} />
-                        ) : currentLesson.type === 'quiz' ? (
-                            <QuizPanel lesson={currentLesson} />
-                        ) : currentLesson.type === 'html' ? (
-                            <PresentationPanel lesson={currentLesson} />
-                        ) : currentLesson.type === 'pdf' ? (
-                            <DocumentPanel lesson={currentLesson} />
-                        ) : (
-                            <PlaceholderPanel lesson={currentLesson} />
-                        )}
+                        </div>
+                        <span className="text-sm font-semibold text-surface-600 dark:text-surface-300 mr-2">
+                            {completionPercentage}% complete
+                        </span>
+                        <button
+                            onClick={toggleCurriculum}
+                            className={`p-2 rounded-lg transition-colors ${
+                                curriculumOpen
+                                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400'
+                                    : 'text-surface-500 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100 dark:hover:bg-surface-800'
+                            }`}
+                            title="Toggle curriculum sidebar"
+                            aria-label="Toggle curriculum sidebar"
+                        >
+                            <PanelRight className="w-5 h-5" />
+                        </button>
                     </div>
+                </div>
 
-                    <div className="card p-5 lg:p-6 mt-4 lg:mt-5 flex-1 min-h-0 overflow-y-auto scrollbar-thin flex flex-col">
-                        <div className="shrink-0">
-                            <h1 className="text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
-                                {currentLesson.title}
-                            </h1>
-                            {currentLesson.description && (
-                                <p className="text-surface-500 mt-2 leading-relaxed">{currentLesson.description}</p>
+                <div className={`grid gap-6 flex-1 min-h-0 overflow-hidden transition-all duration-300 ${curriculumOpen ? 'lg:grid-cols-[1fr_340px]' : 'lg:grid-cols-1 max-w-5xl mx-auto w-full'}`}>
+                    {/* ── Player / lesson body ─────────────────────── */}
+                    <div className="min-w-0 min-h-0 h-full overflow-y-auto scrollbar-thin flex flex-col">
+                        <div className="flex-1 min-h-[20rem] flex flex-col">
+                            {currentLesson.type === 'youtube' && currentLesson.has_video ? (
+                                <SecureVideoPlayer
+                                    key={currentLesson.id}
+                                    lessonId={currentLesson.id}
+                                    title={currentLesson.title}
+                                    initialPercentage={Number(currentLesson.progress?.watch_percentage ?? 0)}
+                                    onProgress={reportProgress}
+                                />
+                            ) : currentLesson.type === 'live' ? (
+                                <LivePanel lesson={currentLesson} />
+                            ) : currentLesson.type === 'quiz' ? (
+                                <QuizPanel lesson={currentLesson} />
+                            ) : currentLesson.type === 'html' ? (
+                                <PresentationPanel lesson={currentLesson} />
+                            ) : currentLesson.type === 'pdf' ? (
+                                <DocumentPanel lesson={currentLesson} />
+                            ) : (
+                                <PlaceholderPanel lesson={currentLesson} />
                             )}
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-auto pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0">
-                            {prevLessonId && (
-                                <Link
-                                    href={route('learn.lesson', [course.slug, prevLessonId])}
-                                    className="btn-secondary w-full sm:w-auto justify-center"
-                                >
-                                    Previous lesson
-                                </Link>
-                            )}
+                        <div className="card p-5 lg:p-6 mt-4 lg:mt-5 shrink-0 flex flex-col">
+                            <div className="shrink-0">
+                                <h1 className="text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
+                                    {currentLesson.title}
+                                </h1>
+                                {currentLesson.description && (
+                                    <p className="text-surface-500 mt-2 leading-relaxed">{currentLesson.description}</p>
+                                )}
+                            </div>
 
-                            {nextLessonId && (
-                                isComplete ? (
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0 mt-5">
+                                {prevLessonId && (
                                     <Link
-                                        href={route('learn.lesson', [course.slug, nextLessonId])}
+                                        href={route('learn.lesson', [course.slug, prevLessonId])}
                                         className="btn-secondary w-full sm:w-auto justify-center"
                                     >
-                                        Next lesson
+                                        Previous lesson
                                     </Link>
-                                ) : (
-                                    <button disabled className="btn-secondary w-full sm:w-auto justify-center opacity-50 cursor-not-allowed">
-                                        Next lesson
-                                    </button>
-                                )
-                            )}
-                            
-                            <button
-                                onClick={markComplete}
-                                disabled={isComplete}
-                                className={`w-full sm:w-auto justify-center ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
-                            >
-                                <CheckCircle2 className="w-4 h-4" />
-                                {isComplete ? 'Completed' : 'Mark as complete'}
-                            </button>
-                            <span className="text-sm text-surface-400 text-center sm:text-left">
-                                {formatDuration(currentLesson.duration_seconds)}
-                            </span>
+                                )}
+
+                                {nextLessonId && (
+                                    isComplete ? (
+                                        <Link
+                                            href={route('learn.lesson', [course.slug, nextLessonId])}
+                                            className="btn-secondary w-full sm:w-auto justify-center"
+                                        >
+                                            Next lesson
+                                        </Link>
+                                    ) : (
+                                        <button disabled className="btn-secondary w-full sm:w-auto justify-center opacity-50 cursor-not-allowed">
+                                            Next lesson
+                                        </button>
+                                    )
+                                )}
+
+                                <button
+                                    onClick={markComplete}
+                                    disabled={isComplete}
+                                    className={`w-full sm:w-auto justify-center ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    {isComplete ? 'Completed' : 'Mark as complete'}
+                                </button>
+                                <span className="text-sm text-surface-400 text-center sm:text-left">
+                                    {formatDuration(currentLesson.duration_seconds)}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
+                    {/* ── Curriculum sidebar ───────────────────────── */}
+                    {curriculumOpen && (
+                        <aside className="card p-2 flex flex-col min-h-0 h-full overflow-hidden fade-in">
+                            <div className="overflow-y-auto scrollbar-thin flex-1 min-h-0 pr-1">
+                                {modules.map((module) => (
+                                    <div key={module.id} className="mb-1">
+                                        <button
+                                            onClick={() => toggleModule(module.id)}
+                                            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
+                                        >
+                                            <span className="text-sm font-semibold text-surface-900 dark:text-white">
+                                                {module.title}
+                                            </span>
+                                            <ChevronDown
+                                                className={`w-4 h-4 text-surface-400 shrink-0 transition-transform ${
+                                                    openModules.includes(module.id) ? 'rotate-180' : ''
+                                                }`}
+                                            />
+                                        </button>
+
+                                        {openModules.includes(module.id) && (
+                                            <ul className="mt-0.5 space-y-0.5">
+                                                {(module.lessons ?? []).map((lesson) => {
+                                                    const Icon = typeIcon[lesson.type] ?? PlayCircle;
+                                                    const active = lesson.id === currentLesson.id;
+                                                    const done = lesson.progress?.status === 'completed';
+
+                                                    return (
+                                                        <li key={lesson.id}>
+                                                            <Link
+                                                                href={route('learn.lesson', [course.slug, lesson.id])}
+                                                                preserveScroll
+                                                                className={`flex items-start gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                                    active
+                                                                        ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium'
+                                                                        : 'text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800'
+                                                                }`}
+                                                            >
+                                                                {done ? (
+                                                                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-accent-500" />
+                                                                ) : (
+                                                                    <Circle className="w-4 h-4 mt-0.5 shrink-0 text-surface-300 dark:text-surface-600" />
+                                                                )}
+                                                                <span className="flex-1 leading-snug">{lesson.title}</span>
+                                                                <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-surface-400" />
+                                                            </Link>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </aside>
+                    )}
                 </div>
-
-                {/* ── Curriculum sidebar ───────────────────────── */}
-                {curriculumOpen && (
-                    <aside className="card p-2 flex flex-col h-full overflow-hidden fade-in">
-                        <div className="overflow-y-auto scrollbar-thin flex-1 pr-1">
-                            {modules.map((module) => (
-                                <div key={module.id} className="mb-1">
-                                    <button
-                                        onClick={() => toggleModule(module.id)}
-                                        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
-                                    >
-                                        <span className="text-sm font-semibold text-surface-900 dark:text-white">
-                                            {module.title}
-                                        </span>
-                                        <ChevronDown
-                                            className={`w-4 h-4 text-surface-400 shrink-0 transition-transform ${
-                                                openModules.includes(module.id) ? 'rotate-180' : ''
-                                            }`}
-                                        />
-                                    </button>
-
-                                    {openModules.includes(module.id) && (
-                                        <ul className="mt-0.5 space-y-0.5">
-                                            {(module.lessons ?? []).map((lesson) => {
-                                                const Icon = typeIcon[lesson.type] ?? PlayCircle;
-                                                const active = lesson.id === currentLesson.id;
-                                                const done = lesson.progress?.status === 'completed';
-
-                                                return (
-                                                    <li key={lesson.id}>
-                                                        <Link
-                                                            href={route('learn.lesson', [course.slug, lesson.id])}
-                                                            preserveScroll
-                                                            className={`flex items-start gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                                active
-                                                                    ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium'
-                                                                    : 'text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800'
-                                                            }`}
-                                                        >
-                                                            {done ? (
-                                                                <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-accent-500" />
-                                                            ) : (
-                                                                <Circle className="w-4 h-4 mt-0.5 shrink-0 text-surface-300 dark:text-surface-600" />
-                                                            )}
-                                                            <span className="flex-1 leading-snug">{lesson.title}</span>
-                                                            <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-surface-400" />
-                                                        </Link>
-                                                    </li>
-                                                );
-                                            })}
-                                        </ul>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </aside>
-                )}
             </div>
 
             {/* Congratulations Modal */}
@@ -416,6 +423,41 @@ function QuizPanel({ lesson }: { lesson: Lesson }) {
 function PresentationPanel({ lesson }: { lesson: Lesson }) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
+    useEffect(() => {
+        if (!lesson.has_presentation) {
+            return;
+        }
+
+        const keys = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ', 'Home', 'End']);
+
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (!keys.has(event.key)) {
+                return;
+            }
+            const target = event.target as HTMLElement | null;
+            if (target) {
+                const tag = target.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) {
+                    return;
+                }
+            }
+
+            const frame = iframeRef.current?.contentWindow;
+            if (!frame) {
+                return;
+            }
+
+            event.preventDefault();
+            frame.postMessage(
+                { source: 'gmora-lms', type: 'deck-key', key: event.key },
+                window.location.origin,
+            );
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [lesson.has_presentation, lesson.id]);
+
     if (!lesson.has_presentation) {
         return (
             <div className="card p-8 text-center">
@@ -434,43 +476,18 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
 
     const src = route('presentation.show', lesson.id);
 
-    const enterFullscreen = () => {
-        const el = iframeRef.current;
-        if (!el) {
-            return;
-        }
-        const req = el.requestFullscreen?.bind(el)
-            ?? (el as HTMLIFrameElement & { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen?.bind(el);
-        req?.();
-    };
-
     return (
-        <div className="card overflow-hidden flex flex-col">
+        <div className="card relative overflow-hidden h-full min-h-[20rem] bg-white dark:bg-surface-950">
             <iframe
                 ref={iframeRef}
                 key={lesson.id}
                 src={src}
                 title={lesson.title}
-                className="w-full min-h-[28rem] h-[min(70vh,42rem)] border-0 bg-white dark:bg-surface-950"
+                className="absolute inset-0 h-full w-full border-0"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
                 allow="clipboard-write; fullscreen"
                 allowFullScreen
             />
-            <div className="p-3 border-t border-surface-200 dark:border-surface-800 flex items-center justify-end gap-2">
-                <button type="button" onClick={enterFullscreen} className="btn-ghost text-sm">
-                    <Maximize2 className="w-4 h-4" />
-                    Fullscreen
-                </button>
-                <a
-                    href={src}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-ghost text-sm"
-                >
-                    <Globe className="w-4 h-4" />
-                    Open in a new tab
-                </a>
-            </div>
         </div>
     );
 }
@@ -493,7 +510,7 @@ function DocumentPanel({ lesson }: { lesson: Lesson }) {
     return (
         <div className="card overflow-hidden h-full flex flex-col">
             {/* The browser's own viewer handles paging, zoom and search. */}
-            <object data={src} type="application/pdf" className="w-full flex-1 min-h-[28rem]">
+            <object data={src} type="application/pdf" className="w-full flex-1 min-h-0">
                 <div className="p-8 text-center">
                     <p className="text-surface-500">
                         Your browser can't display PDFs inline.

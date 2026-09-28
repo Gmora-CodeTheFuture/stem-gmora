@@ -44,8 +44,8 @@ export default function MarketingLayout({
                 <nav className="max-w-[1440px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
                     <div className="flex items-center gap-8 h-full">
                         <Link href="/" className="flex items-center">
-                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
-                            <img src="/logo-dark.svg" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
+                            <img src="/logo.png" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
+                            <img src="/logo-dark.png" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
                         </Link>
 
                         <div className={`items-center h-full ${nav ? 'hidden lg:flex' : 'hidden'}`}>
@@ -166,8 +166,8 @@ export default function MarketingLayout({
                 <div className="max-w-[1440px] mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="col-span-2 md:col-span-1">
                         <Link href="/" className="flex items-center mb-6">
-                            <img src="/logo.svg" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
-                            <img src="/logo-dark.svg" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
+                            <img src="/logo.png" alt="Gmora STEM" className="h-12 w-auto object-contain dark:hidden block" />
+                            <img src="/logo-dark.png" alt="Gmora STEM" className="h-12 w-auto object-contain hidden dark:block" />
                         </Link>
                         <p className="text-sm text-surface-500 dark:text-surface-400">
                             The World's STEM Education Platform. Learn, build, and innovate with us.
