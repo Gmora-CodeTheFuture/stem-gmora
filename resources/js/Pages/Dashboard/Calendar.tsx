@@ -5,19 +5,15 @@ import {
     MapPin, Pencil, Plus, Trash2, X, XCircle, Info
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import SegmentedControl from '@/Components/SegmentedControl';
 import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 
 import FullCalendar from '@fullcalendar/react';
 import type { DateSelectArg, DatesSetArg, EventClickArg, EventContentArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import listPlugin from '@fullcalendar/list';
 
 type EventType = 'class' | 'workshop' | 'deadline' | 'announcement';
-type CalendarView = 'dayGridMonth' | 'timeGridWeek' | 'timeGridDay' | 'listMonth';
 
 interface CalendarItem {
     id: string;
@@ -89,11 +85,6 @@ const TYPE_STYLES: Record<EventType, string> = {
     announcement: TYPE_META.announcement.chip,
 };
 
-const VIEW_ITEMS = [
-    { key: 'dayGridMonth' as const, label: 'Month' },
-    { key: 'timeGridDay' as const, label: 'Day' },
-];
-
 /** Format a Date for `<input type="datetime-local">`. All-day uses noon local. */
 function toLocalInput(date: Date, allDay = false): string {
     const d = new Date(date);
@@ -113,32 +104,9 @@ export default function Calendar({
     const [composerDefaults, setComposerDefaults] = useState<{ starts_at?: string; ends_at?: string }>({});
     const [selectedEvent, setSelectedEvent] = useState<CalendarItem | null>(null);
     const [viewTitle, setViewTitle] = useState('');
-    const [view, setView] = useState<CalendarView>('dayGridMonth');
 
     const calendarRef = useRef<FullCalendar | null>(null);
     const initialDate = useRef(new Date().toISOString().slice(0, 10));
-    const [isNarrow, setIsNarrow] = useState(false);
-
-    useEffect(() => {
-        const query = window.matchMedia('(max-width: 767px)');
-        const sync = () => {
-            const narrow = query.matches;
-            setIsNarrow(narrow);
-            setView((current) => {
-                if (narrow && current !== 'listMonth') {
-                    return 'listMonth';
-                }
-                if (!narrow && current === 'listMonth') {
-                    return 'dayGridMonth';
-                }
-                return current;
-            });
-        };
-
-        sync();
-        query.addEventListener('change', sync);
-        return () => query.removeEventListener('change', sync);
-    }, []);
 
     useEffect(() => {
         if (!selectedEvent) {
@@ -190,7 +158,6 @@ export default function Calendar({
 
     const handleDatesSet = useCallback((arg: DatesSetArg) => {
         setViewTitle(arg.view.title);
-        setView(arg.view.type as CalendarView);
 
         const start = arg.startStr.split('T')[0];
         const end = arg.endStr.split('T')[0];
@@ -241,11 +208,6 @@ export default function Calendar({
         info.view.calendar.unselect();
     };
 
-    const changeView = (next: CalendarView) => {
-        setView(next);
-        api()?.changeView(next);
-    };
-
     const renderEventContent = (arg: EventContentArg) => {
         const item = arg.event.extendedProps as CalendarItem;
         const meta = TYPE_META[item.type];
@@ -258,29 +220,6 @@ export default function Calendar({
                     </div>
                 )}
                 <div className="text-[12px] font-semibold truncate">{arg.event.title}</div>
-            </div>
-        );
-    };
-
-    const renderDayHeader = (arg: { date: Date; text: string; view: { type: string }; isToday: boolean }) => {
-        if (arg.view.type === 'dayGridMonth' || arg.view.type === 'listMonth') {
-            return arg.text;
-        }
-
-        return (
-            <div className="flex flex-col items-center gap-1 py-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-surface-400">
-                    {arg.date.toLocaleDateString(undefined, { weekday: 'short' })}
-                </span>
-                <span
-                    className={`text-sm font-semibold inline-flex items-center justify-center min-w-7 h-7 rounded-full ${
-                        arg.isToday
-                            ? 'bg-primary-600 text-white'
-                            : 'text-surface-800 dark:text-surface-100'
-                    }`}
-                >
-                    {arg.date.getDate()}
-                </span>
             </div>
         );
     };
@@ -325,60 +264,35 @@ export default function Calendar({
 
                 <div className="grid lg:grid-cols-[1fr_340px] gap-5 flex-1 min-h-0 overflow-hidden">
                     <div className="card p-3 sm:p-4 flex flex-col min-h-0 h-full overflow-hidden">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 shrink-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <button
-                                    type="button"
-                                    className="btn-icon"
-                                    aria-label="Previous"
-                                    onClick={() => api()?.prev()}
-                                >
-                                    <ChevronLeft className="w-5 h-5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn-icon"
-                                    aria-label="Next"
-                                    onClick={() => api()?.next()}
-                                >
-                                    <ChevronRight className="w-5 h-5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn-secondary text-sm px-3 py-1.5"
-                                    onClick={() => api()?.today()}
-                                >
-                                    Today
-                                </button>
-                                <h2 className="text-base sm:text-lg font-semibold text-surface-900 dark:text-white ml-1">
-                                    {viewTitle || '\u00a0'}
-                                </h2>
-                            </div>
-
-                            {!isNarrow && (
-                                <SegmentedControl
-                                    className="self-start shrink-0"
-                                    aria-label="Calendar view"
-                                    value={
-                                        view === 'listMonth' || view === 'timeGridWeek'
-                                            ? 'dayGridMonth'
-                                            : view
-                                    }
-                                    onChange={changeView}
-                                    items={VIEW_ITEMS}
-                                />
-                            )}
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-3 shrink-0 min-w-0">
+                            <button
+                                type="button"
+                                className="btn-icon"
+                                aria-label="Previous month"
+                                onClick={() => api()?.prev()}
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-icon"
+                                aria-label="Next month"
+                                onClick={() => api()?.next()}
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                            <h2 className="text-sm sm:text-lg font-semibold text-surface-900 dark:text-white ml-1 truncate min-w-0">
+                                {viewTitle || '\u00a0'}
+                            </h2>
                         </div>
 
                         <div className="fc-gmora flex-1 min-h-0">
                             <FullCalendar
                                 ref={calendarRef}
-                                key={isNarrow ? 'list' : 'grid'}
-                                plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-                                initialView={isNarrow ? 'listMonth' : 'dayGridMonth'}
+                                plugins={[dayGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
                                 initialDate={initialDate.current}
                                 headerToolbar={false}
-                                noEventsText="Nothing scheduled this month."
                                 events={events}
                                 datesSet={handleDatesSet}
                                 eventClick={(info: EventClickArg) => {
@@ -391,17 +305,9 @@ export default function Calendar({
                                 longPressDelay={200}
                                 height="100%"
                                 expandRows={true}
-                                slotMinTime="06:00:00"
-                                slotMaxTime="22:00:00"
-                                scrollTime="08:00:00"
-                                slotDuration="00:30:00"
-                                slotLabelInterval="01:00:00"
-                                allDaySlot={true}
-                                nowIndicator={true}
                                 dayMaxEvents={3}
                                 eventDisplay="block"
                                 eventContent={renderEventContent}
-                                dayHeaderContent={renderDayHeader}
                             />
                         </div>
                     </div>

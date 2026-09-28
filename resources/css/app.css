@@ -560,7 +560,7 @@ html.lenis.lenis-scrolling iframe {
     }
 }
 
-/* The agenda list the calendar falls back to on phones. */
+/* Agenda list — titles wrap so mobile doesn't clip chips. */
 .fc-gmora.fc-gmora.fc-gmora .fc-list {
     @apply border-0 h-full;
 }
@@ -570,24 +570,79 @@ html.lenis.lenis-scrolling iframe {
 }
 
 .fc-gmora.fc-gmora.fc-gmora .fc-list-event td {
-    @apply text-sm py-2.5;
+    @apply text-sm py-2.5 align-top;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-graphic {
+    @apply align-top pt-3;
 }
 
 .fc-gmora.fc-gmora.fc-gmora .fc-list-event:hover td {
     @apply bg-surface-50 dark:bg-surface-800/60;
 }
 
-.fc-gmora.fc-gmora.fc-gmora .fc-list-event-title a {
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-time {
+    @apply whitespace-nowrap text-xs text-surface-500;
+    width: 5.5rem;
+    max-width: 30%;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-title {
+    white-space: normal;
+    overflow: visible;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-title a,
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-title .gmora-cal-chip {
     @apply text-surface-900 dark:text-white font-medium no-underline;
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
+}
+
+.fc-gmora.fc-gmora.fc-gmora .fc-list-event-title .gmora-cal-chip {
+    @apply block;
+    max-width: 100%;
+    overflow: visible;
+    white-space: normal;
 }
 
 .fc-gmora.fc-gmora.fc-gmora .fc-list-empty {
     @apply bg-transparent text-sm text-surface-500 py-10;
 }
 
-/* The toolbar stacks rather than squeezing on a narrow screen. */
+/* Month grid stays usable on phones — compact cells, readable chips. */
 @media (max-width: 767px) {
     .fc-gmora.fc-gmora.fc-gmora .fc-daygrid-day-frame {
         min-height: 0;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-col-header-cell {
+        @apply py-1.5;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-col-header-cell-cushion {
+        @apply text-[10px] tracking-wide;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-daygrid-day-number {
+        @apply text-xs min-w-6 h-6 mx-0.5 my-0.5;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-daygrid-event {
+        @apply mx-0.5;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-daygrid-event .gmora-cal-chip {
+        @apply px-1 py-0.5;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-daygrid-event .gmora-cal-chip > div {
+        @apply text-[10px] leading-tight;
+    }
+
+    .fc-gmora.fc-gmora.fc-gmora .fc-list-event-time {
+        width: 4.75rem;
+        font-size: 11px;
     }
 }

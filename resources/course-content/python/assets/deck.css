@@ -33,14 +33,17 @@
   }
 
   *{ box-sizing:border-box; }
-  html,body{ height:100%; }
+  html,body{
+    height:100%;
+    max-height:100%;
+    overflow:hidden;
+  }
   body{
     margin:0;
     background:var(--bg);
     color:var(--ink);
     font-family:'Inter',system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
-    overflow:hidden;
   }
   h1,h2,h3{
     font-family:'Space Grotesk',sans-serif;
@@ -52,9 +55,10 @@
   /* ---------- deck shell ---------- */
   .deck{
     height:100%;
-    height:100dvh;
+    max-height:100%;
     display:flex;
     flex-direction:column;
+    overflow:hidden;
   }
 
       .deck-header{
@@ -96,6 +100,7 @@
     position:relative;
     overflow:hidden;
     width:100%;
+    min-height:0;
   }
   .slide{
     position:absolute;
@@ -584,11 +589,10 @@
     .deck-header .progress-track{ margin: 0 8px; }
 
     .controls{
-      padding: 10px 12px;
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      padding: 8px 12px 10px;
       flex-wrap: nowrap;
       row-gap: 0;
-      min-height: 0;
+      min-height: 52px;
       gap: 8px;
       align-items: center;
     }
@@ -649,10 +653,15 @@
       margin-top: 10px;
     }
     .cover h1{
-      font-size: clamp(32px, 10vw, 48px);
+      font-size: clamp(26px, 8vw, 40px);
     }
     .cover .sub{
-      font-size: clamp(15px, 4vw, 18px);
+      font-size: clamp(14px, 3.6vw, 17px);
+      margin-top: 8px;
+    }
+    .cover-art{
+      max-width: min(260px, 58%);
+      margin-top: 8px;
     }
     .eyebrow{ font-size: 12px; margin-bottom: 10px; }
     .code-block pre,
@@ -797,13 +806,15 @@
     align-items: center;
     gap: 12px;
     flex: 0 0 auto;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
     z-index: 1;
   }
   .controls {
     position: relative;
     z-index: 2;
     background: var(--bg);
+    flex: 0 0 auto;
   }
   .controls .fs-btn {
     position: relative;
@@ -842,4 +853,109 @@
     height: auto;
     margin: 12px auto 0;
     display: block;
+  }
+
+  /* Mobile footer: pin to bottom of the deck shell, keep Prev / pos / Next on one row.
+     Placed last so it wins over earlier absolute/wrap rules.
+     Do NOT use 100dvh or large safe-area padding here — decks run inside an iframe. */
+  @media (max-width: 640px){
+    .deck-header{
+      position: relative;
+      z-index: 3;
+      background: var(--bg);
+      flex: 0 0 auto;
+    }
+    .controls{
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 12px 10px;
+      background: var(--bg);
+      border-top: 1px solid var(--line);
+      flex: 0 0 auto;
+      min-height: 52px;
+    }
+    .controls .fs-btn{
+      position: static;
+      flex: 0 0 auto;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      visibility: visible;
+      opacity: 1;
+    }
+    .controls .nav-wrapper{
+      position: static;
+      left: auto;
+      transform: none;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 0;
+      white-space: nowrap;
+      visibility: visible;
+      opacity: 1;
+    }
+    .controls .watermark{
+      display: none;
+    }
+    .deck-nav-btn{
+      flex: 0 0 auto;
+      min-height: 40px;
+      min-width: 40px;
+      height: 40px;
+      padding: 0 10px;
+      font-size: 0;
+      gap: 0;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      visibility: visible;
+      opacity: 1;
+    }
+    .deck-nav-btn > span[aria-hidden]{
+      font-size: 18px;
+      line-height: 1;
+    }
+    .deck-nav-btn.primary{
+      min-width: 48px;
+      padding: 0 14px;
+    }
+    .deck-nav-btn:disabled{
+      opacity: .35;
+    }
+    .slide-pos{
+      flex: 0 0 auto;
+      min-width: 3.25rem;
+      font-size: 12px;
+    }
+    .cover-art{
+      max-width: min(220px, 52%);
+      margin-top: 6px;
+    }
+    .slide{
+      padding: 12px 14px 12px;
+    }
+  }
+
+  /* Fullscreen (real viewport) can use safe-area insets. */
+  @media (max-width: 640px){
+    :fullscreen .controls,
+    :-webkit-full-screen .controls,
+    html.deck-fs .controls{
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
   }

@@ -200,8 +200,8 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
 
                 <div className={`grid gap-6 flex-1 min-h-0 overflow-hidden transition-all duration-300 ${curriculumOpen ? 'lg:grid-cols-[1fr_340px]' : 'lg:grid-cols-1 max-w-5xl mx-auto w-full'}`}>
                     {/* ── Player / lesson body ─────────────────────── */}
-                    <div className="min-w-0 min-h-0 h-full overflow-y-auto scrollbar-thin flex flex-col">
-                        <div className={`flex-1 flex flex-col ${currentLesson.type === 'html' ? 'min-h-[min(72dvh,40rem)] sm:min-h-[20rem]' : 'min-h-[20rem]'}`}>
+                    <div className="min-w-0 min-h-0 h-full overflow-y-auto scrollbar-thin flex flex-col pb-6 lg:pb-2">
+                        <div className={`flex-1 flex flex-col ${currentLesson.type === 'html' ? 'min-h-[min(48dvh,24rem)] sm:min-h-[22rem] lg:min-h-[min(72dvh,40rem)]' : 'min-h-[20rem]'}`}>
                             {currentLesson.type === 'youtube' && currentLesson.has_video ? (
                                 <SecureVideoPlayer
                                     key={currentLesson.id}
@@ -223,50 +223,59 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                             )}
                         </div>
 
-                        <div className="card p-5 lg:p-6 mt-4 lg:mt-5 shrink-0 flex flex-col">
+                        <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 flex flex-col bg-white dark:bg-surface-950">
                             <div className="shrink-0">
-                                <h1 className="text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
+                                <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
                                     {currentLesson.title}
                                 </h1>
                                 {currentLesson.description && (
-                                    <p className="text-surface-500 mt-2 leading-relaxed">{currentLesson.description}</p>
+                                    <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block">{currentLesson.description}</p>
                                 )}
                             </div>
 
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0 mt-5">
-                                {prevLessonId && (
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 pt-3 sm:pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0 mt-3 sm:mt-5">
+                                {prevLessonId ? (
                                     <Link
                                         href={route('learn.lesson', [course.slug, prevLessonId])}
-                                        className="btn-secondary w-full sm:w-auto justify-center"
+                                        className="btn-secondary h-11 w-full sm:w-auto justify-center px-4"
                                     >
-                                        Previous lesson
+                                        <span className="sm:hidden">Previous</span>
+                                        <span className="hidden sm:inline">Previous lesson</span>
                                     </Link>
-                                )}
+                                ) : null}
 
-                                {nextLessonId && (
+                                {nextLessonId ? (
                                     isComplete ? (
                                         <Link
                                             href={route('learn.lesson', [course.slug, nextLessonId])}
-                                            className="btn-secondary w-full sm:w-auto justify-center"
+                                            className={`btn-secondary h-11 w-full sm:w-auto justify-center px-4 ${prevLessonId ? '' : 'col-span-2 sm:col-auto'}`}
                                         >
-                                            Next lesson
+                                            <span className="sm:hidden">Next</span>
+                                            <span className="hidden sm:inline">Next lesson</span>
                                         </Link>
                                     ) : (
-                                        <button disabled className="btn-secondary w-full sm:w-auto justify-center opacity-50 cursor-not-allowed">
-                                            Next lesson
+                                        <button
+                                            type="button"
+                                            disabled
+                                            className={`btn-secondary h-11 w-full sm:w-auto justify-center px-4 ${prevLessonId ? '' : 'col-span-2 sm:col-auto'}`}
+                                        >
+                                            <span className="sm:hidden">Next</span>
+                                            <span className="hidden sm:inline">Next lesson</span>
                                         </button>
                                     )
-                                )}
+                                ) : null}
 
                                 <button
+                                    type="button"
                                     onClick={markComplete}
                                     disabled={isComplete}
-                                    className={`w-full sm:w-auto justify-center ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
+                                    className={`col-span-2 sm:col-auto h-11 w-full sm:w-auto justify-center px-4 ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
                                 >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    {isComplete ? 'Completed' : 'Mark as complete'}
+                                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                                    <span className="sm:hidden">{isComplete ? 'Completed' : 'Complete'}</span>
+                                    <span className="hidden sm:inline">{isComplete ? 'Completed' : 'Mark as complete'}</span>
                                 </button>
-                                <span className="text-sm text-surface-400 text-center sm:text-left">
+                                <span className="hidden sm:inline text-sm text-surface-400">
                                     {formatDuration(currentLesson.duration_seconds)}
                                 </span>
                             </div>
@@ -508,7 +517,7 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
             className={
                 immersive
                     ? 'fixed inset-0 z-[200] bg-white dark:bg-surface-950'
-                    : 'card relative overflow-hidden h-full min-h-[min(70dvh,36rem)] sm:min-h-[20rem] bg-white dark:bg-surface-950'
+                    : 'card relative overflow-hidden h-full min-h-[min(48dvh,24rem)] sm:min-h-[22rem] lg:min-h-[min(70dvh,36rem)] bg-white dark:bg-surface-950'
             }
         >
             <iframe

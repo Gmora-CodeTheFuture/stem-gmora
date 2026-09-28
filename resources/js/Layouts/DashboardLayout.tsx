@@ -597,7 +597,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
 
                 {/* ── Page Content ────────────────────────────────── */}
                 {/* The extra bottom padding on mobile clears the tab bar. */}
-                <div className={`max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-10 pt-[88px] overflow-x-hidden ${noScroll ? 'flex-1 flex flex-col min-h-0 pb-4' : 'pb-28 lg:pb-16'}`}>
+                <div className={`max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-10 pt-[88px] overflow-x-hidden ${noScroll ? 'flex-1 flex flex-col min-h-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-4' : 'pb-28 lg:pb-16'}`}>
 
                     {message && !dismissed && (
                         <div
