@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 42 · Write/Create Files</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="42-write-create-files"
+  data-prev-lesson="41-read-files"
+  data-next-lesson="43-delete-files"
+  data-next-title="Delete Files">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 42 - Write/Create Files</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">42</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Write Files</span></h1>
+        <p class="sub">How to write to an existing file, or create a new file.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">42</span> Append vs Write</div>
+      <div class="center-block">
+                <h2>Write to an Existing File</h2>
+        <p class="lede">To write to an existing file, you must add a parameter to the <code>open()</code> function: <code>"a"</code> (Append) or <code>"w"</code> (Write - overwrites content).</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">write.py</div>
+          </div>
+          <pre><code><span class="c"># Example of Appending</span>
+  <span class="c"># f = open("demofile2.txt", "a")</span>
+  <span class="c"># f.write("Now the file has more content!")</span>
+  <span class="c"># f.close()</span>
+
+  <span class="c"># Example of Overwriting</span>
+  <span class="c"># f = open("demofile3.txt", "w")</span>
+  <span class="c"># f.write("Woops! I have deleted the content!")</span>
+  <span class="c"># f.close()</span>
+  <span class="f">print</span>(<span class="s">"Remember to always close() files!"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Delete Files →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

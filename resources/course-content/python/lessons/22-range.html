@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 22 · Range</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="22-range"
+  data-prev-lesson="21-functions"
+  data-next-lesson="23-arrays"
+  data-next-title="Arrays">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 22 - Range</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">22</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>The <span class="accent">range()</span> Function</h1>
+        <p class="sub">How to easily generate sequences of numbers in Python.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">22</span> Range Intro</div>
+      <div class="center-block">
+                <h2>What is range()?</h2>
+        <p class="lede">The <code>range()</code> function returns a sequence of numbers, starting from 0 by default, and increments by 1 (by default), and stops before a specified number.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">range_basic.py</div>
+          </div>
+          <pre><code><span class="c"># Range generates numbers from 0 up to (but not including) 5</span>
+  <span class="k">for</span> x <span class="k">in</span> <span class="f">range</span>(<span class="n">5</span>):
+      <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">22</span> Start Parameter</div>
+      <div class="center-block">
+                <h2>Custom Start Value</h2>
+        <p class="lede">You can provide two numbers to range: <code>range(start, stop)</code>.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">range_start.py</div>
+          </div>
+          <pre><code><span class="c"># Start at 2, go up to (but not including) 6</span>
+  <span class="k">for</span> x <span class="k">in</span> <span class="f">range</span>(<span class="n">2</span>, <span class="n">6</span>):
+      <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">22</span> Step Parameter</div>
+      <div class="center-block">
+                <h2>Custom Step (Increment)</h2>
+        <p class="lede">You can provide a third number to range to define the increment (step): <code>range(start, stop, step)</code>.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">range_step.py</div>
+          </div>
+          <pre><code><span class="c"># Start at 2, up to 30, increasing by 3</span>
+  <span class="k">for</span> x <span class="k">in</span> <span class="f">range</span>(<span class="n">2</span>, <span class="n">15</span>, <span class="n">3</span>):
+      <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">22</span> Negative Step</div>
+      <div class="center-block">
+                <h2>Counting Backwards</h2>
+        <p class="lede">You can use a negative step to count backwards!</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">range_negative.py</div>
+          </div>
+          <pre><code><span class="c"># Start at 5, go down to (but not including) 0, stepping by -1</span>
+  <span class="k">for</span> x <span class="k">in</span> <span class="f">range</span>(<span class="n">5</span>, <span class="n">0</span>, -<span class="n">1</span>):
+      <span class="f">print</span>(x)
+  <span class="f">print</span>(<span class="s">"Blast off!"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">22</span> Range to List</div>
+      <div class="center-block">
+                <h2>Converting Range to a List</h2>
+        <p class="lede">The <code>range()</code> function doesn't actually create all the numbers in memory at once (for efficiency). If you need an actual list, cast it!</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">range_list.py</div>
+          </div>
+          <pre><code>r = <span class="f">range</span>(<span class="n">5</span>)
+  <span class="f">print</span>(r)           <span class="c"># Prints: range(0, 5)</span>
+
+  my_list = <span class="f">list</span>(r)  <span class="c"># Convert to a real list</span>
+  <span class="f">print</span>(my_list)     <span class="c"># Prints: [0, 1, 2, 3, 4]</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">22</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>range(5)</code> generates 0, 1, 2, 3, 4.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>range(start, stop)</code> lets you set a custom start value.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>range(start, stop, step)</code> lets you skip numbers or count backwards.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">The stop number is <strong>never</strong> included in the output.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Arrays →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

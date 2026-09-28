@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 27 · Inheritance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="27-inheritance"
+  data-prev-lesson="26-classes-objects"
+  data-next-lesson="28-polymorphism"
+  data-next-title="Polymorphism">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 27 - Inheritance</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">27</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Inheritance</span></h1>
+        <p class="sub">Inheritance allows us to define a class that inherits all the methods and properties from another class.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">27</span> Parent & Child</div>
+      <div class="center-block">
+                <h2>Parent and Child Classes</h2>
+        <p class="lede">Parent class is the class being inherited from, also called base class. Child class is the class that inherits from another class, also called derived class.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">parent.py</div>
+          </div>
+          <pre><code><span class="c"># Parent Class</span>
+  <span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(self, fname, lname):
+          self.firstname = fname
+          self.lastname = lname
+
+      <span class="k">def</span> <span class="f">printname</span>(self):
+          <span class="f">print</span>(self.firstname, self.lastname)
+
+  x = <span class="f">Person</span>(<span class="s">"John"</span>, <span class="s">"Doe"</span>)
+  x.printname()</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">27</span> Creating a Child Class</div>
+      <div class="center-block">
+                <h2>Creating a Child Class</h2>
+        <p class="lede">To create a class that inherits the functionality from another class, send the parent class as a parameter when creating the child class.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">child.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(self, fname, lname):
+          self.firstname = fname
+          self.lastname = lname
+      <span class="k">def</span> <span class="f">printname</span>(self):
+          <span class="f">print</span>(self.firstname, self.lastname)
+
+  <span class="c"># Child Class inheriting from Person</span>
+  <span class="k">class</span> <span class="f">Student</span>(Person):
+      <span class="k">pass</span> <span class="c"># Use pass if you don't want to add any other properties or methods</span>
+
+  x = <span class="f">Student</span>(<span class="s">"Mike"</span>, <span class="s">"Olsen"</span>)
+  x.printname()</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">27</span> Overriding __init__</div>
+      <div class="center-block">
+                <h2>Adding the __init__() Function</h2>
+        <p class="lede">When you add the <code>__init__()</code> function in the child class, the child class will no longer inherit the parent's <code>__init__()</code> function. To keep it, you must call it explicitly.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">init.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(self, fname, lname):
+          self.firstname = fname
+          self.lastname = lname
+
+  <span class="k">class</span> <span class="f">Student</span>(Person):
+      <span class="k">def</span> <span class="f">__init__</span>(self, fname, lname, year):
+          <span class="c"># Call the parent's init function</span>
+          Person.__init__(self, fname, lname)
+          <span class="c"># Add a new property</span>
+          self.graduationyear = year
+
+  x = <span class="f">Student</span>(<span class="s">"Mike"</span>, <span class="s">"Olsen"</span>, <span class="n">2024</span>)
+  <span class="f">print</span>(x.graduationyear)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">27</span> The super() Function</div>
+      <div class="center-block">
+                <h2>Using the super() Function</h2>
+        <p class="lede">Python also has a <code>super()</code> function that will make the child class inherit all the methods and properties from its parent, without needing to name the parent class explicitly.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">super.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(self, fname, lname):
+          self.firstname = fname
+          self.lastname = lname
+
+  <span class="k">class</span> <span class="f">Student</span>(Person):
+      <span class="k">def</span> <span class="f">__init__</span>(self, fname, lname, year):
+          <span class="f">super</span>().__init__(fname, lname)
+          self.graduationyear = year
+
+  x = <span class="f">Student</span>(<span class="s">"Mike"</span>, <span class="s">"Olsen"</span>, <span class="n">2024</span>)
+  <span class="f">print</span>(x.firstname, x.graduationyear)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">27</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>class Child(Parent):</code> to inherit.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Children inherit all methods and properties from parents.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>super().__init__()</code> to easily call the parent's constructor.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">You can add new properties or override existing methods in the child class.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Polymorphism →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

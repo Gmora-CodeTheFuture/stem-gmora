@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 29 · Modules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="29-modules"
+  data-prev-lesson="28-polymorphism"
+  data-next-lesson="30-scope"
+  data-next-title="Scope">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 29 - Modules</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">29</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Modules</span></h1>
+        <p class="sub">Consider a module to be the same as a code library, a file containing a set of functions you want to include in your application.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">29</span> What is a Module?</div>
+      <div class="center-block">
+                <h2>What is a Module?</h2>
+        <p class="lede">To create a module just save the code you want in a file with the file extension <code>.py</code>.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">mymodule.py</div>
+          </div>
+          <pre><code><span class="c"># Save this in mymodule.py</span>
+  <span class="k">def</span> <span class="f">greeting</span>(name):
+      <span class="f">print</span>(<span class="s">"Hello, "</span> + name)
+    
+  person1 = {
+    <span class="s">"name"</span>: <span class="s">"John"</span>,
+    <span class="s">"age"</span>: <span class="n">36</span>,
+    <span class="s">"country"</span>: <span class="s">"Norway"</span>
+  }</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">29</span> Importing Modules</div>
+      <div class="center-block">
+                <h2>Using a Module</h2>
+        <p class="lede">Now we can use the module we just created, by using the <code>import</code> statement.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">main.py</div>
+          </div>
+          <pre><code><span class="k">import</span> math
+
+  <span class="c"># Here we import a built-in module 'math'</span>
+  <span class="c"># But you would import 'mymodule' the exact same way!</span>
+
+  <span class="f">print</span>(math.pi)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">29</span> Renaming Modules</div>
+      <div class="center-block">
+                <h2>Re-naming a Module</h2>
+        <p class="lede">You can create an alias when you import a module, by using the <code>as</code> keyword.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">alias.py</div>
+          </div>
+          <pre><code><span class="k">import</span> math <span class="k">as</span> m
+
+  <span class="f">print</span>(m.pi)
+  <span class="f">print</span>(m.sqrt(<span class="n">16</span>))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">29</span> Built-in Modules</div>
+      <div class="center-block">
+                <h2>Built-in Modules</h2>
+        <p class="lede">There are several built-in modules in Python, which you can import whenever you like. Like the <code>platform</code> module.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">platform_mod.py</div>
+          </div>
+          <pre><code><span class="k">import</span> platform
+
+  x = platform.system()
+  <span class="f">print</span>(<span class="s">"You are running on:"</span>, x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">29</span> From... Import</div>
+      <div class="center-block">
+                <h2>Import From Module</h2>
+        <p class="lede">You can choose to import only parts from a module, by using the <code>from</code> keyword.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">from.py</div>
+          </div>
+          <pre><code><span class="c"># Import just the pi variable from math</span>
+  <span class="k">from</span> math <span class="k">import</span> pi
+
+  <span class="f">print</span>(pi)
+  <span class="c"># Notice we don't need to write math.pi anymore!</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">29</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>import module_name</code> to bring in external code.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>import module as alias</code> to rename it for convenience.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>from module import specific_part</code> to import just one piece.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Any Python file you create can be imported as a module!</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Scope →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

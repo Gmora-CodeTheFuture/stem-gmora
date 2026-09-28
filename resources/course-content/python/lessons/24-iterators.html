@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 24 · Iterators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="24-iterators"
+  data-prev-lesson="23-arrays"
+  data-next-lesson="25-lambda"
+  data-next-title="Lambda">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 24 - Iterators</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">24</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Iterators</span></h1>
+        <p class="sub">An iterator is an object that contains a countable number of values.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">24</span> Iterable vs Iterator</div>
+      <div class="center-block">
+                <h2>Iterator vs Iterable</h2>
+        <p class="lede">Lists, tuples, dictionaries, and sets are all iterable objects. They are iterable containers which you can get an iterator from.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">iter.py</div>
+          </div>
+          <pre><code>mytuple = (<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>)
+
+  <span class="c"># Create an iterator from the tuple</span>
+  myit = <span class="f">iter</span>(mytuple)
+
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">24</span> Strings are Iterables</div>
+      <div class="center-block">
+                <h2>Strings are Iterables</h2>
+        <p class="lede">Even strings are iterable objects, and can return an iterator.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">string_iter.py</div>
+          </div>
+          <pre><code>mystr = <span class="s">"banana"</span>
+  myit = <span class="f">iter</span>(mystr)
+
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))
+  <span class="f">print</span>(<span class="f">next</span>(myit))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">24</span> Looping</div>
+      <div class="center-block">
+                <h2>Looping Through an Iterator</h2>
+        <p class="lede">We can also use a for loop to iterate through an iterable object. The for loop actually creates an iterator object and executes the next() method for each loop.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">loop.py</div>
+          </div>
+          <pre><code>mytuple = (<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>)
+
+  <span class="k">for</span> x <span class="k">in</span> mytuple:
+      <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">24</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">An iterator implements <code>__iter__()</code> and <code>__next__()</code> methods.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>iter()</code> to get an iterator from a collection.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>next()</code> to get the next item from an iterator.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>for</code> loops handle all of this automatically behind the scenes.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Lambda →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 41 · Read Files</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="41-read-files"
+  data-prev-lesson="40-file-handling"
+  data-next-lesson="42-write-create-files"
+  data-next-title="Write/Create Files">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 41 - Read Files</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">41</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Read Files</span></h1>
+        <p class="sub">How to read the contents of a file.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">41</span> Reading</div>
+      <div class="center-block">
+                <h2>Read a File</h2>
+        <p class="lede">The <code>open()</code> function returns a file object, which has a <code>read()</code> method for reading the content of the file.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">read.py</div>
+          </div>
+          <pre><code><span class="c"># Example code (run this locally)</span>
+  <span class="c"># f = open("demofile.txt", "r")</span>
+  <span class="c"># print(f.read())</span>
+  <span class="c"># f.close()</span>
+  <span class="f">print</span>(<span class="s">"File reading works locally!"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">41</span> Read Lines</div>
+      <div class="center-block">
+                <h2>Read Lines</h2>
+        <p class="lede">You can return one line by using the <code>readline()</code> method. By calling <code>readline()</code> two times, you can read the two first lines.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">lines.py</div>
+          </div>
+          <pre><code><span class="c"># Example code</span>
+  <span class="c"># f = open("demofile.txt", "r")</span>
+  <span class="c"># print(f.readline())</span>
+  <span class="c"># print(f.readline())</span>
+  <span class="c"># f.close()</span>
+  <span class="f">print</span>(<span class="s">"Use readline() for one line at a time."</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">41</span> Loop Through Lines</div>
+      <div class="center-block">
+                <h2>Looping Lines</h2>
+        <p class="lede">By looping through the lines of the file, you can read the whole file, line by line. This is the most efficient way to read large files.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">loop_lines.py</div>
+          </div>
+          <pre><code><span class="c"># Example code</span>
+  <span class="c"># f = open("demofile.txt", "r")</span>
+  <span class="c"># for x in f:</span>
+  <span class="c">#   print(x)</span>
+  <span class="c"># f.close()</span>
+  <span class="f">print</span>(<span class="s">"For loop reads lines efficiently."</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Write/Create Files →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

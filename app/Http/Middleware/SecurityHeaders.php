@@ -34,7 +34,11 @@ class SecurityHeaders
             $headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains';
         }
 
-        $headers['Content-Security-Policy'] = $this->contentSecurityPolicy();
+        // Presentations already set a sandboxed CSP. Stacking a second policy
+        // ANDs them and blocks CDN fonts (e.g. Excalidraw Virgil on jsDelivr).
+        if (! $response->headers->has('Content-Security-Policy')) {
+            $headers['Content-Security-Policy'] = $this->contentSecurityPolicy();
+        }
 
         foreach ($headers as $key => $value) {
             $response->headers->set($key, $value, false);
@@ -65,8 +69,8 @@ class SecurityHeaders
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' data: https://fonts.gstatic.com",
             "img-src 'self' data: blob: https:",
-            // The lesson player is a YouTube iframe served from our own page.
-            'frame-src https://www.youtube.com https://www.youtube-nocookie.com',
+            // The lesson player embeds YouTube and same-origin HTML presentations.
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
             "media-src 'self' blob:",
             "connect-src {$connectSrc}",
         ]);

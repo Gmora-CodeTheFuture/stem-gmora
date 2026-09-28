@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 01 · Introduction to Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="01-introduction"
+  data-prev-lesson="null"
+  data-next-lesson="02-get-started"
+  data-next-title="Get Started">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 01 - Introduction to Python</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<!-- SLIDE 1 — Cover -->
+    <section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">01</span> Python Programming Series</div>
+      <div class="center-block">
+        <h1>Introduction to <span class="accent">Python</span></h1>
+        <p class="sub">What Python actually is, why so many people choose it, and the first line of code you'll ever write — together.</p>
+        <img class="cover-art" src="images/lesson-01/01-cover.png" alt="A beginner sitting at a laptop, with code symbols floating above the screen">
+      </div>
+    </section>
+
+    <!-- SLIDE 2 — What is Python -->
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">02</span> The Basics</div>
+      <div class="center-block">
+        <h2>What is Python?</h2>
+        <p class="lede">Python is a general-purpose programming language — a way of giving a computer clear, step-by-step instructions, written in a form that reads almost like plain English.</p>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Created by <strong>Guido van Rossum</strong>, first released in 1991.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Named after <em>Monty Python's Flying Circus</em> — not the snake.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Built around one core idea: code should be easy for humans to read.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3 — Why learn Python -->
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">03</span> The Basics</div>
+      <div class="center-block">
+        <h2>Why start with Python?</h2>
+        <p class="lede">It's consistently one of the first languages recommended to beginners — for good reasons.</p>
+        <div class="card-grid">
+          <div class="card fragment"><span class="k">01</span><h3>Beginner-friendly syntax</h3><p>Fewer symbols, less punctuation, closer to natural language.</p></div>
+          <div class="card fragment"><span class="k">02</span><h3>Huge ecosystem</h3><p>A library exists for almost anything you'll want to build.</p></div>
+          <div class="card fragment"><span class="k">03</span><h3>One language, many jobs</h3><p>Web apps, data, automation, and AI all in the same language.</p></div>
+          <div class="card fragment"><span class="k">04</span><h3>Massive community</h3><p>Millions of learners means answers are always one search away.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4 — Where it's used -->
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">04</span> The Basics</div>
+      <div class="center-block">
+        <h2>Where Python shows up</h2>
+        <p class="lede">Chances are you've used something built with Python today, without realizing it.</p>
+        <div class="card-grid">
+          <div class="card fragment"><span class="k">WEB</span><h3>Web Development</h3><p>Instagram and Spotify's backends use frameworks like Django and Flask.</p></div>
+          <div class="card fragment"><span class="k">DATA</span><h3>Data &amp; AI</h3><p>Libraries like pandas and PyTorch power analytics and machine learning.</p></div>
+          <div class="card fragment"><span class="k">AUTO</span><h3>Automation</h3><p>Renaming files, scraping websites, sending emails — all scriptable.</p></div>
+          <div class="card fragment"><span class="k">GAME</span><h3>Games &amp; Creative Coding</h3><p>Simple 2D games and generative art are a natural fit for beginners.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5 — How code runs -->
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">05</span> Under the Hood</div>
+      <div class="center-block">
+        <h2>How your code actually runs</h2>
+        <p class="lede">Python is an <strong>interpreted</strong> language — your code is read and run one line at a time, rather than compiled all at once.</p>
+        <div class="steps-row">
+          <div class="step-box fragment">You write code in a <span class="pill">.py</span> file</div>
+          <div class="arrow fragment">→</div>
+          <div class="step-box fragment">The Python interpreter reads it line by line</div>
+          <div class="arrow fragment">→</div>
+          <div class="step-box fragment">Your computer executes each instruction</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6 — Setup -->
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">06</span> Setup</div>
+      <div class="center-block">
+        <h2>Getting Python installed</h2>
+        <p class="lede">Before writing any code, you need Python on your machine.</p>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Download it from <strong>python.org/downloads</strong> — Windows, macOS, and Linux are all supported.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">On Windows, tick <strong>“Add Python to PATH”</strong> during setup — this one checkbox saves a lot of headaches.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Confirm it worked by opening a terminal and running <span class="pill">python --version</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7 — First program (interactive terminal) -->
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">07</span> Hands On</div>
+      <div class="center-block">
+        <h2>Your first program</h2>
+        <p class="lede fragment">Every programmer, in every language, starts with the exact same line. Click <strong>Run</strong> below to try it.</p>
+
+        <div class="terminal fragment">
+          <div class="terminal-bar">
+            <span></span><span></span><span></span>
+            <span class="fname">hello.py</span>
+          </div>
+          <div class="terminal-body">
+            <span class="comment"># your very first Python program</span>
+            <span class="code-line"><span class="fn">print</span>(<span class="str">"Hello, World!"</span>)</span>
+            <span class="out-line" id="outLine"></span>
+          </div>
+        </div>
+        <button class="run-btn fragment" id="runBtn">▶ Run hello.py</button>
+        <p class="lede fragment" style="margin-top:14px; font-size:18px;"><span class="pill">print()</span> simply displays whatever is inside the parentheses on the screen.</p>
+      </div>
+    </section>
+
+    <!-- SLIDE 8 — Recap -->
+    <section class="slide" data-index="7">
+      <div class="eyebrow"><span class="num">08</span> Recap</div>
+      <div class="center-block">
+        <h2>Nice work — here's what you covered</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">What Python is, and where the name comes from</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Why it's a popular first language</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Where it's used in the real world</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">How the interpreter runs your code, line by line</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Installed Python and checked the version</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Ran your first program: <span class="pill">print("Hello, World!")</span></span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Variables &amp; Data Types →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

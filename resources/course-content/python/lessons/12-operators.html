@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 12 · Operators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="12-operators"
+  data-prev-lesson="11-booleans"
+  data-next-lesson="13-lists"
+  data-next-title="Lists">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 12 - Operators</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">12</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Operators</span></h1>
+        <p class="sub">Operators are used to perform operations on variables and values.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">12</span> Operators</div>
+      <div class="center-block">
+                <h2>What are Operators?</h2>
+        <p class="lede">Operators are special symbols in Python that carry out arithmetic or logical computation.</p>
+        <div class="card-grid">
+          <div class="card fragment">
+            <span class="k">+ - * /</span>
+            <h3>Arithmetic</h3>
+            <p>Used for math operations.</p>
+          </div>
+          <div class="card fragment">
+            <span class="k">= += -=</span>
+            <h3>Assignment</h3>
+            <p>Used to assign values to variables.</p>
+          </div>
+          <div class="card fragment">
+            <span class="k">== > <</span>
+            <h3>Comparison</h3>
+            <p>Used to compare two values.</p>
+          </div>
+          <div class="card fragment">
+            <span class="k">and or not</span>
+            <h3>Logical</h3>
+            <p>Used to combine conditional statements.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">12</span> Arithmetic</div>
+      <div class="center-block">
+                <h2>Arithmetic Operators</h2>
+        <p class="lede">Arithmetic operators are used with numeric values to perform common mathematical operations.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">math.py</div>
+          </div>
+          <pre><code><span class="f">print</span>(<span class="n">10</span> + <span class="n">3</span>)  <span class="c"># Addition: 13</span>
+  <span class="f">print</span>(<span class="n">10</span> - <span class="n">3</span>)  <span class="c"># Subtraction: 7</span>
+  <span class="f">print</span>(<span class="n">10</span> * <span class="n">3</span>)  <span class="c"># Multiplication: 30</span>
+  <span class="f">print</span>(<span class="n">10</span> / <span class="n">3</span>)  <span class="c"># Division: 3.3333333333333335</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">12</span> Advanced Arithmetic</div>
+      <div class="center-block">
+                <h2>Advanced Arithmetic</h2>
+        <p class="lede">Python also has built-in operators for floor division, modulus (remainder), and exponentiation.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">adv_math.py</div>
+          </div>
+          <pre><code><span class="f">print</span>(<span class="n">10</span> // <span class="n">3</span>) <span class="c"># Floor division (rounds down): 3</span>
+  <span class="f">print</span>(<span class="n">10</span> % <span class="n">3</span>)  <span class="c"># Modulus (remainder): 1</span>
+  <span class="f">print</span>(<span class="n">10</span> ** <span class="n">3</span>) <span class="c"># Exponentiation (10 to power of 3): 1000</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">12</span> Assignment</div>
+      <div class="center-block">
+                <h2>Assignment Operators</h2>
+        <p class="lede">Assignment operators are used to assign values to variables. You can combine math and assignment in one step.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">assign.py</div>
+          </div>
+          <pre><code>x = <span class="n">5</span>
+  <span class="f">print</span>(x)
+
+  x += <span class="n">3</span>   <span class="c"># Same as: x = x + 3</span>
+  <span class="f">print</span>(x)
+
+  x *= <span class="n">2</span>   <span class="c"># Same as: x = x * 2</span>
+  <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">12</span> Comparison</div>
+      <div class="center-block">
+                <h2>Comparison Operators</h2>
+        <p class="lede">Comparison operators are used to compare two values. They always return a Boolean (True or False).</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">compare.py</div>
+          </div>
+          <pre><code>x = <span class="n">5</span>
+  y = <span class="n">3</span>
+
+  <span class="f">print</span>(x == y)  <span class="c"># Equal</span>
+  <span class="f">print</span>(x != y)  <span class="c"># Not equal</span>
+  <span class="f">print</span>(x > y)   <span class="c"># Greater than</span>
+  <span class="f">print</span>(x <= y)  <span class="c"># Less than or equal to</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">12</span> Logical</div>
+      <div class="center-block">
+                <h2>Logical Operators</h2>
+        <p class="lede">Logical operators are used to combine conditional statements.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">logical.py</div>
+          </div>
+          <pre><code>x = <span class="n">5</span>
+
+  <span class="c"># and: Returns True if both statements are true</span>
+  <span class="f">print</span>(x > <span class="n">3</span> <span class="k">and</span> x < <span class="n">10</span>)
+
+  <span class="c"># or: Returns True if one of the statements is true</span>
+  <span class="f">print</span>(x > <span class="n">10</span> <span class="k">or</span> x < <span class="n">6</span>)
+
+  <span class="c"># not: Reverse the result</span>
+  <span class="f">print</span>(<span class="k">not</span>(x > <span class="n">3</span> <span class="k">and</span> x < <span class="n">10</span>))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="7">
+      <div class="eyebrow"><span class="num">12</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Math operators include <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>//</code>, <code>%</code>, <code>**</code>.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>+=</code> to add a number to an existing variable.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Comparison operators like <code>==</code> and <code>!=</code> return Booleans.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Logical operators are written as words: <code>and</code>, <code>or</code>, <code>not</code>.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Lists →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

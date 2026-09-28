@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 11 · Booleans</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="11-booleans"
+  data-prev-lesson="10-strings"
+  data-next-lesson="12-operators"
+  data-next-title="Operators">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 11 - Booleans</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">11</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Booleans</span></h1>
+        <p class="sub">Booleans represent one of two values: True or False.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">11</span> True and False</div>
+      <div class="center-block">
+                <h2>Boolean Values</h2>
+        <p class="lede">In programming you often need to know if an expression is True or False. These are called Boolean values.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">bool.py</div>
+          </div>
+          <pre><code><span class="c"># Note the capital T and F!</span>
+  is_active = <span class="n">True</span>
+  is_admin = <span class="n">False</span>
+
+  <span class="f">print</span>(is_active)
+  <span class="f">print</span>(<span class="f">type</span>(is_active))  <span class="c"># <class 'bool'></span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">11</span> Comparisons</div>
+      <div class="center-block">
+                <h2>Boolean from Comparisons</h2>
+        <p class="lede">When you compare two values, the expression is evaluated and Python returns a Boolean answer.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">compare.py</div>
+          </div>
+          <pre><code><span class="f">print</span>(<span class="n">10</span> > <span class="n">9</span>)    <span class="c"># True</span>
+  <span class="f">print</span>(<span class="n">10</span> == <span class="n">9</span>)   <span class="c"># False</span>
+  <span class="f">print</span>(<span class="n">10</span> < <span class="n">9</span>)    <span class="c"># False</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">11</span> If Statements</div>
+      <div class="center-block">
+                <h2>Booleans in if Statements</h2>
+        <p class="lede">When you run a condition in an <code>if</code> statement, Python evaluates it and returns True or False to decide which block to execute.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">if_bool.py</div>
+          </div>
+          <pre><code>a = <span class="n">200</span>
+  b = <span class="n">33</span>
+
+  <span class="k">if</span> b > a:
+      <span class="f">print</span>(<span class="s">"b is greater than a"</span>)
+  <span class="k">else</span>:
+      <span class="f">print</span>(<span class="s">"b is not greater than a"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">11</span> bool() function</div>
+      <div class="center-block">
+                <h2>Evaluate Values</h2>
+        <p class="lede">The <code>bool()</code> function allows you to evaluate any value, and give you True or False in return.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">eval.py</div>
+          </div>
+          <pre><code><span class="c"># Almost everything has some sort of content and is True</span>
+  <span class="f">print</span>(<span class="f">bool</span>(<span class="s">"Hello"</span>))   <span class="c"># True</span>
+  <span class="f">print</span>(<span class="f">bool</span>(<span class="n">15</span>))        <span class="c"># True</span>
+  <span class="f">print</span>(<span class="f">bool</span>([-<span class="n">1</span>, <span class="n">0</span>]))   <span class="c"># True</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">11</span> Falsy Values</div>
+      <div class="center-block">
+                <h2>What Evaluates to False?</h2>
+        <p class="lede">There are not many values that evaluate to False, except empty values, the number 0, and the value None.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">falsy.py</div>
+          </div>
+          <pre><code><span class="f">print</span>(<span class="f">bool</span>(<span class="n">False</span>))
+  <span class="f">print</span>(<span class="f">bool</span>(<span class="n">None</span>))
+  <span class="f">print</span>(<span class="f">bool</span>(<span class="n">0</span>))
+  <span class="f">print</span>(<span class="f">bool</span>(<span class="s">""</span>))      <span class="c"># empty string</span>
+  <span class="f">print</span>(<span class="f">bool</span>([]))      <span class="c"># empty list</span>
+  <span class="f">print</span>(<span class="f">bool</span>({}))      <span class="c"># empty dict</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">11</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Booleans are either <code>True</code> or <code>False</code> (capitalized!).</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Comparisons like <code>10 > 5</code> evaluate to a Boolean.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Almost all values are "truthy" (evaluate to True).</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Empty strings, 0, None, and empty lists are "falsy" (evaluate to False).</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Operators →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

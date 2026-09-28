@@ -1,0 +1,275 @@
+{
+  "slug": "python-programming",
+  "title": "Python Programming",
+  "modules": [
+    {
+      "title": "Getting Started",
+      "description": "Meet Python, set up your environment, and write your first lines of code.",
+      "lessons": [
+        {
+          "id": "01-introduction",
+          "file": "01-introduction.html",
+          "title": "Introduction to Python"
+        },
+        {
+          "id": "02-get-started",
+          "file": "02-get-started.html",
+          "title": "Get Started"
+        },
+        {
+          "id": "03-syntax",
+          "file": "03-syntax.html",
+          "title": "Syntax"
+        },
+        {
+          "id": "04-output",
+          "file": "04-output.html",
+          "title": "Output"
+        },
+        {
+          "id": "05-comments",
+          "file": "05-comments.html",
+          "title": "Comments"
+        }
+      ]
+    },
+    {
+      "title": "Data Fundamentals",
+      "description": "Variables, types, casting, strings, booleans, and operators.",
+      "lessons": [
+        {
+          "id": "06-variables",
+          "file": "06-variables.html",
+          "title": "Variables"
+        },
+        {
+          "id": "07-data-types",
+          "file": "07-data-types.html",
+          "title": "Data Types"
+        },
+        {
+          "id": "09-casting",
+          "file": "09-casting.html",
+          "title": "Casting"
+        },
+        {
+          "id": "10-strings",
+          "file": "10-strings.html",
+          "title": "Strings"
+        },
+        {
+          "id": "11-booleans",
+          "file": "11-booleans.html",
+          "title": "Booleans"
+        },
+        {
+          "id": "12-operators",
+          "file": "12-operators.html",
+          "title": "Operators"
+        }
+      ]
+    },
+    {
+      "title": "Collections",
+      "description": "Lists, tuples, sets, and dictionaries \u2014 Python's core containers.",
+      "lessons": [
+        {
+          "id": "13-lists",
+          "file": "13-lists.html",
+          "title": "Lists"
+        },
+        {
+          "id": "14-tuples",
+          "file": "14-tuples.html",
+          "title": "Tuples"
+        },
+        {
+          "id": "15-sets",
+          "file": "15-sets.html",
+          "title": "Sets"
+        },
+        {
+          "id": "16-dictionaries",
+          "file": "16-dictionaries.html",
+          "title": "Dictionaries"
+        }
+      ]
+    },
+    {
+      "title": "Control Flow",
+      "description": "Branch and loop with if/else, while, and match/case.",
+      "lessons": [
+        {
+          "id": "17-if-else",
+          "file": "17-if-else.html",
+          "title": "If/Else"
+        },
+        {
+          "id": "18-while-loops",
+          "file": "18-while-loops.html",
+          "title": "While Loops"
+        },
+        {
+          "id": "20-match-case",
+          "file": "20-match-case.html",
+          "title": "Match Case"
+        }
+      ]
+    },
+    {
+      "title": "Functions and Iteration",
+      "description": "Functions, range, arrays, iterators, and lambda expressions.",
+      "lessons": [
+        {
+          "id": "21-functions",
+          "file": "21-functions.html",
+          "title": "Functions"
+        },
+        {
+          "id": "22-range",
+          "file": "22-range.html",
+          "title": "Range"
+        },
+        {
+          "id": "23-arrays",
+          "file": "23-arrays.html",
+          "title": "Arrays"
+        },
+        {
+          "id": "24-iterators",
+          "file": "24-iterators.html",
+          "title": "Iterators"
+        },
+        {
+          "id": "25-lambda",
+          "file": "25-lambda.html",
+          "title": "Lambda"
+        }
+      ]
+    },
+    {
+      "title": "Object-Oriented Python",
+      "description": "Classes, inheritance, and polymorphism.",
+      "lessons": [
+        {
+          "id": "26-classes-objects",
+          "file": "26-classes-objects.html",
+          "title": "Classes & Objects"
+        },
+        {
+          "id": "27-inheritance",
+          "file": "27-inheritance.html",
+          "title": "Inheritance"
+        },
+        {
+          "id": "28-polymorphism",
+          "file": "28-polymorphism.html",
+          "title": "Polymorphism"
+        }
+      ]
+    },
+    {
+      "title": "Language Essentials",
+      "description": "Modules, scope, dates, errors, input, and the math library.",
+      "lessons": [
+        {
+          "id": "29-modules",
+          "file": "29-modules.html",
+          "title": "Modules"
+        },
+        {
+          "id": "30-scope",
+          "file": "30-scope.html",
+          "title": "Scope"
+        },
+        {
+          "id": "31-dates",
+          "file": "31-dates.html",
+          "title": "Dates"
+        },
+        {
+          "id": "32-try-except",
+          "file": "32-try-except.html",
+          "title": "Try Except"
+        },
+        {
+          "id": "33-none",
+          "file": "33-none.html",
+          "title": "None"
+        },
+        {
+          "id": "34-user-input",
+          "file": "34-user-input.html",
+          "title": "User Input"
+        },
+        {
+          "id": "35-math",
+          "file": "35-math.html",
+          "title": "Math"
+        }
+      ]
+    },
+    {
+      "title": "Working with Data and Files",
+      "description": "JSON, RegEx, PIP, formatting, and file read/write/delete.",
+      "lessons": [
+        {
+          "id": "36-json",
+          "file": "36-json.html",
+          "title": "JSON"
+        },
+        {
+          "id": "37-regex",
+          "file": "37-regex.html",
+          "title": "RegEx"
+        },
+        {
+          "id": "38-pip",
+          "file": "38-pip.html",
+          "title": "PIP"
+        },
+        {
+          "id": "39-string-formatting",
+          "file": "39-string-formatting.html",
+          "title": "String Formatting"
+        },
+        {
+          "id": "40-file-handling",
+          "file": "40-file-handling.html",
+          "title": "File Handling"
+        },
+        {
+          "id": "41-read-files",
+          "file": "41-read-files.html",
+          "title": "Read Files"
+        },
+        {
+          "id": "42-write-create-files",
+          "file": "42-write-create-files.html",
+          "title": "Write/Create Files"
+        },
+        {
+          "id": "43-delete-files",
+          "file": "43-delete-files.html",
+          "title": "Delete Files"
+        }
+      ]
+    },
+    {
+      "title": "Beyond the Basics",
+      "description": "HTTP requests with the requests library, and where to go next.",
+      "lessons": [
+        {
+          "id": "44-requests",
+          "file": "44-requests.html",
+          "title": "Requests"
+        },
+        {
+          "id": "45-next-steps",
+          "file": "45-next-steps.html",
+          "title": "Next Steps"
+        }
+      ]
+    }
+  ]
+}

@@ -132,7 +132,9 @@ class PresentationController extends Controller
      */
     private function rewriteAssetPaths(string $html, string $lessonId): string
     {
-        $baseUrl = route('presentation.asset', ['lesson' => $lessonId, 'path' => '']);
+        // Base ends with /assets/ so relative refs (deck.css, images/…) map to the
+        // presentation.asset route and flattened files under storage_path.
+        $baseUrl = rtrim(url('/presentations/'.$lessonId), '/').'/assets/';
 
         // Inject a <base> tag so all relative URLs resolve through our controller.
         // We insert it right after <head> if present.

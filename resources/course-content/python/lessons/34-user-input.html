@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 34 · User Input</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="34-user-input"
+  data-prev-lesson="33-none"
+  data-next-lesson="35-math"
+  data-next-title="Math">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 34 - User Input</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">34</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>User <span class="accent">Input</span></h1>
+        <p class="sub">How to ask the user to type information into your program.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">34</span> input()</div>
+      <div class="center-block">
+                <h2>The input() Function</h2>
+        <p class="lede">Python allows for user input. That means we are able to ask the user for input using the <code>input()</code> function.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">input_basic.py</div>
+          </div>
+          <pre><code>username = <span class="f">input</span>(<span class="s">"Enter your username: "</span>)
+  <span class="f">print</span>(<span class="s">"Welcome back,"</span>, username)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+        <p class="lede fragment" style="margin-top:14px; font-size:17px;">(When you run this in our web editor, a popup box will ask for your input!)</p>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">34</span> Data Types</div>
+      <div class="center-block">
+                <h2>Input is Always a String</h2>
+        <p class="lede">No matter what the user types, the <code>input()</code> function ALWAYS returns a string. If you want a number, you must cast it.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">input_types.py</div>
+          </div>
+          <pre><code>age = <span class="f">input</span>(<span class="s">"Enter your age: "</span>)
+  <span class="f">print</span>(<span class="f">type</span>(age))  <span class="c"># This will be <class 'str'>!</span>
+
+  <span class="c"># This will cause an error because age is a string:</span>
+  <span class="c"># print(age + 5)</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">34</span> Casting Input</div>
+      <div class="center-block">
+                <h2>Casting User Input</h2>
+        <p class="lede">Wrap the <code>input()</code> function inside <code>int()</code> or <code>float()</code> to convert the text into a usable number.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">input_cast.py</div>
+          </div>
+          <pre><code><span class="c"># Ask for age and immediately convert to integer</span>
+  age = <span class="f">int</span>(<span class="f">input</span>(<span class="s">"Enter your age: "</span>))
+
+  <span class="c"># Now math works!</span>
+  future_age = age + <span class="n">10</span>
+  <span class="f">print</span>(<span class="s">"In 10 years, you will be:"</span>, future_age)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">34</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>input("Prompt: ")</code> to pause and wait for the user.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">The result of <code>input()</code> is ALWAYS a string.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>int(input())</code> to get an integer from the user.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>float(input())</code> to get a decimal from the user.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Virtual Environments →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

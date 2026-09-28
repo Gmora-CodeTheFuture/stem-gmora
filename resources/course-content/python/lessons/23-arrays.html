@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 23 · Arrays</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="23-arrays"
+  data-prev-lesson="22-range"
+  data-next-lesson="24-iterators"
+  data-next-title="Iterators">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 23 - Arrays</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">23</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Arrays</span></h1>
+        <p class="sub">Note: Python does not have built-in support for Arrays, but Python Lists can be used instead.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">23</span> Arrays vs Lists</div>
+      <div class="center-block">
+                <h2>Lists as Arrays</h2>
+        <p class="lede">Arrays are used to store multiple values in one single variable. In Python, we simply use lists to act as arrays.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">arrays.py</div>
+          </div>
+          <pre><code>cars = [<span class="s">"Ford"</span>, <span class="s">"Volvo"</span>, <span class="s">"BMW"</span>]
+
+  <span class="f">print</span>(cars)
+  <span class="f">print</span>(<span class="f">type</span>(cars))  <span class="c"># Prints <class 'list'></span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">23</span> Accessing Elements</div>
+      <div class="center-block">
+                <h2>Access the Elements of an Array</h2>
+        <p class="lede">You refer to an array element by referring to the index number.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">access.py</div>
+          </div>
+          <pre><code>cars = [<span class="s">"Ford"</span>, <span class="s">"Volvo"</span>, <span class="s">"BMW"</span>]
+
+  <span class="c"># Get the first item</span>
+  x = cars[<span class="n">0</span>]
+  <span class="f">print</span>(x)
+
+  <span class="c"># Modify the first item</span>
+  cars[<span class="n">0</span>] = <span class="s">"Toyota"</span>
+  <span class="f">print</span>(cars)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">23</span> Length</div>
+      <div class="center-block">
+                <h2>The Length of an Array</h2>
+        <p class="lede">Use the <code>len()</code> method to return the length of an array (the number of elements in an array).</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">length.py</div>
+          </div>
+          <pre><code>cars = [<span class="s">"Ford"</span>, <span class="s">"Volvo"</span>, <span class="s">"BMW"</span>]
+
+  x = <span class="f">len</span>(cars)
+  <span class="f">print</span>(<span class="s">"There are"</span>, x, <span class="s">"cars in the array."</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">23</span> Iterating</div>
+      <div class="center-block">
+                <h2>Looping Array Elements</h2>
+        <p class="lede">You can use the <code>for in</code> loop to loop through all the elements of an array.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">loop.py</div>
+          </div>
+          <pre><code>cars = [<span class="s">"Ford"</span>, <span class="s">"Volvo"</span>, <span class="s">"BMW"</span>]
+
+  <span class="k">for</span> x <span class="k">in</span> cars:
+      <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">23</span> Methods</div>
+      <div class="center-block">
+                <h2>Adding and Removing</h2>
+        <p class="lede">You can use the <code>append()</code> method to add an element, and <code>pop()</code> or <code>remove()</code> to remove elements.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">methods.py</div>
+          </div>
+          <pre><code>cars = [<span class="s">"Ford"</span>, <span class="s">"Volvo"</span>, <span class="s">"BMW"</span>]
+
+  cars.append(<span class="s">"Honda"</span>)
+  <span class="f">print</span>(cars)
+
+  cars.pop(<span class="n">1</span>)  <span class="c"># removes Volvo</span>
+  <span class="f">print</span>(cars)
+
+  cars.remove(<span class="s">"BMW"</span>)
+  <span class="f">print</span>(cars)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">23</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Python doesn't have a native "array" type; we use Lists.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Lists can do everything arrays can do, and more.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">If you need strictly typed arrays for performance (math/science), you import <code>numpy</code>.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Iterators →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 21 · Functions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="21-functions"
+  data-prev-lesson="20-match-case"
+  data-next-lesson="22-range"
+  data-next-title="Range">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 21 - Functions</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">21</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Functions</span></h1>
+        <p class="sub">How to package a block of code so that it only runs when it is called.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">21</span> Functions</div>
+      <div class="center-block">
+                <h2>Creating a Function</h2>
+        <p class="lede">In Python a function is defined using the <code>def</code> keyword.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">func.py</div>
+          </div>
+          <pre><code><span class="k">def</span> <span class="f">my_function</span>():
+      <span class="f">print</span>(<span class="s">"Hello from a function"</span>)
+
+  <span class="c"># This won't output anything until we call it!</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">21</span> Calling Functions</div>
+      <div class="center-block">
+                <h2>Calling a Function</h2>
+        <p class="lede">To call a function, use the function name followed by parenthesis.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">call.py</div>
+          </div>
+          <pre><code><span class="k">def</span> <span class="f">my_function</span>():
+      <span class="f">print</span>(<span class="s">"Hello from a function"</span>)
+
+  my_function()
+  my_function()
+  my_function()</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">21</span> Arguments</div>
+      <div class="center-block">
+                <h2>Arguments (Inputs)</h2>
+        <p class="lede">Information can be passed into functions as arguments. Arguments are specified after the function name, inside the parentheses.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">args.py</div>
+          </div>
+          <pre><code><span class="k">def</span> <span class="f">greet</span>(fname):
+      <span class="f">print</span>(fname + <span class="s">" Johnson"</span>)
+
+  <span class="f">greet</span>(<span class="s">"Emil"</span>)
+  <span class="f">greet</span>(<span class="s">"Tobias"</span>)
+  <span class="f">greet</span>(<span class="s">"Linus"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">21</span> Multiple Arguments</div>
+      <div class="center-block">
+                <h2>Multiple Arguments</h2>
+        <p class="lede">You can add as many arguments as you want, just separate them with a comma.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">multi_args.py</div>
+          </div>
+          <pre><code><span class="k">def</span> <span class="f">full_name</span>(fname, lname):
+      <span class="f">print</span>(fname + <span class="s">" "</span> + lname)
+
+  <span class="f">full_name</span>(<span class="s">"Emil"</span>, <span class="s">"Refsnes"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">21</span> Return Values</div>
+      <div class="center-block">
+                <h2>Returning Values</h2>
+        <p class="lede">To let a function return a value back to the caller, use the <code>return</code> statement.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">return.py</div>
+          </div>
+          <pre><code><span class="k">def</span> <span class="f">my_function</span>(x):
+      <span class="k">return</span> <span class="n">5</span> * x
+
+  <span class="f">print</span>(<span class="f">my_function</span>(<span class="n">3</span>))
+  <span class="f">print</span>(<span class="f">my_function</span>(<span class="n">5</span>))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">21</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>def func():</code> to define a new function.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Call it using its name and parentheses: <code>func()</code>.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Add variables inside the parentheses to pass data (arguments).</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>return</code> to send a computed value back out of the function.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Range →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

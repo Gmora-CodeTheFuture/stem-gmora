@@ -46,6 +46,6 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->call([BadgeSeeder::class, CourseSeeder::class]);
+        $this->call([BadgeSeeder::class, CourseSeeder::class, PythonCourseSeeder::class]);
     }
 }

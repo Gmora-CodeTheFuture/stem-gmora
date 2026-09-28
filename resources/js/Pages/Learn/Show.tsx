@@ -1,8 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ArrowLeft, CheckCircle2, ChevronDown, Circle, FileText,
-    Globe, HelpCircle, MessageSquare, PlayCircle, Radio, Video, PanelRight
+    Globe, HelpCircle, Maximize2, MessageSquare, PlayCircle, Radio, Video, PanelRight
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SecureVideoPlayer from '@/Components/SecureVideoPlayer';
@@ -13,6 +13,14 @@ interface LearnPageProps extends PageProps {
     modules: Module[];
     currentLesson: Lesson;
     completionPercentage: number;
+}
+
+interface DeckMessage {
+    source?: string;
+    type?: string;
+    direction?: 'next' | 'prev';
+    percent?: number;
+    complete?: boolean;
 }
 
 const typeIcon = {
@@ -70,6 +78,50 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
     const nextLessonId = currentIndex !== -1 && currentIndex + 1 < allLessons.length ? allLessons[currentIndex + 1].id : null;
 
     const [showCongrats, setShowCongrats] = useState(false);
+    const lastDeckPercent = useRef(Number(currentLesson.progress?.watch_percentage ?? 0));
+
+    useEffect(() => {
+        lastDeckPercent.current = Number(currentLesson.progress?.watch_percentage ?? 0);
+    }, [currentLesson.id, currentLesson.progress?.watch_percentage]);
+
+    useEffect(() => {
+        if (currentLesson.type !== 'html') {
+            return;
+        }
+
+        const onMessage = (event: MessageEvent<DeckMessage>) => {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+            const data = event.data;
+            if (!data || data.source !== 'gmora-deck') {
+                return;
+            }
+
+            if (data.type === 'deck-progress') {
+                const percent = Math.max(0, Math.min(100, Number(data.percent ?? 0)));
+                const complete = Boolean(data.complete) || percent >= 90;
+                if (complete || percent - lastDeckPercent.current >= 1) {
+                    lastDeckPercent.current = percent;
+                    reportProgress(percent, complete);
+                }
+                return;
+            }
+
+            if (data.type === 'deck-navigate') {
+                if (data.direction === 'next' && nextLessonId) {
+                    router.visit(route('learn.lesson', [course.slug, nextLessonId]));
+                } else if (data.direction === 'prev' && prevLessonId) {
+                    router.visit(route('learn.lesson', [course.slug, prevLessonId]));
+                } else if (data.direction === 'next' && !nextLessonId) {
+                    setShowCongrats(true);
+                }
+            }
+        };
+
+        window.addEventListener('message', onMessage);
+        return () => window.removeEventListener('message', onMessage);
+    }, [course.slug, currentLesson.type, nextLessonId, prevLessonId, reportProgress]);
 
     const markComplete = () => {
         router.patch(
@@ -362,33 +414,63 @@ function QuizPanel({ lesson }: { lesson: Lesson }) {
 }
 
 function PresentationPanel({ lesson }: { lesson: Lesson }) {
-    const handleLaunch = () => {
-        if (lesson.has_presentation) {
-            window.open(route('presentation.show', lesson.id), '_blank', 'noopener,noreferrer');
-        }
-    };
+    const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    return (
-        <div className="card p-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 flex items-center justify-center mx-auto mb-4">
-                <Globe className="w-7 h-7 text-violet-600 dark:text-violet-400" />
-            </div>
-            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
-                Interactive Presentation
-            </h2>
-            <p className="text-surface-500 mt-2 max-w-md mx-auto">
-                This lesson contains an interactive HTML presentation. Click the button below to open it in a new tab and explore at your own pace.
-            </p>
-            {lesson.has_presentation ? (
-                <button onClick={handleLaunch} className="btn-primary mt-5 gap-2">
-                    <Globe className="w-4 h-4" />
-                    Launch Interactive Presentation
-                </button>
-            ) : (
+    if (!lesson.has_presentation) {
+        return (
+            <div className="card p-8 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 flex items-center justify-center mx-auto mb-4">
+                    <Globe className="w-7 h-7 text-violet-600 dark:text-violet-400" />
+                </div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                    Interactive Presentation
+                </h2>
                 <p className="text-sm text-surface-400 mt-5">
                     The presentation hasn't been uploaded yet.
                 </p>
-            )}
+            </div>
+        );
+    }
+
+    const src = route('presentation.show', lesson.id);
+
+    const enterFullscreen = () => {
+        const el = iframeRef.current;
+        if (!el) {
+            return;
+        }
+        const req = el.requestFullscreen?.bind(el)
+            ?? (el as HTMLIFrameElement & { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen?.bind(el);
+        req?.();
+    };
+
+    return (
+        <div className="card overflow-hidden flex flex-col">
+            <iframe
+                ref={iframeRef}
+                key={lesson.id}
+                src={src}
+                title={lesson.title}
+                className="w-full min-h-[28rem] h-[min(70vh,42rem)] border-0 bg-white dark:bg-surface-950"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
+                allow="clipboard-write; fullscreen"
+                allowFullScreen
+            />
+            <div className="p-3 border-t border-surface-200 dark:border-surface-800 flex items-center justify-end gap-2">
+                <button type="button" onClick={enterFullscreen} className="btn-ghost text-sm">
+                    <Maximize2 className="w-4 h-4" />
+                    Fullscreen
+                </button>
+                <a
+                    href={src}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-ghost text-sm"
+                >
+                    <Globe className="w-4 h-4" />
+                    Open in a new tab
+                </a>
+            </div>
         </div>
     );
 }

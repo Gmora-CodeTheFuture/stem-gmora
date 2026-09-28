@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 26 · Classes & Objects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="26-classes-objects"
+  data-prev-lesson="25-lambda"
+  data-next-lesson="27-inheritance"
+  data-next-title="Inheritance">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 26 - Classes & Objects</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">26</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Classes & <span class="accent">Objects</span></h1>
+        <p class="sub">Python is an object oriented programming language. Almost everything in Python is an object, with its properties and methods.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">26</span> Classes</div>
+      <div class="center-block">
+                <h2>Create a Class</h2>
+        <p class="lede">A Class is like an object constructor, or a "blueprint" for creating objects. To create a class, use the keyword <code>class</code>.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">class.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">MyClass</span>:
+      x = <span class="n">5</span>
+
+  <span class="c"># Now we can use the class named MyClass to create objects</span>
+  p1 = <span class="f">MyClass</span>()
+  <span class="f">print</span>(p1.x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">26</span> __init__() Function</div>
+      <div class="center-block">
+                <h2>The __init__() Function</h2>
+        <p class="lede">All classes have a function called <code>__init__()</code>, which is always executed when the class is being initiated. Use it to assign values to object properties.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">init.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(self, name, age):
+          self.name = name
+          self.age = age
+
+  p1 = <span class="f">Person</span>(<span class="s">"John"</span>, <span class="n">36</span>)
+
+  <span class="f">print</span>(p1.name)
+  <span class="f">print</span>(p1.age)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">26</span> Object Methods</div>
+      <div class="center-block">
+                <h2>Object Methods</h2>
+        <p class="lede">Objects can also contain methods. Methods in objects are functions that belong to the object.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">methods.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(self, name, age):
+          self.name = name
+          self.age = age
+
+      <span class="k">def</span> <span class="f">myfunc</span>(self):
+          <span class="f">print</span>(<span class="s">"Hello my name is "</span> + self.name)
+
+  p1 = <span class="f">Person</span>(<span class="s">"John"</span>, <span class="n">36</span>)
+  p1.myfunc()</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">26</span> The self Parameter</div>
+      <div class="center-block">
+                <h2>The self Parameter</h2>
+        <p class="lede">The <code>self</code> parameter is a reference to the current instance of the class, and is used to access variables that belong to the class. It does not have to be named self, but it has to be the first parameter.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">self.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Person</span>:
+      <span class="k">def</span> <span class="f">__init__</span>(mysillyobject, name, age):
+          mysillyobject.name = name
+          mysillyobject.age = age
+
+      <span class="k">def</span> <span class="f">myfunc</span>(abc):
+          <span class="f">print</span>(<span class="s">"Hello my name is "</span> + abc.name)
+
+  p1 = <span class="f">Person</span>(<span class="s">"John"</span>, <span class="n">36</span>)
+  p1.myfunc()</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">26</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>class Name:</code> to create a blueprint.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>__init__(self)</code> to initialize object properties.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Methods are functions defined inside the class.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">The first parameter of methods is always the instance itself (usually <code>self</code>).</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Inheritance →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

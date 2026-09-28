@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 15 · Sets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="15-sets"
+  data-prev-lesson="14-tuples"
+  data-next-lesson="16-dictionaries"
+  data-next-title="Dictionaries">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 15 - Sets</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">15</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Sets</span></h1>
+        <p class="sub">Sets are used to store multiple items, but they are unordered and do not allow duplicate values.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">15</span> Sets</div>
+      <div class="center-block">
+                <h2>Creating Sets</h2>
+        <p class="lede">Sets are written with curly brackets <code>{}</code>. They are unordered, unchangeable*, and unindexed.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">sets.py</div>
+          </div>
+          <pre><code>thisset = {<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>}
+  <span class="f">print</span>(thisset)
+  <span class="c"># Note: the items will appear in a random order!</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">15</span> Duplicates</div>
+      <div class="center-block">
+                <h2>No Duplicates Allowed</h2>
+        <p class="lede">Sets cannot have two items with the same value. Duplicate values will be ignored.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">dupes.py</div>
+          </div>
+          <pre><code>thisset = {<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"apple"</span>}
+
+  <span class="f">print</span>(thisset)
+  <span class="c"># "apple" will only appear once</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">15</span> Access Items</div>
+      <div class="center-block">
+                <h2>Accessing Items</h2>
+        <p class="lede">You cannot access items in a set by referring to an index or a key. You must use a <code>for</code> loop.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">access.py</div>
+          </div>
+          <pre><code>thisset = {<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>}
+
+  <span class="k">for</span> x <span class="k">in</span> thisset:
+      <span class="f">print</span>(x)
+
+  <span class="c"># Check if "banana" is in the set</span>
+  <span class="f">print</span>(<span class="s">"banana"</span> <span class="k">in</span> thisset)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">15</span> Add Items</div>
+      <div class="center-block">
+                <h2>Adding Items</h2>
+        <p class="lede">Once a set is created, you cannot change its items, but you can add new items using the <code>add()</code> method.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">add.py</div>
+          </div>
+          <pre><code>thisset = {<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>}
+
+  thisset.add(<span class="s">"orange"</span>)
+  <span class="f">print</span>(thisset)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">15</span> Remove Items</div>
+      <div class="center-block">
+                <h2>Removing Items</h2>
+        <p class="lede">To remove an item in a set, use the <code>remove()</code>, or the <code>discard()</code> method.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">remove.py</div>
+          </div>
+          <pre><code>thisset = {<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>}
+
+  thisset.remove(<span class="s">"banana"</span>)
+  <span class="f">print</span>(thisset)
+
+  thisset.discard(<span class="s">"apple"</span>)
+  <span class="f">print</span>(thisset)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">15</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Sets are written with curly brackets <code>{}</code>.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">They are unordered (no index numbers) and do not allow duplicates.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>add()</code> to insert an item into a set.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>remove()</code> or <code>discard()</code> to take an item out.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Dictionaries →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

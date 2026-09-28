@@ -28,12 +28,7 @@ class PresentationService
      */
     public function store(Lesson $lesson, UploadedFile $file): Presentation
     {
-        // Clean up any previous upload for this lesson.
-        $existing = $lesson->presentation;
-        if ($existing) {
-            Storage::disk(self::DISK)->deleteDirectory($existing->storage_path);
-            $existing->delete();
-        }
+        $this->forgetExisting($lesson);
 
         $uuid = (string) Str::uuid();
         $storageDir = "presentations/{$uuid}";
@@ -49,6 +44,58 @@ class PresentationService
             'storage_path' => $storageDir,
             'file_size' => $file->getSize(),
         ]);
+    }
+
+    /**
+     * Copy a local directory tree into presentation storage (used by seeders).
+     *
+     * Expects $sourceDir to already contain the entry HTML and any relative assets.
+     */
+    public function storeFromDirectory(
+        Lesson $lesson,
+        string $sourceDir,
+        string $entryFile = 'index.html',
+        ?string $originalFilename = null,
+    ): Presentation {
+        if (! is_dir($sourceDir)) {
+            throw new \RuntimeException("Presentation source directory not found: {$sourceDir}");
+        }
+
+        $entryPath = rtrim($sourceDir, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$entryFile;
+        if (! is_file($entryPath)) {
+            throw new \RuntimeException("Presentation entry file not found: {$entryPath}");
+        }
+
+        $this->forgetExisting($lesson);
+
+        $uuid = (string) Str::uuid();
+        $storageDir = "presentations/{$uuid}";
+        $disk = Storage::disk(self::DISK);
+
+        $this->moveDirectoryToStorage($sourceDir, $storageDir, $disk);
+
+        $fileSize = 0;
+        foreach ($disk->allFiles($storageDir) as $file) {
+            $fileSize += (int) $disk->size($file);
+        }
+
+        return Presentation::create([
+            'lesson_id' => $lesson->id,
+            'original_filename' => $originalFilename ?? basename($sourceDir),
+            'entry_file' => $entryFile,
+            'storage_path' => $storageDir,
+            'file_size' => $fileSize,
+        ]);
+    }
+
+    /** Remove any previous presentation (files + row) for this lesson. */
+    private function forgetExisting(Lesson $lesson): void
+    {
+        $existing = $lesson->presentation;
+        if ($existing) {
+            Storage::disk(self::DISK)->deleteDirectory($existing->storage_path);
+            $existing->delete();
+        }
     }
 
     /**

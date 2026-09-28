@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 38 · PIP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="38-pip"
+  data-prev-lesson="37-regex"
+  data-next-lesson="39-string-formatting"
+  data-next-title="String Formatting">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 38 - PIP</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">38</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">PIP</span></h1>
+        <p class="sub">PIP is a package manager for Python packages, or modules if you like.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">38</span> Packages</div>
+      <div class="center-block">
+                <h2>What is a Package?</h2>
+        <p class="lede">A package contains all the files you need for a module. Modules are Python code libraries you can include in your project. PIP allows you to install them easily.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">Terminal</div>
+          </div>
+          <pre><code><span class="c"># Check if you have pip installed:</span>
+  pip --version
+
+  <span class="c"># If not installed, you can get it from pypi.org</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">38</span> Install</div>
+      <div class="center-block">
+                <h2>Installing a Package</h2>
+        <p class="lede">Navigate your command line to the location of Python's script directory, and type the following:</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">Terminal</div>
+          </div>
+          <pre><code><span class="c"># Download a package named camelcase:</span>
+  pip install camelcase
+
+  <span class="c"># Now you can use it in your code!</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">38</span> Using Packages</div>
+      <div class="center-block">
+                <h2>Using a Package</h2>
+        <p class="lede">Once the package is installed, it is ready to use. Import the "camelcase" package into your project.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">camel.py</div>
+          </div>
+          <pre><code><span class="c"># This will error in our browser editor, but works locally!</span>
+  <span class="c"># import camelcase</span>
+  <span class="c"># c = camelcase.CamelCase()</span>
+  <span class="c"># txt = "hello world"</span>
+  <span class="c"># print(c.hump(txt)) # Prints: Hello World</span>
+  <span class="f">print</span>(<span class="s">"You must run pip locally to test this!"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">38</span> Uninstalling</div>
+      <div class="center-block">
+                <h2>Uninstall and List</h2>
+        <p class="lede">Use the <code>uninstall</code> command to remove a package, and the <code>list</code> command to see what you have installed.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">Terminal</div>
+          </div>
+          <pre><code><span class="c"># Remove the camelcase package</span>
+  pip uninstall camelcase
+
+  <span class="c"># List all installed packages</span>
+  pip list</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">38</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">PIP is Python's standard package manager.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>pip install [package]</code> in your terminal.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Import installed packages using the standard <code>import</code> statement.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>pip list</code> and <code>pip uninstall</code> to manage packages.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: String Formatting →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

@@ -167,7 +167,7 @@ class SecuritySessionTest extends TestCase
 
         $this->assertStringContainsString("default-src 'self'", $csp);
         $this->assertStringContainsString("object-src 'none'", $csp);
-        // The lesson player must still be able to frame YouTube.
-        $this->assertStringContainsString('frame-src https://www.youtube.com', $csp);
+        // The lesson player embeds same-origin HTML presentations and YouTube.
+        $this->assertStringContainsString("frame-src 'self' https://www.youtube.com", $csp);
     }
 }

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 09 · Casting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="09-casting"
+  data-prev-lesson="07-data-types"
+  data-next-lesson="10-strings"
+  data-next-title="Strings">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 09 - Casting</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">09</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Type <span class="accent">Casting</span></h1>
+        <p class="sub">How to convert data from one type (like a string) to another type (like an integer).</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">09</span> What is Casting?</div>
+      <div class="center-block">
+                <h2>What is Casting?</h2>
+        <p class="lede">There may be times when you want to specify a type on to a variable. This is done with casting functions.</p>
+        <div class="card-grid">
+          <div class="card fragment">
+            <span class="k">int()</span>
+            <h3>Integer Casting</h3>
+            <p>Converts a float or a string into an integer (whole number).</p>
+          </div>
+          <div class="card fragment">
+            <span class="k">str()</span>
+            <h3>String Casting</h3>
+            <p>Converts a number into text.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">09</span> Integer Casting</div>
+      <div class="center-block">
+                <h2>Casting to Integers</h2>
+        <p class="lede">Use <code>int()</code> to construct an integer number from a float or a string (providing the string represents a whole number).</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">cast_int.py</div>
+          </div>
+          <pre><code>x = <span class="f">int</span>(<span class="n">1</span>)       <span class="c"># x will be 1</span>
+  y = <span class="f">int</span>(<span class="n">2.8</span>)     <span class="c"># y will be 2 (decimals are removed)</span>
+  z = <span class="f">int</span>(<span class="s">"3"</span>)     <span class="c"># z will be 3</span>
+
+  <span class="f">print</span>(x, y, z)
+  <span class="f">print</span>(<span class="f">type</span>(z))   <span class="c"># It's an int!</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">09</span> Float Casting</div>
+      <div class="center-block">
+                <h2>Casting to Floats</h2>
+        <p class="lede">Use <code>float()</code> to construct a float number from an integer, another float, or a string.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">cast_float.py</div>
+          </div>
+          <pre><code>x = <span class="f">float</span>(<span class="n">1</span>)       <span class="c"># x will be 1.0</span>
+  y = <span class="f">float</span>(<span class="n">2.8</span>)     <span class="c"># y will be 2.8</span>
+  z = <span class="f">float</span>(<span class="s">"3"</span>)     <span class="c"># z will be 3.0</span>
+  w = <span class="f">float</span>(<span class="s">"4.2"</span>)   <span class="c"># w will be 4.2</span>
+
+  <span class="f">print</span>(x, y, z, w)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">09</span> String Casting</div>
+      <div class="center-block">
+                <h2>Casting to Strings</h2>
+        <p class="lede">Use <code>str()</code> to construct a string from a wide variety of data types, including numbers.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">cast_str.py</div>
+          </div>
+          <pre><code>x = <span class="f">str</span>(<span class="s">"s1"</span>)    <span class="c"># x will be 's1'</span>
+  y = <span class="f">str</span>(<span class="n">2</span>)       <span class="c"># y will be '2'</span>
+  z = <span class="f">str</span>(<span class="n">3.0</span>)     <span class="c"># z will be '3.0'</span>
+
+  <span class="c"># Now we can concatenate it with other strings</span>
+  <span class="f">print</span>(<span class="s">"I have "</span> + y + <span class="s">" apples."</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">09</span> Errors in Casting</div>
+      <div class="center-block">
+                <h2>Casting Errors</h2>
+        <p class="lede">You can only cast compatible types. Trying to cast letters to an integer will crash your program.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">cast_error.py</div>
+          </div>
+          <pre><code><span class="c"># This works perfectly</span>
+  num = <span class="f">int</span>(<span class="s">"150"</span>)
+  <span class="f">print</span>(num)
+
+  <span class="c"># This will throw a ValueError</span>
+  bad_num = <span class="f">int</span>(<span class="s">"hello"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">09</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>int()</code> to turn numbers/strings into whole numbers.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>float()</code> to turn numbers/strings into decimal numbers.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>str()</code> to turn any data into text.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>int(3.9)</code> becomes <code>3</code> (it truncates, it does not round up).</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Strings →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

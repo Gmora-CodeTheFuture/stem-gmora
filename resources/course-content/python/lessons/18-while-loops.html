@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 18 · While Loops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="18-while-loops"
+  data-prev-lesson="17-if-else"
+  data-next-lesson="20-match-case"
+  data-next-title="Match Case">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 18 - While Loops</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">18</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">While Loops</span></h1>
+        <p class="sub">How to execute a set of statements as long as a condition is true.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">18</span> While Loops</div>
+      <div class="center-block">
+                <h2>The while Loop</h2>
+        <p class="lede">With the <code>while</code> loop we can execute a set of statements as long as a condition is true.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">while.py</div>
+          </div>
+          <pre><code>i = <span class="n">1</span>
+  <span class="k">while</span> i < <span class="n">6</span>:
+      <span class="f">print</span>(i)
+      i += <span class="n">1</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+        <p class="lede fragment" style="margin-top:14px; font-size:17px;"><strong>Warning:</strong> Remember to increment <code>i</code>, or else the loop will continue forever!</p>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">18</span> Break Statement</div>
+      <div class="center-block">
+                <h2>The break Statement</h2>
+        <p class="lede">With the <code>break</code> statement we can stop the loop even if the while condition is true.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">break.py</div>
+          </div>
+          <pre><code>i = <span class="n">1</span>
+  <span class="k">while</span> i < <span class="n">6</span>:
+      <span class="f">print</span>(i)
+      <span class="k">if</span> i == <span class="n">3</span>:
+          <span class="k">break</span>
+      i += <span class="n">1</span>
+  <span class="f">print</span>(<span class="s">"Loop ended!"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">18</span> Continue Statement</div>
+      <div class="center-block">
+                <h2>The continue Statement</h2>
+        <p class="lede">With the <code>continue</code> statement we can stop the current iteration, and continue with the next.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">continue.py</div>
+          </div>
+          <pre><code>i = <span class="n">0</span>
+  <span class="k">while</span> i < <span class="n">6</span>:
+      i += <span class="n">1</span>
+      <span class="k">if</span> i == <span class="n">3</span>:
+          <span class="k">continue</span>
+      <span class="f">print</span>(i)
+  <span class="c"># Notice that the number 3 is missing!</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">18</span> Else in While</div>
+      <div class="center-block">
+                <h2>The else Statement</h2>
+        <p class="lede">With the <code>else</code> statement we can run a block of code once when the condition no longer is true.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">else.py</div>
+          </div>
+          <pre><code>i = <span class="n">1</span>
+  <span class="k">while</span> i < <span class="n">6</span>:
+      <span class="f">print</span>(i)
+      i += <span class="n">1</span>
+  <span class="k">else</span>:
+      <span class="f">print</span>(<span class="s">"i is no longer less than 6"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">18</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>while condition:</code> loops as long as the condition is true.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Always ensure your condition will eventually become false.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>break</code> to exit the loop entirely.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>continue</code> to skip to the next iteration.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: For Loops →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

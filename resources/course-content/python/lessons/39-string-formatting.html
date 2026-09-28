@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 39 · String Formatting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="39-string-formatting"
+  data-prev-lesson="38-pip"
+  data-next-lesson="40-file-handling"
+  data-next-title="File Handling">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 39 - String Formatting</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">39</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>String <span class="accent">Formatting</span></h1>
+        <p class="sub">To make sure a string will display as expected, we can format the result with the format() method or f-strings.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">39</span> F-Strings</div>
+      <div class="center-block">
+                <h2>F-Strings</h2>
+        <p class="lede">F-String was introduced in Python 3.6, and is now the preferred way of formatting strings.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">fstring.py</div>
+          </div>
+          <pre><code>txt = f<span class="s">"The price is 49 dollars"</span>
+  <span class="f">print</span>(txt)
+
+  price = <span class="n">59</span>
+  txt = f<span class="s">"The price is {price} dollars"</span>
+  <span class="f">print</span>(txt)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">39</span> Modifiers</div>
+      <div class="center-block">
+                <h2>Formatting Modifiers</h2>
+        <p class="lede">A modifier is included by adding a colon <code>:</code> followed by a legal formatting type, like <code>.2f</code> which means fixed point number with 2 decimals.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">mod.py</div>
+          </div>
+          <pre><code>price = <span class="n">59</span>
+  <span class="c"># Add two decimals to the price</span>
+  txt = f<span class="s">"The price is {price:.2f} dollars"</span>
+  <span class="f">print</span>(txt)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">39</span> Math Operations</div>
+      <div class="center-block">
+                <h2>Perform Math Operations</h2>
+        <p class="lede">You can perform math operations within the placeholders, and return the result.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">math.py</div>
+          </div>
+          <pre><code>txt = f<span class="s">"The price is {20 * 59} dollars"</span>
+  <span class="f">print</span>(txt)
+
+  price = <span class="n">59</span>
+  tax = <span class="n">0.25</span>
+  txt = f<span class="s">"The total is {price + (price * tax)} dollars"</span>
+  <span class="f">print</span>(txt)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">39</span> String format()</div>
+      <div class="center-block">
+                <h2>The format() Method</h2>
+        <p class="lede">Before Python 3.6 we used the <code>format()</code> method to format strings. It is still heavily used today.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">format.py</div>
+          </div>
+          <pre><code>price = <span class="n">49</span>
+  txt = <span class="s">"The price is {:.2f} dollars"</span>
+  <span class="f">print</span>(txt.format(price))
+
+  quantity = <span class="n">3</span>
+  itemno = <span class="n">567</span>
+  price = <span class="n">49</span>
+  myorder = <span class="s">"I want {} pieces of item number {} for {:.2f} dollars."</span>
+  <span class="f">print</span>(myorder.format(quantity, itemno, price))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">39</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use F-strings <code>f"Text {var}"</code> for modern, clean formatting.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use format modifiers like <code>{price:.2f}</code> for decimal precision.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">You can perform math and call functions directly inside F-strings.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">The older <code>.format()</code> method is still valid and useful in older codebases.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: File Handling →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

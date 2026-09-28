@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 13 · Lists</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="13-lists"
+  data-prev-lesson="12-operators"
+  data-next-lesson="14-tuples"
+  data-next-title="Tuples">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 13 - Lists</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">13</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Lists</span></h1>
+        <p class="sub">Lists are used to store multiple items in a single variable.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">13</span> Lists</div>
+      <div class="center-block">
+                <h2>Creating Lists</h2>
+        <p class="lede">Lists are created using square brackets <code>[]</code>. They are ordered and changeable (mutable).</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">lists.py</div>
+          </div>
+          <pre><code>thislist = [<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>]
+  <span class="f">print</span>(thislist)
+
+  <span class="c"># Lists allow duplicate values</span>
+  dupes = [<span class="s">"apple"</span>, <span class="s">"apple"</span>, <span class="s">"apple"</span>]
+  <span class="f">print</span>(dupes)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">13</span> Access Items</div>
+      <div class="center-block">
+                <h2>Accessing Items</h2>
+        <p class="lede">List items are indexed, the first item has index [0], the second item has index [1] etc.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">access.py</div>
+          </div>
+          <pre><code>thislist = [<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>]
+  <span class="f">print</span>(thislist[<span class="n">1</span>])  <span class="c"># Prints "banana"</span>
+
+  <span class="c"># Negative indexing means start from the end</span>
+  <span class="f">print</span>(thislist[-<span class="n">1</span>]) <span class="c"># Prints "cherry"</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">13</span> Change Items</div>
+      <div class="center-block">
+                <h2>Changing Items</h2>
+        <p class="lede">To change the value of a specific item, refer to the index number.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">change.py</div>
+          </div>
+          <pre><code>thislist = [<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>]
+
+  thislist[<span class="n">1</span>] = <span class="s">"blackcurrant"</span>
+  <span class="f">print</span>(thislist)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">13</span> Add Items</div>
+      <div class="center-block">
+                <h2>Adding Items</h2>
+        <p class="lede">To add an item to the end of the list, use the <code>append()</code> method. To insert at a specific index, use <code>insert()</code>.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">add.py</div>
+          </div>
+          <pre><code>thislist = [<span class="s">"apple"</span>, <span class="s">"banana"</span>]
+
+  thislist.append(<span class="s">"orange"</span>)
+  <span class="f">print</span>(thislist)
+
+  thislist.insert(<span class="n">1</span>, <span class="s">"lemon"</span>)
+  <span class="f">print</span>(thislist)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">13</span> Remove Items</div>
+      <div class="center-block">
+                <h2>Removing Items</h2>
+        <p class="lede">You can remove items by value using <code>remove()</code>, or by index using <code>pop()</code>.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">remove.py</div>
+          </div>
+          <pre><code>thislist = [<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>]
+
+  thislist.remove(<span class="s">"banana"</span>)
+  <span class="f">print</span>(thislist)
+
+  <span class="c"># pop() removes the last item if no index is specified</span>
+  thislist.pop()
+  <span class="f">print</span>(thislist)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">13</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Lists are written with square brackets <code>[]</code>.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">They are ordered and can be changed (mutable).</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>append()</code> to add to the end, <code>insert()</code> to add anywhere.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>remove()</code> or <code>pop()</code> to remove items.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Tuples →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

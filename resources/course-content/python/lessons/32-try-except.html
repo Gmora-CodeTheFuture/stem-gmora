@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 32 · Try Except</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="32-try-except"
+  data-prev-lesson="31-dates"
+  data-next-lesson="33-none"
+  data-next-title="None">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 32 - Try Except</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">32</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Try Except</span></h1>
+        <p class="sub">The try block lets you test a block of code for errors. The except block lets you handle the error.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">32</span> Exception Handling</div>
+      <div class="center-block">
+                <h2>Exception Handling</h2>
+        <p class="lede">When an error occurs, or exception as we call it, Python will normally stop and generate an error message. These exceptions can be handled using the try statement.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">try.py</div>
+          </div>
+          <pre><code><span class="k">try</span>:
+      <span class="f">print</span>(variable_that_does_not_exist)
+  <span class="k">except</span>:
+      <span class="f">print</span>(<span class="s">"An exception occurred!"</span>)
+    
+  <span class="c"># Without the try block, the program would crash here</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">32</span> Many Exceptions</div>
+      <div class="center-block">
+                <h2>Many Exceptions</h2>
+        <p class="lede">You can define as many exception blocks as you want, e.g. if you want to execute a special block of code for a special kind of error.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">many.py</div>
+          </div>
+          <pre><code><span class="k">try</span>:
+      <span class="f">print</span>(x)
+  <span class="k">except</span> NameError:
+      <span class="f">print</span>(<span class="s">"Variable x is not defined"</span>)
+  <span class="k">except</span>:
+      <span class="f">print</span>(<span class="s">"Something else went wrong"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">32</span> Else</div>
+      <div class="center-block">
+                <h2>Else Statement</h2>
+        <p class="lede">You can use the <code>else</code> keyword to define a block of code to be executed if no errors were raised.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">else.py</div>
+          </div>
+          <pre><code><span class="k">try</span>:
+      <span class="f">print</span>(<span class="s">"Hello"</span>)
+  <span class="k">except</span>:
+      <span class="f">print</span>(<span class="s">"Something went wrong"</span>)
+  <span class="k">else</span>:
+      <span class="f">print</span>(<span class="s">"Nothing went wrong"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">32</span> Finally</div>
+      <div class="center-block">
+                <h2>Finally Statement</h2>
+        <p class="lede">The <code>finally</code> block, if specified, will be executed regardless if the try block raises an error or not. Useful for closing files/connections.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">finally.py</div>
+          </div>
+          <pre><code><span class="k">try</span>:
+      <span class="f">print</span>(x)
+  <span class="k">except</span>:
+      <span class="f">print</span>(<span class="s">"Something went wrong"</span>)
+  <span class="k">finally</span>:
+      <span class="f">print</span>(<span class="s">"The 'try except' is finished"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">32</span> Raise</div>
+      <div class="center-block">
+                <h2>Raise an exception</h2>
+        <p class="lede">As a Python developer you can choose to throw an exception if a condition occurs. To throw (or raise) an exception, use the <code>raise</code> keyword.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">raise.py</div>
+          </div>
+          <pre><code>x = -<span class="n">1</span>
+
+  <span class="k">if</span> x < <span class="n">0</span>:
+      <span class="k">raise</span> Exception(<span class="s">"Sorry, no numbers below zero"</span>)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">32</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>try:</code> to test a block of code for errors.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>except:</code> to handle the error without crashing the program.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>finally:</code> to run cleanup code regardless of success or failure.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Use <code>raise Exception("msg")</code> to trigger your own errors.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: None →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

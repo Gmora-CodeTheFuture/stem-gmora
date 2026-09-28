@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 28 · Polymorphism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="28-polymorphism"
+  data-prev-lesson="27-inheritance"
+  data-next-lesson="29-modules"
+  data-next-title="Modules">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 28 - Polymorphism</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">28</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Polymorphism</span></h1>
+        <p class="sub">The word "polymorphism" means "many forms", and in programming it refers to methods/functions/operators with the same name that can be executed on many objects or classes.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">28</span> Built-in Polymorphism</div>
+      <div class="center-block">
+                <h2>Function Polymorphism</h2>
+        <p class="lede">An example of a Python function that can be used on different objects is the <code>len()</code> function.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">len.py</div>
+          </div>
+          <pre><code><span class="c"># For strings, len() returns the number of characters</span>
+  x = <span class="s">"Hello World!"</span>
+  <span class="f">print</span>(<span class="f">len</span>(x))
+
+  <span class="c"># For tuples, len() returns the number of items</span>
+  mytuple = (<span class="s">"apple"</span>, <span class="s">"banana"</span>, <span class="s">"cherry"</span>)
+  <span class="f">print</span>(<span class="f">len</span>(mytuple))
+
+  <span class="c"># For dictionaries, len() returns the number of key/value pairs</span>
+  thisdict = {<span class="s">"brand"</span>: <span class="s">"Ford"</span>, <span class="s">"model"</span>: <span class="s">"Mustang"</span>}
+  <span class="f">print</span>(<span class="f">len</span>(thisdict))</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">28</span> Class Polymorphism</div>
+      <div class="center-block">
+                <h2>Class Polymorphism</h2>
+        <p class="lede">Polymorphism is often used in Class methods, where we can have multiple classes with the same method name.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">classes.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Car</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, brand):
+      self.brand = brand
+    <span class="k">def</span> <span class="f">move</span>(self):
+      <span class="f">print</span>(<span class="s">"Drive!"</span>)
+
+  <span class="k">class</span> <span class="f">Boat</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, brand):
+      self.brand = brand
+    <span class="k">def</span> <span class="f">move</span>(self):
+      <span class="f">print</span>(<span class="s">"Sail!"</span>)
+
+  car1 = <span class="f">Car</span>(<span class="s">"Ford"</span>)
+  boat1 = <span class="f">Boat</span>(<span class="s">"Ibiza"</span>)
+
+  <span class="k">for</span> x <span class="k">in</span> (car1, boat1):
+    <span class="f">print</span>(x.brand)
+    x.move() <span class="c"># Both have a move() method!</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">28</span> Polymorphism and Inheritance</div>
+      <div class="center-block">
+                <h2>Polymorphism and Inheritance</h2>
+        <p class="lede">What about classes with child classes with the same name? Can we use polymorphism there? Yes. If we create a base class, child classes can override the parent methods.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">poly_inherit.py</div>
+          </div>
+          <pre><code><span class="k">class</span> <span class="f">Vehicle</span>:
+    <span class="k">def</span> <span class="f">move</span>(self):
+      <span class="f">print</span>(<span class="s">"Move along..."</span>)
+
+  <span class="k">class</span> <span class="f">Car</span>(Vehicle):
+    <span class="k">pass</span> <span class="c"># Inherits move()</span>
+
+  <span class="k">class</span> <span class="f">Plane</span>(Vehicle):
+    <span class="k">def</span> <span class="f">move</span>(self):
+      <span class="f">print</span>(<span class="s">"Fly!"</span>) <span class="c"># Overrides move()</span>
+
+  car1 = <span class="f">Car</span>()
+  plane1 = <span class="f">Plane</span>()
+
+  <span class="k">for</span> x <span class="k">in</span> (car1, plane1):
+    x.move()</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">28</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Polymorphism means methods can share the same name across different types.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text"><code>len()</code> is a great example built into Python.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">We can call a method on an object without needing to know its exact class, as long as it has that method.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Modules →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>

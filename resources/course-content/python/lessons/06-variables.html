@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 06 · Variables</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="deck.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body
+  data-lesson-id="06-variables"
+  data-prev-lesson="05-comments"
+  data-next-lesson="07-data-types"
+  data-next-title="Data Types">
+
+<div class="deck">
+  <header class="deck-header">
+    <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 06 - Variables</span></div>
+    <div class="progress-track"><div class="progress-fill"></div></div>
+    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
+  </header>
+
+  <main id="slides">
+<section class="slide cover" data-index="0">
+      <div class="eyebrow"><span class="num">06</span> Python Programming Series</div>
+      <div class="center-block">
+                <h1>Python <span class="accent">Variables</span></h1>
+        <p class="sub">How to store data values in computer memory so you can use them later.</p>
+      </div>
+    </section>
+    
+    <section class="slide" data-index="1">
+      <div class="eyebrow"><span class="num">06</span> Variables</div>
+      <div class="center-block">
+                <h2>What is a Variable?</h2>
+        <p class="lede">Variables are containers for storing data values. Think of a variable as a labeled box where you can put information.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">variables.py</div>
+          </div>
+          <pre><code><span class="c"># Creating variables</span>
+  x = <span class="n">5</span>
+  y = <span class="s">"John"</span>
+
+  <span class="f">print</span>(x)
+  <span class="f">print</span>(y)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="2">
+      <div class="eyebrow"><span class="num">06</span> No Command</div>
+      <div class="center-block">
+                <h2>No Declaration Command</h2>
+        <p class="lede">Unlike other programming languages (like C++ or Java), Python has no command for declaring a variable. A variable is created the moment you first assign a value to it.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">no_decl.py</div>
+          </div>
+          <pre><code><span class="c"># In Java you would write: int age = 25;</span>
+  <span class="c"># In Python, just write the name and the value:</span>
+  age = <span class="n">25</span>
+  name = <span class="s">"Alice"</span>
+
+  <span class="f">print</span>(name, <span class="s">"is"</span>, age)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="3">
+      <div class="eyebrow"><span class="num">06</span> Reassigning</div>
+      <div class="center-block">
+                <h2>Changing Variable Values</h2>
+        <p class="lede">Variables do not need to be declared with any particular type, and can even change type after they have been set.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">change.py</div>
+          </div>
+          <pre><code>x = <span class="n">4</span>       <span class="c"># x is of type int</span>
+  <span class="f">print</span>(x)
+
+  x = <span class="s">"Sally"</span> <span class="c"># x is now of type str</span>
+  <span class="f">print</span>(x)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="4">
+      <div class="eyebrow"><span class="num">06</span> Naming Rules</div>
+      <div class="center-block">
+                <h2>Variable Names</h2>
+        <p class="lede">A variable can have a short name (like x and y) or a more descriptive name (age, carname, total_volume). But there are rules.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">rules.py</div>
+          </div>
+          <pre><code><span class="c"># Legal names</span>
+  myvar = <span class="s">"John"</span>
+  my_var = <span class="s">"John"</span>
+  _my_var = <span class="s">"John"</span>
+
+  <span class="c"># Illegal names (these will cause a SyntaxError)</span>
+  <span class="c"># 2myvar = "John"</span>
+  <span class="c"># my-var = "John"</span>
+  <span class="c"># my var = "John"</span></code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+        <p class="lede fragment" style="margin-top:14px; font-size:17px;">Variables must start with a letter or underscore, and can only contain alpha-numeric characters and underscores (A-z, 0-9, and _ ).</p>
+      </div>
+    </section>
+
+    <section class="slide" data-index="5">
+      <div class="eyebrow"><span class="num">06</span> Multiple Variables</div>
+      <div class="center-block">
+                <h2>Many Values to Multiple Variables</h2>
+        <p class="lede">Python allows you to assign values to multiple variables in one line.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">multiple.py</div>
+          </div>
+          <pre><code>x, y, z = <span class="s">"Orange"</span>, <span class="s">"Banana"</span>, <span class="s">"Cherry"</span>
+  <span class="f">print</span>(x)
+  <span class="f">print</span>(y)
+  <span class="f">print</span>(z)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="6">
+      <div class="eyebrow"><span class="num">06</span> One Value</div>
+      <div class="center-block">
+                <h2>One Value to Multiple Variables</h2>
+        <p class="lede">And you can assign the same value to multiple variables in one line.</p>
+        <div class="code-block fragment">
+          <div class="header">
+            <div class="dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
+            <div class="filename">one_val.py</div>
+          </div>
+          <pre><code>x = y = z = <span class="s">"Orange"</span>
+  <span class="f">print</span>(x)
+  <span class="f">print</span>(y)
+  <span class="f">print</span>(z)</code></pre>
+        </div>
+        <div class="run-btn-wrap"><button class="run-btn">▶ Run file</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-index="7">
+      <div class="eyebrow"><span class="num">06</span> Summary</div>
+      <div class="center-block">
+                <h2>Recap</h2>
+        <div class="list-check">
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Variables are created the moment you assign a value to them.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Variables can change their data type at any time.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">Variable names cannot start with a number or contain spaces/dashes.</span></div>
+          <div class="item fragment"><span class="tick">✓</span><span class="type-text">You can assign multiple variables in a single line.</span></div>
+        </div>
+        <a class="lede fragment next-lesson-cta" role="button" style="display:inline-block; margin-top:24px; color:var(--gold); font-weight:600; text-decoration:none;">Next lesson: Data Types →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="controls">
+    <div class="nav-wrapper">
+      <button id="prevBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Previous">←</button>
+      <div class="dots" id="dots"></div>
+      <button id="nextBtn" class="arrow-btn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--ink); padding: 4px;" aria-label="Next">→</button>
+    </div>
+    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
+  </footer>
+</div>
+
+<script src="deck.js" defer></script>
+</body>
+</html>
