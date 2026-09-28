@@ -276,9 +276,27 @@
   const FS_ICON_EXIT =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>';
 
+  function isNativeFullscreen() {
+    return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function isCssFullscreen() {
+    return document.documentElement.classList.contains('deck-fs');
+  }
+
+  function isFullscreenActive() {
+    return isNativeFullscreen() || isCssFullscreen();
+  }
+
+  function setCssFullscreen(active) {
+    document.documentElement.classList.toggle('deck-fs', active);
+    document.body.classList.toggle('deck-fs', active);
+    post({ type: 'deck-fullscreen', active: Boolean(active) });
+  }
+
   function syncFullscreenButton() {
     if (!fsBtn) return;
-    const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    const active = isFullscreenActive();
     fsBtn.innerHTML = active ? FS_ICON_EXIT : FS_ICON_ENTER;
     fsBtn.title = active ? 'Exit fullscreen (Esc or F)' : 'Fullscreen (F)';
     fsBtn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Fullscreen');
@@ -286,20 +304,80 @@
     fsBtn.classList.toggle('is-active', active);
   }
 
-  function toggleFullscreen() {
+  function enterFullscreen() {
     const root = document.documentElement;
-    const active = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!active) {
-      (root.requestFullscreen || root.webkitRequestFullscreen)?.call(root);
-    } else {
-      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+    const request = root.requestFullscreen || root.webkitRequestFullscreen;
+    // iOS Safari (and many iframe embeds) reject native fullscreen — use CSS immersive mode.
+    if (!request) {
+      setCssFullscreen(true);
+      syncFullscreenButton();
+      return;
     }
+    try {
+      const result = request.call(root);
+      if (result && typeof result.then === 'function') {
+        result.then(syncFullscreenButton).catch(() => {
+          setCssFullscreen(true);
+          syncFullscreenButton();
+        });
+      } else {
+        // Older webkit may not return a promise; fall back shortly if nothing happened.
+        setTimeout(() => {
+          if (!isNativeFullscreen()) {
+            setCssFullscreen(true);
+            syncFullscreenButton();
+          }
+        }, 120);
+      }
+    } catch (_) {
+      setCssFullscreen(true);
+      syncFullscreenButton();
+    }
+  }
+
+  function exitFullscreen() {
+    if (isCssFullscreen()) {
+      setCssFullscreen(false);
+      syncFullscreenButton();
+      return;
+    }
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) {
+      try {
+        const result = exit.call(document);
+        if (result && typeof result.then === 'function') {
+          result.finally(syncFullscreenButton);
+        } else {
+          syncFullscreenButton();
+        }
+      } catch (_) {
+        syncFullscreenButton();
+      }
+    }
+  }
+
+  function toggleFullscreen() {
+    if (isFullscreenActive()) exitFullscreen();
+    else enterFullscreen();
   }
 
   if (fsBtn) {
     fsBtn.addEventListener('click', toggleFullscreen);
-    document.addEventListener('fullscreenchange', syncFullscreenButton);
-    document.addEventListener('webkitfullscreenchange', syncFullscreenButton);
+    document.addEventListener('fullscreenchange', () => {
+      if (isNativeFullscreen() && isCssFullscreen()) setCssFullscreen(false);
+      syncFullscreenButton();
+      post({ type: 'deck-fullscreen', active: isFullscreenActive() });
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+      if (isNativeFullscreen() && isCssFullscreen()) setCssFullscreen(false);
+      syncFullscreenButton();
+      post({ type: 'deck-fullscreen', active: isFullscreenActive() });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isCssFullscreen()) {
+        exitFullscreen();
+      }
+    });
     syncFullscreenButton();
   }
 

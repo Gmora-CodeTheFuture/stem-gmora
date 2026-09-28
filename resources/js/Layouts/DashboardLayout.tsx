@@ -220,8 +220,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Security', href: '/admin/security', icon: ShieldCheck },
     ] : [];
 
-    // Phone tab bar: students keep the learning destinations; admins get the
-    // four places they jump between most. Everything else stays in the drawer.
+    // Phone tab bar: the four primary destinations. Everything else stays in the drawer.
     const mobileTabs = isAdmin
         ? [
             { name: 'Overview', href: '/admin', icon: LayoutDashboard, exact: true },
@@ -236,7 +235,12 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 { name: 'Students', href: '/instructor/students', icon: Users },
                 { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
             ]
-            : navigation;
+            : [
+                { name: 'Home', href: '/dashboard', icon: Home, exact: true },
+                { name: 'Courses', href: '/dashboard/courses', icon: BookOpen },
+                { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+                { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unread },
+            ];
 
     const path = typeof window === 'undefined' ? '' : window.location.pathname;
     const isActive = (href: string, exact = false) =>
@@ -283,7 +287,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     );
 
     return (
-        <div className={`bg-surface-50 dark:bg-surface-950 font-sans selection:bg-primary-200 dark:selection:bg-primary-900/40 text-surface-900 dark:text-surface-100 transition-colors duration-200 ${noScroll ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+        <div className={`bg-surface-50 dark:bg-surface-950 font-sans selection:bg-primary-200 dark:selection:bg-primary-900/40 text-surface-900 dark:text-surface-100 transition-colors duration-200 overflow-x-hidden ${noScroll ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
             {/* Sidebar */}
             <aside
                 className={`fixed top-0 left-0 z-50 h-full flex flex-col bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-[width,transform] duration-200 ease-in-out
@@ -319,9 +323,10 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin overflow-x-hidden">
                     {isStudent && (
                         <>
-                            <div className="space-y-1">{navigation.map(navLink)}</div>
+                            {/* Desktop rail only — on phones these four live in the bottom tab bar. */}
+                            <div className="hidden lg:block space-y-1">{navigation.map(navLink)}</div>
 
-                            <div className={`pt-6 pb-2 ${expanded ? 'px-6' : 'px-0 text-center'}`}>
+                            <div className={`pb-2 ${expanded ? 'px-6' : 'px-0 text-center'} pt-2 lg:pt-6`}>
                                 {expanded ? (
                                     <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Your Work</p>
                                 ) : (
@@ -647,14 +652,13 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             )}
 
             {/* ── Mobile tab bar ──────────────────────────────────
-                The four places people move between constantly. Everything else
-                stays in the drawer — a tab bar stops being useful the moment it
-                becomes a second menu. */}
+                Home / Courses / Calendar / Notifications only.
+                Your Work and the rest stay in the hamburger drawer. */}
             <nav
                 className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-surface-900/95 backdrop-blur border-t border-surface-200 dark:border-surface-800 pb-[env(safe-area-inset-bottom)]"
                 aria-label="Primary"
             >
-                <div className="flex items-stretch">
+                <div className="flex items-stretch h-14">
                     {mobileTabs.map((item) => {
                         const active = isActive(item.href, item.exact);
                         const badge = 'badge' in item ? item.badge : undefined;
@@ -664,23 +668,28 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                                 key={item.name}
                                 href={item.href}
                                 aria-current={active ? 'page' : undefined}
-                                className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
+                                aria-label={
+                                    badge !== undefined && badge > 0
+                                        ? `${item.name}, ${badge} unread`
+                                        : item.name
+                                }
+                                className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors min-w-0 px-0.5 ${
                                     active
                                         ? 'text-primary-600 dark:text-primary-400'
                                         : 'text-surface-500 dark:text-surface-400'
                                 }`}
                             >
                                 <span className="relative">
-                                    <item.icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
+                                    <item.icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
 
                                     {badge !== undefined && badge > 0 && (
-                                        <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1 min-w-[16px] h-4 rounded-full flex items-center justify-center">
+                                        <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[9px] font-bold px-1 min-w-[15px] h-3.5 rounded-full flex items-center justify-center">
                                             {badge > 9 ? '9+' : badge}
                                         </span>
                                     )}
                                 </span>
 
-                                {item.name}
+                                <span className="truncate max-w-full">{item.name}</span>
                             </Link>
                         );
                     })}

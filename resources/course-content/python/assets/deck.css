@@ -535,44 +535,104 @@
 
   @media (max-width: 640px){
     .hide-mobile{ display: none; }
-        .deck-header{
-    display:flex;
-    align-items:center;
-    padding: 20px 30px;
-    flex:0 0 auto;
-    width:100%;
-  }
+
+    .deck-header{
+      display:flex;
+      align-items:center;
+      padding: 10px 14px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      gap: 8px;
+      flex:0 0 auto;
+      width:100%;
+    }
+    .brand{
+      font-size:12px;
+      max-width: 42%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-header .progress-track{ margin: 0 8px; }
+
     .controls{
-      padding: 14px 20px 22px;
-      flex-wrap: wrap;
-      row-gap: 14px;
-      min-height: 96px;
+      padding: 10px 12px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      flex-wrap: nowrap;
+      row-gap: 0;
+      min-height: 0;
+      gap: 8px;
+      align-items: center;
+    }
+    .controls .fs-btn{
+      order: 0;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
     }
     .controls .nav-wrapper{
       position: static;
       left: auto;
       transform: none;
-      order: 2;
-      width: 100%;
+      order: 0;
+      flex: 1 1 auto;
+      width: auto;
       justify-content: center;
+      gap: 8px;
+      flex-wrap: nowrap;
     }
-    .controls .fs-btn{ order: 1; }
     .controls .watermark{
-      order: 1;
-      margin-left: auto;
-      justify-content: flex-end;
+      display: none;
     }
-    .watermark svg{ height:34px; }
-    .nav-buttons{ width: 100%; flex-wrap: wrap; }
-    .nav-buttons button, .nav-buttons a.btn{ flex: 1; min-width: 30%; padding: 12px; }
+    .deck-nav-btn{
+      min-height: 40px;
+      min-width: 40px;
+      padding: 8px;
+      font-size: 0;
+      letter-spacing: 0;
+      gap: 0;
+      border-radius: 10px;
+    }
+    .deck-nav-btn > span[aria-hidden]{
+      font-size: 18px;
+      line-height: 1;
+    }
+    .deck-nav-btn.primary{
+      min-width: 44px;
+      padding: 8px 14px;
+    }
+    .slide-pos{
+      min-width: 3.25rem;
+      font-size: 12px;
+    }
 
     .slide {
       justify-content: flex-start;
       overflow-y: auto;
-      padding: 30px 20px 40px; 
+      padding: 16px 16px 24px;
+      -webkit-overflow-scrolling: touch;
     }
-    .slide h2 { max-width: none; }
-    
+    .slide h2 {
+      max-width: none;
+      font-size: clamp(24px, 7vw, 34px);
+    }
+    .slide .lede{
+      font-size: clamp(18px, 4.5vw, 22px);
+      margin-top: 10px;
+    }
+    .cover h1{
+      font-size: clamp(32px, 10vw, 48px);
+    }
+    .cover .sub{
+      font-size: clamp(15px, 4vw, 18px);
+    }
+    .eyebrow{ font-size: 12px; margin-bottom: 10px; }
+    .code-block pre,
+    .terminal-body{
+      font-size: 14px !important;
+    }
+    .card-grid{
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
     .steps-row {
       flex-direction: column;
       align-items: stretch;
@@ -585,6 +645,47 @@
       transform: rotate(90deg);
       text-align: center;
       margin: 4px 0;
+    }
+  }
+
+  /* Immersive fullscreen — native API + CSS fallback for iOS / iframe embeds */
+  :fullscreen .deck,
+  :-webkit-full-screen .deck,
+  html.deck-fs .deck,
+  html.deck-fs body,
+  html.deck-fs{
+    height: 100%;
+    height: 100dvh;
+    width: 100%;
+    background: var(--bg);
+  }
+  html.deck-fs,
+  html.deck-fs body{
+    margin: 0;
+    overflow: hidden;
+  }
+  :fullscreen .deck-header,
+  :-webkit-full-screen .deck-header,
+  html.deck-fs .deck-header{
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  :fullscreen .controls,
+  :-webkit-full-screen .controls,
+  html.deck-fs .controls{
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  @media (max-width: 640px){
+    :fullscreen .slide,
+    :-webkit-full-screen .slide,
+    html.deck-fs .slide{
+      padding: 12px 16px 20px;
+    }
+    :fullscreen .controls,
+    :-webkit-full-screen .controls,
+    html.deck-fs .controls{
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
     }
   }
 

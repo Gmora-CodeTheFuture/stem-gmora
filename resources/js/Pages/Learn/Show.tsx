@@ -201,7 +201,7 @@ export default function LearnShow({ course, modules, currentLesson, completionPe
                 <div className={`grid gap-6 flex-1 min-h-0 overflow-hidden transition-all duration-300 ${curriculumOpen ? 'lg:grid-cols-[1fr_340px]' : 'lg:grid-cols-1 max-w-5xl mx-auto w-full'}`}>
                     {/* ── Player / lesson body ─────────────────────── */}
                     <div className="min-w-0 min-h-0 h-full overflow-y-auto scrollbar-thin flex flex-col">
-                        <div className="flex-1 min-h-[20rem] flex flex-col">
+                        <div className={`flex-1 flex flex-col ${currentLesson.type === 'html' ? 'min-h-[min(72dvh,40rem)] sm:min-h-[20rem]' : 'min-h-[20rem]'}`}>
                             {currentLesson.type === 'youtube' && currentLesson.has_video ? (
                                 <SecureVideoPlayer
                                     key={currentLesson.id}
@@ -422,6 +422,7 @@ function QuizPanel({ lesson }: { lesson: Lesson }) {
 
 function PresentationPanel({ lesson }: { lesson: Lesson }) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const [immersive, setImmersive] = useState(false);
 
     useEffect(() => {
         if (!lesson.has_presentation) {
@@ -454,9 +455,35 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
             );
         };
 
+        const onMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+            const data = event.data;
+            if (!data || data.source !== 'gmora-deck' || data.type !== 'deck-fullscreen') {
+                return;
+            }
+            setImmersive(Boolean(data.active));
+        };
+
         window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
+        window.addEventListener('message', onMessage);
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener('message', onMessage);
+        };
     }, [lesson.has_presentation, lesson.id]);
+
+    useEffect(() => {
+        if (!immersive) {
+            return;
+        }
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, [immersive]);
 
     if (!lesson.has_presentation) {
         return (
@@ -477,7 +504,13 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
     const src = route('presentation.show', lesson.id);
 
     return (
-        <div className="card relative overflow-hidden h-full min-h-[20rem] bg-white dark:bg-surface-950">
+        <div
+            className={
+                immersive
+                    ? 'fixed inset-0 z-[200] bg-white dark:bg-surface-950'
+                    : 'card relative overflow-hidden h-full min-h-[min(70dvh,36rem)] sm:min-h-[20rem] bg-white dark:bg-surface-950'
+            }
+        >
             <iframe
                 ref={iframeRef}
                 key={lesson.id}
