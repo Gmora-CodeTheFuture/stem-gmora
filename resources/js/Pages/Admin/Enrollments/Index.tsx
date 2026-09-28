@@ -3,6 +3,7 @@ import { Plus, Search, UserPlus } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Paginated } from '@/types';
 import { FormEventHandler, useState } from 'react';
 
@@ -96,43 +97,46 @@ export default function EnrollmentsIndex({ enrollments, filters, users, courses 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <InputLabel htmlFor="user_id" value="Student" />
-                                <select
+                                <SystemSelect
                                     id="user_id"
-                                    value={grantForm.data.user_id}
-                                    onChange={(e) => grantForm.setData('user_id', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                    required
-                                >
-                                    <option value="">Select user…</option>
-                                    {users.map((user) => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.full_name} ({user.email})
-                                        </option>
-                                    ))}
-                                </select>
+                                    value={grantForm.data.user_id || '__none__'}
+                                    onValueChange={(v) =>
+                                        grantForm.setData('user_id', v === '__none__' ? '' : v)
+                                    }
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: '__none__', label: 'Select user…' },
+                                        ...users.map((user) => ({
+                                            value: user.id,
+                                            label: `${user.full_name} (${user.email})`,
+                                        })),
+                                    ]}
+                                />
                                 {grantForm.errors.user_id && (
                                     <p className="text-xs text-red-500 mt-1">{grantForm.errors.user_id}</p>
                                 )}
                             </div>
                             <div>
                                 <InputLabel htmlFor="course_id" value="Published course" />
-                                <select
+                                <SystemSelect
                                     id="course_id"
-                                    value={grantForm.data.course_id}
-                                    onChange={(e) => grantForm.setData('course_id', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                    required
-                                >
-                                    <option value="">Select course…</option>
-                                    {courses.map((course) => (
-                                        <option key={course.id} value={course.id}>
-                                            {course.title}
-                                            {Number(course.price) > 0
-                                                ? ` — ${course.currency} ${course.price}`
-                                                : ' — Free'}
-                                        </option>
-                                    ))}
-                                </select>
+                                    value={grantForm.data.course_id || '__none__'}
+                                    onValueChange={(v) =>
+                                        grantForm.setData('course_id', v === '__none__' ? '' : v)
+                                    }
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: '__none__', label: 'Select course…' },
+                                        ...courses.map((course) => ({
+                                            value: course.id,
+                                            label: `${course.title}${
+                                                Number(course.price) > 0
+                                                    ? ` — ${course.currency} ${course.price}`
+                                                    : ' — Free'
+                                            }`,
+                                        })),
+                                    ]}
+                                />
                                 {grantForm.errors.course_id && (
                                     <p className="text-xs text-red-500 mt-1">{grantForm.errors.course_id}</p>
                                 )}
@@ -171,14 +175,21 @@ export default function EnrollmentsIndex({ enrollments, filters, users, courses 
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search student..." className="flex-1 bg-transparent border-0 text-sm text-surface-900 dark:text-white placeholder-surface-400 focus:ring-0 focus:outline-none" />
                 </form>
-                <select value={filters.status || ''} onChange={(e) => applyFilters({ status: e.target.value })}
-                    className="text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-1.5 text-surface-700 dark:text-surface-300">
-                    <option value="">All statuses</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="refunded">Refunded</option>
-                    <option value="suspended">Suspended</option>
-                </select>
+                <SystemSelect
+                    value={filters.status || '__all__'}
+                    onValueChange={(status) =>
+                        applyFilters({ status: status === '__all__' ? '' : status })
+                    }
+                    aria-label="Filter by status"
+                    triggerClassName="text-sm rounded-lg py-1.5 max-w-[170px]"
+                    options={[
+                        { value: '__all__', label: 'All statuses' },
+                        { value: 'active', label: 'Active' },
+                        { value: 'completed', label: 'Completed' },
+                        { value: 'refunded', label: 'Refunded' },
+                        { value: 'suspended', label: 'Suspended' },
+                    ]}
+                />
             </div>
 
             <div className="card overflow-hidden">
@@ -207,16 +218,20 @@ export default function EnrollmentsIndex({ enrollments, filters, users, courses 
                                 </td>
                                 <td className="px-6 py-4 text-surface-500 text-xs" data-label="Enrolled">{new Date(enrollment.enrolled_at).toLocaleDateString()}</td>
                                 <td className="px-6 py-4" data-actions>
-                                    <select
+                                    <SystemSelect
                                         value={enrollment.status}
-                                        onChange={(e) => router.patch(`/admin/enrollments/${enrollment.id}`, { status: e.target.value })}
-                                        className="text-xs border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-2 py-1 text-surface-700 dark:text-surface-300"
-                                    >
-                                        <option value="active">Active</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="refunded">Refunded</option>
-                                        <option value="suspended">Suspended</option>
-                                    </select>
+                                        onValueChange={(status) =>
+                                            router.patch(`/admin/enrollments/${enrollment.id}`, { status })
+                                        }
+                                        aria-label={`Status for ${enrollment.user.full_name}`}
+                                        triggerClassName="text-xs rounded-lg py-1 max-w-[140px]"
+                                        options={[
+                                            { value: 'active', label: 'Active' },
+                                            { value: 'completed', label: 'Completed' },
+                                            { value: 'refunded', label: 'Refunded' },
+                                            { value: 'suspended', label: 'Suspended' },
+                                        ]}
+                                    />
                                 </td>
                             </tr>
                         ))}

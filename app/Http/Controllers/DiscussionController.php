@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Discussion;
 use App\Models\DiscussionReply;
+use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Notifications\DiscussionReplied;
 use App\Notifications\DiscussionStarted;
@@ -12,6 +13,7 @@ use App\Services\ContentVersion;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,6 +27,54 @@ use Inertia\Response;
  */
 class DiscussionController extends Controller
 {
+    /**
+     * Cross-course discussions hub for the sidebar.
+     * Course boards at /learn/{course}/discussions stay as-is.
+     */
+    public function hub(Request $request): Response
+    {
+        $user = $request->user();
+        $courseIds = $this->accessibleCourseIds($user);
+        $filter = $request->string('filter')->toString() ?: 'all';
+        $courseId = $request->string('course')->toString();
+        $search = trim($request->string('search')->toString());
+
+        if ($courseId !== '' && ! $courseIds->contains($courseId)) {
+            abort(403);
+        }
+
+        $discussions = Discussion::query()
+            ->whereIn('course_id', $courseIds)
+            ->when($courseId !== '', fn ($q) => $q->where('course_id', $courseId))
+            ->when($filter === 'unanswered', fn ($q) => $q->where('replies_count', 0))
+            ->when($filter === 'solved', fn ($q) => $q->whereNotNull('solved_reply_id'))
+            ->when($filter === 'mine', fn ($q) => $q->where('user_id', $user->id))
+            ->when($search !== '', fn ($q) => $q->where(fn ($inner) => $inner
+                ->whereLike('title', "%{$search}%")
+                ->orWhereLike('body', "%{$search}%")))
+            ->with(['author:id,full_name,avatar_url', 'lesson:id,title', 'course:id,title,slug'])
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('last_activity_at')
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (Discussion $discussion) => [
+                ...$this->present($discussion),
+                'course' => $discussion->course?->only(['id', 'title', 'slug']),
+            ])
+            ->toArray();
+
+        $courses = Course::whereIn('id', $courseIds)
+            ->orderBy('title')
+            ->get(['id', 'title', 'slug'])
+            ->toArray();
+
+        return Inertia::render('Discussions/Hub', [
+            'discussions' => $discussions,
+            'courses' => $courses,
+            'filters' => ['filter' => $filter, 'course' => $courseId, 'search' => $search],
+        ]);
+    }
+
     /** The board for a course, optionally narrowed to one lesson. */
     public function index(Request $request, Course $course): Response
     {
@@ -264,6 +314,26 @@ class DiscussionController extends Controller
         $user = $request->user();
 
         return $user->isAdmin() || ($course && $course->instructor_id === $user->id);
+    }
+
+    /** @return Collection<int, string> */
+    private function accessibleCourseIds(User $user): Collection
+    {
+        if ($user->isAdmin()) {
+            return Course::query()->pluck('id');
+        }
+
+        $ids = Enrollment::where('user_id', $user->id)
+            ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
+            ->pluck('course_id');
+
+        if ($user->isInstructor()) {
+            $ids = $ids->merge(
+                Course::where('instructor_id', $user->id)->pluck('id'),
+            )->unique()->values();
+        }
+
+        return $ids;
     }
 
     private function authorizeThreadOwner(Request $request, Discussion $discussion): void

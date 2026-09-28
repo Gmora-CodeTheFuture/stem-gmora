@@ -479,17 +479,17 @@
     transition:border-color .2s ease, background .2s ease, color .2s ease, opacity .2s ease;
   }
   .deck-nav-btn:hover:not(:disabled){
-    border-color:var(--blue);
-    background:rgba(26, 54, 93, .04);
+    border-color:#2563eb;
+    background:rgba(37, 99, 235, .06);
   }
   .deck-nav-btn.primary{
-    background:var(--blue);
+    background:#2563eb;
     color:#fff;
-    border-color:var(--blue);
+    border-color:#2563eb;
   }
   .deck-nav-btn.primary:hover:not(:disabled){
-    background:#152845;
-    border-color:#152845;
+    background:#1d4ed8;
+    border-color:#1d4ed8;
   }
   .deck-nav-btn:disabled{
     opacity:.35;
@@ -527,10 +527,10 @@
     transition:border-color .2s ease, background .2s ease;
     text-decoration:none;
   }
-  .nav-buttons button:hover:not(:disabled), .nav-buttons a.btn:hover{ border-color:var(--blue); }
+  .nav-buttons button:hover:not(:disabled), .nav-buttons a.btn:hover{ border-color:#2563eb; }
   .nav-buttons button:disabled{ opacity:.35; cursor:default; }
-  .nav-buttons .primary{ background:var(--blue); color:#fff; border-color:var(--blue); }
-  .nav-buttons .primary:hover:not(:disabled){ background:#152845; }
+  .nav-buttons .primary{ background:#2563eb; color:#fff; border-color:#2563eb; }
+  .nav-buttons .primary:hover:not(:disabled){ background:#1d4ed8; }
   button:focus-visible, a.btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
   @media (max-width: 640px){
@@ -542,12 +542,26 @@
     flex:0 0 auto;
     width:100%;
   }
-    .controls{ 
-      padding: 14px 30px 22px; 
-      flex-direction: column; 
-      gap: 20px; 
+    .controls{
+      padding: 14px 20px 22px;
+      flex-wrap: wrap;
+      row-gap: 14px;
+      min-height: 96px;
     }
-    .watermark{ order: 3; justify-content:center; margin-top: -6px; }
+    .controls .nav-wrapper{
+      position: static;
+      left: auto;
+      transform: none;
+      order: 2;
+      width: 100%;
+      justify-content: center;
+    }
+    .controls .fs-btn{ order: 1; }
+    .controls .watermark{
+      order: 1;
+      margin-left: auto;
+      justify-content: flex-end;
+    }
     .watermark svg{ height:34px; }
     .nav-buttons{ width: 100%; flex-wrap: wrap; }
     .nav-buttons button, .nav-buttons a.btn{ flex: 1; min-width: 30%; padding: 12px; }
@@ -601,59 +615,62 @@
 
 
   /* ---------- fullscreen + toolbar extras ---------- */
-  .fs-btn, .next-lesson-btn {
+  .fs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    padding: 0;
     background: transparent;
     border: 1px solid var(--line);
     border-radius: 10px;
-    padding: 6px 10px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--blue);
+    color: #2563eb;
     cursor: pointer;
-    transition: background .2s var(--ease), border-color .2s var(--ease);
+    transition: background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
   }
-  .fs-btn:hover, .next-lesson-btn:hover {
-    background: var(--blue-soft);
+  .fs-btn svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+  .fs-btn:hover {
+    background: rgba(37, 99, 235, .08);
     border-color: transparent;
+  }
+  .fs-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
   }
   .fs-btn.is-active {
-    background: var(--blue);
+    background: #2563eb;
     color: #fff;
-    border-color: var(--blue);
+    border-color: #2563eb;
   }
   .fs-btn.is-active:hover {
-    background: #152845;
-    border-color: #152845;
-  }
-  /* Footer-only next-lesson control — never overlay #slides */
-  .controls .next-lesson-btn {
-    display: none !important;
-    position: static;
-    flex: 0 0 auto;
-    margin-left: auto;
-    background: var(--gold-soft);
-    color: var(--gold);
-    border-color: transparent;
-    white-space: nowrap;
-    z-index: 1;
-  }
-  .controls .next-lesson-btn.visible {
-    display: inline-flex !important;
-    align-items: center;
-    gap: 6px;
+    background: #1d4ed8;
+    border-color: #1d4ed8;
   }
   .controls .nav-wrapper {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 12px;
     flex: 0 0 auto;
     flex-wrap: wrap;
+    z-index: 1;
   }
   .controls {
     position: relative;
     z-index: 2;
     background: var(--bg);
+  }
+  .controls .fs-btn {
+    position: relative;
+    z-index: 2;
   }
   .controls .watermark {
     flex: 0 0 auto;

@@ -30,12 +30,17 @@ interface Props extends PageProps {
     enrolled: CourseCard[];
     catalog: CourseCard[];
     categories: string[];
-    filters: { search: string; filter: 'enrolled' | 'all'; category: string };
+    filters: { search: string; filter: 'enrolled' | 'all'; category: string[] };
     counts: { enrolled: number; all: number };
 }
 
 export default function DashboardCourses({ enrolled, catalog, categories, filters, counts }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+    const selectedCategories = Array.isArray(filters.category)
+        ? filters.category
+        : filters.category
+          ? [filters.category]
+          : [];
 
     // Debounced server-side search, so search and filters compose.
     useEffect(() => {
@@ -44,7 +49,7 @@ export default function DashboardCourses({ enrolled, catalog, categories, filter
         const timeout = setTimeout(() => {
             router.get(
                 route('dashboard.courses'),
-                { ...filters, search: search || undefined },
+                { ...filters, search: search || undefined, category: selectedCategories },
                 { preserveState: true, replace: true },
             );
         }, 300);
@@ -52,16 +57,29 @@ export default function DashboardCourses({ enrolled, catalog, categories, filter
         return () => clearTimeout(timeout);
     }, [search]);
 
-    const apply = (patch: Partial<Props['filters']>) => {
+    const apply = (patch: Partial<{ search: string; filter: 'enrolled' | 'all'; category: string[] }>) => {
         router.get(
             route('dashboard.courses'),
-            { ...filters, search: search || undefined, ...patch },
+            {
+                ...filters,
+                search: search || undefined,
+                category: selectedCategories,
+                ...patch,
+            },
             { preserveState: true, replace: true },
         );
     };
 
+    const toggleCategory = (category: string) => {
+        const next = selectedCategories.includes(category)
+            ? selectedCategories.filter((item) => item !== category)
+            : [...selectedCategories, category];
+
+        apply({ category: next });
+    };
+
     const showing = filters.filter === 'enrolled' ? enrolled : catalog;
-    const hasFilters = Boolean(search) || Boolean(filters.category);
+    const hasFilters = Boolean(search) || selectedCategories.length > 0;
 
     return (
         <DashboardLayout header="Courses">
@@ -109,25 +127,32 @@ export default function DashboardCourses({ enrolled, catalog, categories, filter
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                    {categories.map((category) => (
-                        <button
-                            key={category}
-                            onClick={() => apply({ category: filters.category === category ? '' : category })}
-                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                                filters.category === category
-                                    ? 'bg-primary-600 border-primary-600 text-white'
-                                    : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
-                            }`}
-                        >
-                            {category}
-                        </button>
-                    ))}
+                    {categories.map((category) => {
+                        const active = selectedCategories.includes(category);
+
+                        return (
+                            <button
+                                key={category}
+                                type="button"
+                                aria-pressed={active}
+                                onClick={() => toggleCategory(category)}
+                                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                                    active
+                                        ? 'bg-primary-600 border-primary-600 text-white'
+                                        : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-primary-400'
+                                }`}
+                            >
+                                {category}
+                            </button>
+                        );
+                    })}
 
                     {hasFilters && (
                         <button
+                            type="button"
                             onClick={() => {
                                 setSearch('');
-                                apply({ search: '', category: '' });
+                                apply({ search: '', category: [] });
                             }}
                             className="inline-flex items-center gap-1 text-sm text-surface-500 hover:text-surface-900 dark:hover:text-white px-2"
                         >

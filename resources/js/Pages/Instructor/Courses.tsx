@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { Course, PageProps, Paginated } from '@/types';
 
 interface Props extends PageProps {
@@ -42,18 +43,19 @@ export default function InstructorCourses({ courses, filters }: Props) {
                         className="input pl-9"
                     />
                 </form>
-                <select
-                    value={filters.status ?? ''}
-                    onChange={(e) => apply({ status: e.target.value })}
-                    className="input max-w-[170px]"
-                >
-                    <option value="">Any status</option>
-                    {STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                            {status.replace('_', ' ')}
-                        </option>
-                    ))}
-                </select>
+                <SystemSelect
+                    value={filters.status || '__any__'}
+                    onValueChange={(status) => apply({ status: status === '__any__' ? '' : status })}
+                    aria-label="Filter by status"
+                    triggerClassName="max-w-[170px]"
+                    options={[
+                        { value: '__any__', label: 'Any status' },
+                        ...STATUSES.map((status) => ({
+                            value: status,
+                            label: status.replace('_', ' '),
+                        })),
+                    ]}
+                />
             </div>
 
             <div className="card overflow-hidden">

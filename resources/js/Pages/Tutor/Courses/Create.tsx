@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, User } from '@/types';
 import { FormEventHandler } from 'react';
 
@@ -65,19 +66,21 @@ export default function CreateCourse({ instructors = [] }: Props) {
                         {instructors.length > 0 && (
                             <div>
                                 <InputLabel htmlFor="instructor_id" value="Assigned instructor" />
-                                <select
+                                <SystemSelect
                                     id="instructor_id"
-                                    value={data.instructor_id}
-                                    onChange={(e) => setData('instructor_id', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                >
-                                    <option value="">Assign to me (admin)</option>
-                                    {instructors.map((instructor) => (
-                                        <option key={instructor.id} value={instructor.id}>
-                                            {instructor.full_name} ({instructor.email})
-                                        </option>
-                                    ))}
-                                </select>
+                                    value={data.instructor_id || '__none__'}
+                                    onValueChange={(v) =>
+                                        setData('instructor_id', v === '__none__' ? '' : v)
+                                    }
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: '__none__', label: 'Assign to me (admin)' },
+                                        ...instructors.map((instructor) => ({
+                                            value: instructor.id,
+                                            label: `${instructor.full_name} (${instructor.email})`,
+                                        })),
+                                    ]}
+                                />
                                 <InputError className="mt-2" message={errors.instructor_id} />
                             </div>
                         )}
@@ -90,12 +93,17 @@ export default function CreateCourse({ instructors = [] }: Props) {
                             </div>
                             <div>
                                 <InputLabel htmlFor="difficulty" value="Difficulty *" />
-                                <select id="difficulty" value={data.difficulty} onChange={(e) => setData('difficulty', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm">
-                                    <option value="beginner">Beginner</option>
-                                    <option value="intermediate">Intermediate</option>
-                                    <option value="advanced">Advanced</option>
-                                </select>
+                                <SystemSelect
+                                    id="difficulty"
+                                    value={data.difficulty}
+                                    onValueChange={(difficulty) => setData('difficulty', difficulty)}
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: 'beginner', label: 'Beginner' },
+                                        { value: 'intermediate', label: 'Intermediate' },
+                                        { value: 'advanced', label: 'Advanced' },
+                                    ]}
+                                />
                             </div>
                         </div>
 

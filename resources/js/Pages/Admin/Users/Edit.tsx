@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, User, Role } from '@/types';
 import { FormEventHandler } from 'react';
 
@@ -61,35 +62,37 @@ export default function EditUser({ targetUser, roles, instructors }: Props) {
 
                         <div>
                             <InputLabel htmlFor="role_id" value="Role" />
-                            <select
+                            <SystemSelect
                                 id="role_id"
                                 value={data.role_id}
-                                onChange={(e) => setData('role_id', e.target.value)}
-                                className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm"
-                            >
-                                {roles.map((role) => (
-                                    <option key={role.id} value={role.id}>{role.display_name}</option>
-                                ))}
-                            </select>
+                                onValueChange={(role_id) => setData('role_id', role_id)}
+                                triggerClassName="mt-1 w-full"
+                                options={roles.map((role) => ({
+                                    value: role.id,
+                                    label: role.display_name,
+                                }))}
+                            />
                             <InputError className="mt-2" message={errors.role_id} />
                         </div>
 
                         {showInstructorAssignment && (
                             <div>
                                 <InputLabel htmlFor="assigned_instructor_id" value="Assigned instructor" />
-                                <select
+                                <SystemSelect
                                     id="assigned_instructor_id"
-                                    value={data.assigned_instructor_id}
-                                    onChange={(e) => setData('assigned_instructor_id', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 dark:focus:border-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 rounded-md shadow-sm"
-                                >
-                                    <option value="">Unassigned</option>
-                                    {instructors.map((instructor) => (
-                                        <option key={instructor.id} value={instructor.id}>
-                                            {instructor.full_name} ({instructor.email})
-                                        </option>
-                                    ))}
-                                </select>
+                                    value={data.assigned_instructor_id || '__none__'}
+                                    onValueChange={(v) =>
+                                        setData('assigned_instructor_id', v === '__none__' ? '' : v)
+                                    }
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: '__none__', label: 'Unassigned' },
+                                        ...instructors.map((instructor) => ({
+                                            value: instructor.id,
+                                            label: `${instructor.full_name} (${instructor.email})`,
+                                        })),
+                                    ]}
+                                />
                                 <InputError className="mt-2" message={errors.assigned_instructor_id} />
                             </div>
                         )}

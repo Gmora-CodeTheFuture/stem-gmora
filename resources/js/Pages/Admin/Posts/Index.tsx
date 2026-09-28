@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Eye, PenSquare, Plus, Search, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { Paginated, PageProps } from '@/types';
 
 interface PostRow {
@@ -53,16 +54,17 @@ export default function PostsIndex({ posts, filters }: Props) {
                     />
                 </form>
 
-                <select
-                    value={filters.status ?? ''}
-                    onChange={(e) => apply({ status: e.target.value })}
+                <SystemSelect
+                    value={filters.status || '__all__'}
+                    onValueChange={(status) => apply({ status: status === '__all__' ? '' : status })}
                     aria-label="Filter by status"
-                    className="input rounded-full max-w-[160px]"
-                >
-                    <option value="">All statuses</option>
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                </select>
+                    triggerClassName="rounded-full max-w-[160px]"
+                    options={[
+                        { value: '__all__', label: 'All statuses' },
+                        { value: 'draft', label: 'Draft' },
+                        { value: 'published', label: 'Published' },
+                    ]}
+                />
 
                 <Link href={route('admin.posts.create')} className="btn-primary sm:ml-auto">
                     <Plus className="w-4 h-4" />

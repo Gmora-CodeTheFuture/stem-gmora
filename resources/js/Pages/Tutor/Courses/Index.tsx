@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { BookOpen, Search, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Paginated, Course, User } from '@/types';
 
 interface Props extends PageProps {
@@ -61,33 +62,33 @@ export default function CoursesIndex({ courses, categories, filters, canCreate =
                     />
                 </form>
 
-                <select
-                    value={filters.status ?? ''}
-                    onChange={(e) => apply({ status: e.target.value })}
+                <SystemSelect
+                    value={filters.status || '__any__'}
+                    onValueChange={(status) => apply({ status: status === '__any__' ? '' : status })}
                     aria-label="Filter by status"
-                    className="input max-w-[170px]"
-                >
-                    <option value="">Any status</option>
-                    {STATUSES.map((status) => (
-                        <option key={status} value={status}>
-                            {status.replace('_', ' ')}
-                        </option>
-                    ))}
-                </select>
+                    triggerClassName="max-w-[170px]"
+                    options={[
+                        { value: '__any__', label: 'Any status' },
+                        ...STATUSES.map((status) => ({
+                            value: status,
+                            label: status.replace('_', ' '),
+                        })),
+                    ]}
+                />
 
-                <select
-                    value={filters.category ?? ''}
-                    onChange={(e) => apply({ category: e.target.value })}
+                <SystemSelect
+                    value={filters.category || '__any__'}
+                    onValueChange={(category) => apply({ category: category === '__any__' ? '' : category })}
                     aria-label="Filter by category"
-                    className="input max-w-[180px]"
-                >
-                    <option value="">Any category</option>
-                    {categories.map((category) => (
-                        <option key={category} value={category}>
-                            {category}
-                        </option>
-                    ))}
-                </select>
+                    triggerClassName="max-w-[180px]"
+                    options={[
+                        { value: '__any__', label: 'Any category' },
+                        ...categories.map((category) => ({
+                            value: category,
+                            label: category,
+                        })),
+                    ]}
+                />
             </div>
 
             {courses.data.length === 0 ? (

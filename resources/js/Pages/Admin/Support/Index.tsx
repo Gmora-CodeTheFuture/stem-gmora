@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { LifeBuoy, MessageSquare } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SegmentedControl from '@/Components/SegmentedControl';
+import SystemSelect from '@/Components/SystemSelect';
 import { Paginated, PageProps } from '@/types';
 
 interface TicketRow {
@@ -79,20 +80,22 @@ export default function SupportQueue({ tickets, filters, staff, counts }: Props)
                     }))}
                 />
 
-                <select
-                    value={filters.assignee ?? ''}
-                    onChange={(e) => apply({ assignee: e.target.value })}
+                <SystemSelect
+                    value={filters.assignee || '__any__'}
+                    onValueChange={(assignee) =>
+                        apply({ assignee: assignee === '__any__' ? '' : assignee })
+                    }
                     aria-label="Filter by assignee"
-                    className="input rounded-full max-w-[220px]"
-                >
-                    <option value="">Anyone</option>
-                    <option value="unassigned">Unassigned</option>
-                    {staff.map((member) => (
-                        <option key={member.id} value={member.id}>
-                            {member.full_name}
-                        </option>
-                    ))}
-                </select>
+                    triggerClassName="rounded-full max-w-[220px]"
+                    options={[
+                        { value: '__any__', label: 'Anyone' },
+                        { value: 'unassigned', label: 'Unassigned' },
+                        ...staff.map((member) => ({
+                            value: member.id,
+                            label: member.full_name,
+                        })),
+                    ]}
+                />
             </div>
 
             {tickets.data.length === 0 ? (
@@ -130,45 +133,43 @@ export default function SupportQueue({ tickets, filters, staff, counts }: Props)
                                 </span>
                             </span>
 
-                            <select
-                                value={ticket.assignee?.id ?? ''}
-                                onChange={(e) => set(ticket, { assigned_to: e.target.value || null })}
+                            <SystemSelect
+                                value={ticket.assignee?.id ?? '__none__'}
+                                onValueChange={(v) =>
+                                    set(ticket, { assigned_to: v === '__none__' ? null : v })
+                                }
                                 aria-label={`Assign ${ticket.reference}`}
-                                className="input py-1.5 max-w-[170px] text-sm"
-                            >
-                                <option value="">Unassigned</option>
-                                {staff.map((member) => (
-                                    <option key={member.id} value={member.id}>
-                                        {member.full_name}
-                                    </option>
-                                ))}
-                            </select>
+                                triggerClassName="py-1.5 max-w-[170px] text-sm"
+                                options={[
+                                    { value: '__none__', label: 'Unassigned' },
+                                    ...staff.map((member) => ({
+                                        value: member.id,
+                                        label: member.full_name,
+                                    })),
+                                ]}
+                            />
 
-                            <select
+                            <SystemSelect
                                 value={ticket.priority}
-                                onChange={(e) => set(ticket, { priority: e.target.value })}
+                                onValueChange={(priority) => set(ticket, { priority })}
                                 aria-label={`Priority for ${ticket.reference}`}
-                                className="input py-1.5 max-w-[120px] text-sm capitalize"
-                            >
-                                {['low', 'normal', 'high'].map((priority) => (
-                                    <option key={priority} value={priority}>
-                                        {priority}
-                                    </option>
-                                ))}
-                            </select>
+                                triggerClassName="py-1.5 max-w-[120px] text-sm capitalize"
+                                options={['low', 'normal', 'high'].map((priority) => ({
+                                    value: priority,
+                                    label: priority,
+                                }))}
+                            />
 
-                            <select
+                            <SystemSelect
                                 value={ticket.status}
-                                onChange={(e) => set(ticket, { status: e.target.value })}
+                                onValueChange={(status) => set(ticket, { status })}
                                 aria-label={`Status for ${ticket.reference}`}
-                                className="input py-1.5 max-w-[130px] text-sm capitalize"
-                            >
-                                {['open', 'pending', 'resolved', 'closed'].map((status) => (
-                                    <option key={status} value={status}>
-                                        {status}
-                                    </option>
-                                ))}
-                            </select>
+                                triggerClassName="py-1.5 max-w-[130px] text-sm capitalize"
+                                options={['open', 'pending', 'resolved', 'closed'].map((status) => ({
+                                    value: status,
+                                    label: status,
+                                }))}
+                            />
                         </div>
                     ))}
                 </div>

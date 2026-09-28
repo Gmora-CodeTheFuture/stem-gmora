@@ -9,13 +9,11 @@
   const nextBtn = document.getElementById('nextBtn');
   const prevBtn = document.getElementById('prevBtn');
   const progressFill = document.querySelector('.progress-fill');
-  const nextLessonBtn = document.getElementById('nextLessonBtn');
   const fsBtn = document.getElementById('fsBtn');
 
   const lessonId = document.body.dataset.lessonId || '';
   const nextLesson = document.body.dataset.nextLesson || '';
   const prevLesson = document.body.dataset.prevLesson || '';
-  const nextTitle = document.body.dataset.nextTitle || 'Next lesson';
 
   let currentSlide = 0;
   let currentFrag = 0;
@@ -125,17 +123,6 @@
         complete,
       });
     }
-
-    if (nextLessonBtn) {
-      if (complete && nextLesson && nextLesson !== 'null') {
-        nextLessonBtn.classList.add('visible');
-        nextLessonBtn.setAttribute('aria-hidden', 'false');
-        nextLessonBtn.textContent = 'Next: ' + nextTitle + ' →';
-      } else {
-        nextLessonBtn.classList.remove('visible');
-        nextLessonBtn.setAttribute('aria-hidden', 'true');
-      }
-    }
   }
 
   function render() {
@@ -230,12 +217,6 @@
 
   if (nextBtn) nextBtn.addEventListener('click', next);
   if (prevBtn) prevBtn.addEventListener('click', prev);
-  if (nextLessonBtn) {
-    nextLessonBtn.addEventListener('click', () => {
-      post({ type: 'deck-progress', percent: 100, complete: true, slide: currentSlide, slides: slides.length, frag: currentFrag, frags: 0 });
-      requestNavigate('next');
-    });
-  }
 
   // Replace hard-coded next-lesson anchors with postMessage CTAs
   document.querySelectorAll('a[href$=".html"], a.next-lesson-cta').forEach((a) => {
@@ -290,11 +271,17 @@
     document.body.focus({ preventScroll: true });
   } catch (_) { /* ignore */ }
 
+  const FS_ICON_ENTER =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+  const FS_ICON_EXIT =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+
   function syncFullscreenButton() {
     if (!fsBtn) return;
     const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
-    fsBtn.textContent = active ? 'Exit fullscreen' : 'Fullscreen';
+    fsBtn.innerHTML = active ? FS_ICON_EXIT : FS_ICON_ENTER;
     fsBtn.title = active ? 'Exit fullscreen (Esc or F)' : 'Fullscreen (F)';
+    fsBtn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Fullscreen');
     fsBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
     fsBtn.classList.toggle('is-active', active);
   }

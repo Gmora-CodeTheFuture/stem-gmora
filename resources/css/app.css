@@ -151,6 +151,63 @@ html.lenis.lenis-scrolling iframe {
                transition-colors duration-150;
     }
 
+    /* Dropdown menus — site palette: white/surface panel, primary blue highlight. */
+    .system-menu {
+        @apply overflow-hidden rounded-2xl text-sm leading-tight
+               bg-white dark:bg-surface-900
+               text-surface-900 dark:text-surface-100
+               border border-surface-200 dark:border-surface-700
+               shadow-lift;
+        max-height: min(320px, var(--radix-select-content-available-height, 320px));
+        animation: system-menu-in 120ms ease-out;
+    }
+
+    .system-menu-viewport {
+        @apply p-1.5 max-h-[inherit] overflow-y-auto;
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.surface.300') transparent;
+    }
+
+    .dark .system-menu-viewport {
+        scrollbar-color: theme('colors.surface.600') transparent;
+    }
+
+    .system-menu-item {
+        @apply relative flex cursor-default select-none items-center rounded-xl
+               py-2 pl-8 pr-3 outline-none
+               text-surface-700 dark:text-surface-200;
+    }
+
+    .system-menu-item[data-highlighted],
+    .system-menu-item:focus,
+    .system-menu-item:hover {
+        @apply bg-primary-600 text-white;
+    }
+
+    .system-menu-item[data-disabled] {
+        @apply pointer-events-none opacity-40;
+    }
+
+    .system-menu-check {
+        @apply absolute left-2 inline-flex items-center justify-center
+               text-primary-600 dark:text-primary-400;
+    }
+
+    .system-menu-item[data-highlighted] .system-menu-check,
+    .system-menu-item:focus .system-menu-check,
+    .system-menu-item:hover .system-menu-check {
+        @apply text-white;
+    }
+
+    .system-menu-separator {
+        @apply my-1.5 h-px mx-2 bg-surface-100 dark:bg-surface-800;
+    }
+
+    .system-menu-label {
+        @apply px-3 py-1.5 text-[11px] font-semibold tracking-wide
+               text-surface-400 dark:text-surface-500;
+    }
+
     /* Section spacing for marketing pages. */
     .section {
         @apply py-16 md:py-24;
@@ -167,6 +224,17 @@ html.lenis.lenis-scrolling iframe {
 
     .progress-fill {
         @apply h-full rounded-full bg-primary-600 transition-[width] duration-500;
+    }
+}
+
+@keyframes system-menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 

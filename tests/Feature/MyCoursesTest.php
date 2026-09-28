@@ -98,7 +98,25 @@ class MyCoursesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('catalog', 1)
-                ->where('catalog.0.title', 'Robot Arms'));
+                ->where('catalog.0.title', 'Robot Arms')
+                ->where('filters.category', ['Robotics']));
+    }
+
+    public function test_multiple_categories_can_be_selected(): void
+    {
+        Course::factory()->create(['title' => 'Robot Arms', 'category' => 'Robotics']);
+        Course::factory()->create(['title' => 'Neural Nets', 'category' => 'Artificial Intelligence']);
+        Course::factory()->create(['title' => 'Python 101', 'category' => 'Programming']);
+
+        $this->actingAs($this->student)
+            ->get(route('dashboard.courses', [
+                'filter' => 'all',
+                'category' => ['Robotics', 'Programming'],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('catalog', 2)
+                ->where('filters.category', ['Robotics', 'Programming']));
     }
 
     public function test_unpublished_courses_stay_out_of_the_catalog(): void

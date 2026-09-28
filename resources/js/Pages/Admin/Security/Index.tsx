@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { AlertTriangle, KeyRound, Search, ShieldCheck, Ticket } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { Paginated, PageProps } from '@/types';
 
 interface LogRow {
@@ -140,19 +141,16 @@ export default function SecurityIndex({ logs, filters, actions, tokens }: Props)
                     />
                 </form>
 
-                <select
-                    value={filters.action ?? ''}
-                    onChange={(e) => apply({ action: e.target.value })}
+                <SystemSelect
+                    value={filters.action || '__all__'}
+                    onValueChange={(action) => apply({ action: action === '__all__' ? '' : action })}
                     aria-label="Filter by action"
-                    className="input rounded-full max-w-[240px]"
-                >
-                    <option value="">All actions</option>
-                    {actions.map((action) => (
-                        <option key={action} value={action}>
-                            {action}
-                        </option>
-                    ))}
-                </select>
+                    triggerClassName="rounded-full max-w-[240px]"
+                    options={[
+                        { value: '__all__', label: 'All actions' },
+                        ...actions.map((action) => ({ value: action, label: action })),
+                    ]}
+                />
 
                 <div className="flex items-center gap-2">
                     <input

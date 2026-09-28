@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SegmentedControl from '@/Components/SegmentedControl';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 
 import FullCalendar from '@fullcalendar/react';
@@ -721,36 +722,37 @@ function EventComposer({
                             <label htmlFor="type" className="block text-sm font-medium mb-1.5">
                                 Type
                             </label>
-                            <select
+                            <SystemSelect
                                 id="type"
                                 value={form.data.type}
-                                onChange={(e) => form.setData('type', e.target.value as EventType)}
-                                className="input"
-                            >
-                                <option value="class">Class</option>
-                                <option value="workshop">Workshop</option>
-                                <option value="deadline">Deadline</option>
-                                <option value="announcement">Announcement</option>
-                            </select>
+                                onValueChange={(type) => form.setData('type', type as EventType)}
+                                options={[
+                                    { value: 'class', label: 'Class' },
+                                    { value: 'workshop', label: 'Workshop' },
+                                    { value: 'deadline', label: 'Deadline' },
+                                    { value: 'announcement', label: 'Announcement' },
+                                ]}
+                            />
                         </div>
 
                         <div>
                             <label htmlFor="course" className="block text-sm font-medium mb-1.5">
                                 Course
                             </label>
-                            <select
+                            <SystemSelect
                                 id="course"
-                                value={form.data.course_id}
-                                onChange={(e) => form.setData('course_id', e.target.value)}
-                                className="input"
-                            >
-                                {courses.map((course) => (
-                                    <option key={course.id} value={course.id}>
-                                        {course.title}
-                                    </option>
-                                ))}
-                                <option value="">Everyone (platform-wide)</option>
-                            </select>
+                                value={form.data.course_id || '__everyone__'}
+                                onValueChange={(courseId) =>
+                                    form.setData('course_id', courseId === '__everyone__' ? '' : courseId)
+                                }
+                                options={[
+                                    ...courses.map((course) => ({
+                                        value: course.id,
+                                        label: course.title,
+                                    })),
+                                    { value: '__everyone__', label: 'Everyone (platform-wide)' },
+                                ]}
+                            />
                             {form.errors.course_id && (
                                 <p className="text-xs text-red-500 mt-1">{form.errors.course_id}</p>
                             )}

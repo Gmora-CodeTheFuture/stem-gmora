@@ -20,7 +20,6 @@
   <header class="deck-header">
     <div class="brand"><span class="dot"></span><span class="hide-mobile">Python Series · </span><span style="color: var(--gold);">Lesson 03 - Syntax</span></div>
     <div class="progress-track"><div class="progress-fill"></div></div>
-    <button type="button" class="fs-btn" id="fsBtn" title="Fullscreen (F)">Fullscreen</button>
   </header>
 
   <main id="slides">
@@ -82,6 +81,9 @@
   </main>
 
   <footer class="controls">
+    <button type="button" class="fs-btn" id="fsBtn" aria-label="Fullscreen" title="Fullscreen (F)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+    </button>
     <div class="nav-wrapper">
       <button type="button" id="prevBtn" class="deck-nav-btn" aria-label="Previous slide">
         <span aria-hidden="true">←</span> Previous
@@ -91,7 +93,6 @@
         Next <span aria-hidden="true">→</span>
       </button>
     </div>
-    <button type="button" class="next-lesson-btn" id="nextLessonBtn" aria-hidden="true">Next lesson →</button>
     <div class="watermark" aria-hidden="true">
       <img src="images/gmora-logo.png" alt="" class="slide-logo" />
     </div>

@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { CreditCard, TrendingUp, RotateCcw, Search } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Paginated } from '@/types';
 import { useState } from 'react';
 
@@ -76,17 +77,21 @@ export default function PaymentsIndex({ payments, summary, filters }: Props) {
                         className="flex-1 bg-transparent border-0 text-sm text-surface-900 dark:text-white placeholder-surface-400 focus:ring-0 focus:outline-none"
                     />
                 </form>
-                <select
-                    value={filters.status || ''}
-                    onChange={(e) => applyFilters({ status: e.target.value })}
-                    className="text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-1.5 text-surface-700 dark:text-surface-300"
-                >
-                    <option value="">All statuses</option>
-                    <option value="completed">Completed</option>
-                    <option value="pending">Pending</option>
-                    <option value="refunded">Refunded</option>
-                    <option value="failed">Failed</option>
-                </select>
+                <SystemSelect
+                    value={filters.status || '__all__'}
+                    onValueChange={(status) =>
+                        applyFilters({ status: status === '__all__' ? '' : status })
+                    }
+                    aria-label="Filter by status"
+                    triggerClassName="text-sm rounded-lg py-1.5 max-w-[170px]"
+                    options={[
+                        { value: '__all__', label: 'All statuses' },
+                        { value: 'completed', label: 'Completed' },
+                        { value: 'pending', label: 'Pending' },
+                        { value: 'refunded', label: 'Refunded' },
+                        { value: 'failed', label: 'Failed' },
+                    ]}
+                />
             </div>
 
             {/* Table */}

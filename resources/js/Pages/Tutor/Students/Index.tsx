@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Search, Mail, BookOpen } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Paginated } from '@/types';
 import { useState } from 'react';
 
@@ -43,11 +44,18 @@ export default function TutorStudentsIndex({ students, courses, filters }: Props
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search by student name..." className="flex-1 bg-transparent border-0 text-sm text-surface-900 dark:text-white placeholder-surface-400 focus:ring-0 focus:outline-none" />
                 </form>
-                <select value={filters.course || ''} onChange={(e) => applyFilters({ course: e.target.value })}
-                    className="text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-1.5 text-surface-700 dark:text-surface-300">
-                    <option value="">All my courses</option>
-                    {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                </select>
+                <SystemSelect
+                    value={filters.course || '__all__'}
+                    onValueChange={(course) =>
+                        applyFilters({ course: course === '__all__' ? '' : course })
+                    }
+                    aria-label="Filter by course"
+                    triggerClassName="text-sm rounded-lg py-1.5 max-w-[220px]"
+                    options={[
+                        { value: '__all__', label: 'All my courses' },
+                        ...courses.map((c) => ({ value: c.id, label: c.title })),
+                    ]}
+                />
             </div>
 
             <div className="card overflow-hidden">

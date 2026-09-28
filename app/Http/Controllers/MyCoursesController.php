@@ -39,7 +39,7 @@ class MyCoursesController extends Controller
         $search = trim($request->string('search')->toString());
         $filter = $request->string('filter')->toString() ?: 'enrolled';
         $filter = in_array($filter, ['enrolled', 'all'], true) ? $filter : 'enrolled';
-        $category = $request->string('category')->toString();
+        $categories = $this->selectedCategories($request);
 
         $enrollments = Enrollment::where('user_id', $user->id)
             ->whereIn('status', [Enrollment::STATUS_ACTIVE, Enrollment::STATUS_COMPLETED])
@@ -54,7 +54,7 @@ class MyCoursesController extends Controller
         $enrolledIds = $enrollments->pluck('course_id')->all();
 
         $enrolled = $enrollments
-            ->filter(fn (Enrollment $enrollment) => $this->matches($enrollment->course, $search, $category))
+            ->filter(fn (Enrollment $enrollment) => $this->matches($enrollment->course, $search, $categories))
             ->map(fn (Enrollment $enrollment) => [
                 'enrollment_id' => $enrollment->id,
                 'status' => $enrollment->status,
@@ -75,7 +75,7 @@ class MyCoursesController extends Controller
             ->get();
 
         $catalog = $published
-            ->filter(fn (Course $course) => $this->matches($course, $search, $category))
+            ->filter(fn (Course $course) => $this->matches($course, $search, $categories))
             ->map(fn (Course $course) => $this->presentCourse($course, in_array($course->id, $enrolledIds, true)))
             ->values();
 
@@ -86,7 +86,7 @@ class MyCoursesController extends Controller
             'filters' => [
                 'search' => $search,
                 'filter' => $filter,
-                'category' => $category,
+                'category' => $categories,
             ],
             'counts' => [
                 'enrolled' => count($enrolledIds),
@@ -120,13 +120,16 @@ class MyCoursesController extends Controller
         ];
     }
 
-    private function matches(?Course $course, string $search, string $category): bool
+    /**
+     * @param  list<string>  $categories
+     */
+    private function matches(?Course $course, string $search, array $categories): bool
     {
         if (! $course) {
             return false;
         }
 
-        if ($category !== '' && $course->category !== $category) {
+        if ($categories !== [] && ! in_array($course->category, $categories, true)) {
             return false;
         }
 
@@ -137,6 +140,25 @@ class MyCoursesController extends Controller
         $haystack = mb_strtolower($course->title.' '.$course->subtitle.' '.$course->category);
 
         return str_contains($haystack, mb_strtolower($search));
+    }
+
+    /** @return list<string> */
+    private function selectedCategories(Request $request): array
+    {
+        $raw = $request->input('category', []);
+
+        if (is_string($raw)) {
+            $raw = $raw === '' ? [] : [$raw];
+        }
+
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(
+            array_map(static fn ($value) => is_string($value) ? trim($value) : '', $raw),
+            static fn (string $value) => $value !== '',
+        )));
     }
 
     private function percentage(Enrollment $enrollment): int

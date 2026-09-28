@@ -4,6 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Paginated, User, Role } from '@/types';
 import { FormEventHandler, useState } from 'react';
 
@@ -92,17 +93,16 @@ export default function UsersIndex({ users, roles, filters }: Props) {
                             </div>
                             <div>
                                 <InputLabel htmlFor="role_id" value="Role" />
-                                <select
+                                <SystemSelect
                                     id="role_id"
                                     value={createForm.data.role_id}
-                                    onChange={(e) => createForm.setData('role_id', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                    required
-                                >
-                                    {roles.map((role) => (
-                                        <option key={role.id} value={role.id}>{role.display_name}</option>
-                                    ))}
-                                </select>
+                                    onValueChange={(role_id) => createForm.setData('role_id', role_id)}
+                                    triggerClassName="mt-1 w-full"
+                                    options={roles.map((role) => ({
+                                        value: role.id,
+                                        label: role.display_name,
+                                    }))}
+                                />
                                 {createForm.errors.role_id && (
                                     <p className="text-xs text-red-500 mt-1">{createForm.errors.role_id}</p>
                                 )}
@@ -149,16 +149,21 @@ export default function UsersIndex({ users, roles, filters }: Props) {
                         className="flex-1 bg-transparent border-0 text-sm text-surface-900 dark:text-white placeholder-surface-400 focus:ring-0 focus:outline-none"
                     />
                 </form>
-                <select
-                    value={filters.role || ''}
-                    onChange={(e) => applyFilters({ role: e.target.value })}
-                    className="w-full sm:w-auto text-sm border border-surface-200 dark:border-surface-700 dark:bg-surface-800 rounded-lg px-3 py-2 pr-8 text-surface-700 dark:text-surface-300"
-                >
-                    <option value="">All roles</option>
-                    {roles.map((role) => (
-                        <option key={role.id} value={role.name}>{role.display_name}</option>
-                    ))}
-                </select>
+                <SystemSelect
+                    value={filters.role || '__all__'}
+                    onValueChange={(role) =>
+                        applyFilters({ role: role === '__all__' ? '' : role })
+                    }
+                    aria-label="Filter by role"
+                    triggerClassName="w-full sm:w-auto text-sm rounded-lg py-2 max-w-[200px]"
+                    options={[
+                        { value: '__all__', label: 'All roles' },
+                        ...roles.map((role) => ({
+                            value: role.name,
+                            label: role.display_name,
+                        })),
+                    ]}
+                />
             </div>
 
             {/* Table */}

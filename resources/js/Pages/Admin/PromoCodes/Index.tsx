@@ -5,6 +5,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 
 interface PromoCodeRow {
@@ -115,15 +116,16 @@ export default function PromoCodesIndex({ promoCodes, courses }: Props) {
                             </div>
                             <div>
                                 <InputLabel htmlFor="type" value="Type" />
-                                <select
+                                <SystemSelect
                                     id="type"
                                     value={data.type}
-                                    onChange={(e) => setData('type', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                >
-                                    <option value="percentage">Percentage</option>
-                                    <option value="fixed">Fixed amount</option>
-                                </select>
+                                    onValueChange={(type) => setData('type', type)}
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: 'percentage', label: 'Percentage' },
+                                        { value: 'fixed', label: 'Fixed amount' },
+                                    ]}
+                                />
                             </div>
                             <div>
                                 <InputLabel htmlFor="value" value="Value" />
@@ -151,17 +153,21 @@ export default function PromoCodesIndex({ promoCodes, courses }: Props) {
                             </div>
                             <div>
                                 <InputLabel htmlFor="course_id" value="Course (optional)" />
-                                <select
+                                <SystemSelect
                                     id="course_id"
-                                    value={data.course_id || ''}
-                                    onChange={(e) => setData('course_id', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                >
-                                    <option value="">All courses</option>
-                                    {courses.map((course) => (
-                                        <option key={course.id} value={course.id}>{course.title}</option>
-                                    ))}
-                                </select>
+                                    value={data.course_id || '__all__'}
+                                    onValueChange={(v) =>
+                                        setData('course_id', v === '__all__' ? '' : v)
+                                    }
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: '__all__', label: 'All courses' },
+                                        ...courses.map((course) => ({
+                                            value: course.id,
+                                            label: course.title,
+                                        })),
+                                    ]}
+                                />
                             </div>
                             <div>
                                 <InputLabel htmlFor="max_uses" value="Max uses (optional)" />

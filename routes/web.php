@@ -193,6 +193,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/enrollments/{enrollment}', [EnrollmentController::class, 'destroy'])->name('enroll.destroy');
 
     Route::get('/dashboard/assignments', [AssignmentController::class, 'index'])->name('dashboard.assignments');
+    Route::get('/dashboard/discussions', [DiscussionController::class, 'hub'])->name('dashboard.discussions');
 
     // Learning — every route below is enrollment-gated (Plan §7.2)
     Route::middleware('enrolled')->group(function () {

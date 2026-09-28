@@ -4,6 +4,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { AuthorQuestion, Quiz } from '@/types';
 
 const QUESTION_TYPES = [
@@ -159,10 +160,9 @@ export default function QuizBuilderPanel({ quiz }: { quiz: Quiz }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <InputLabel value="Type" />
-                        <select
+                        <SystemSelect
                             value={question.type}
-                            onChange={(e) => {
-                                const type = e.target.value;
+                            onValueChange={(type) => {
                                 setQuestion({
                                     ...question,
                                     type,
@@ -171,12 +171,12 @@ export default function QuizBuilderPanel({ quiz }: { quiz: Quiz }) {
                                         : [{ text: '', is_correct: true }, { text: '', is_correct: false }],
                                 });
                             }}
-                            className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 rounded-md"
-                        >
-                            {QUESTION_TYPES.map((t) => (
-                                <option key={t.value} value={t.value}>{t.label}</option>
-                            ))}
-                        </select>
+                            triggerClassName="mt-1 w-full"
+                            options={QUESTION_TYPES.map((t) => ({
+                                value: t.value,
+                                label: t.label,
+                            }))}
+                        />
                     </div>
                     <div>
                         <InputLabel value="Points" />

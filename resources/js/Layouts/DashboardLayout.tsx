@@ -182,6 +182,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     ];
 
     const yourWork = [
+        { name: 'Discussions', href: '/dashboard/discussions', icon: MessageSquare },
         { name: 'Support', href: '/support', icon: LifeBuoy },
         { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
         { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
@@ -192,6 +193,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
         { name: 'Home', href: '/instructor', icon: Home, exact: true },
         { name: 'My courses', href: '/instructor/courses', icon: BookOpen },
         { name: 'My students', href: '/instructor/students', icon: Users },
+        { name: 'Discussions', href: '/dashboard/discussions', icon: MessageSquare },
         { name: 'Grading', href: '/tutor/grading', icon: GraduationCap },
         { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
         { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unread },
@@ -537,37 +539,50 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
 
                             {menuOpen && (
                                 <>
-                                    <div className="absolute right-0 mt-2 w-60 card p-2 shadow-lg z-50">
-                                        <div className="px-3 py-2.5 mb-1 border-b border-surface-100 dark:border-surface-800">
-                                            <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
-                                                {auth?.user?.full_name}
-                                            </p>
-                                            <p className="text-xs text-surface-500 truncate">{auth?.user?.email}</p>
+                                    <div
+                                        className="fixed inset-0 z-40"
+                                        onClick={() => setMenuOpen(false)}
+                                        aria-hidden="true"
+                                    />
+                                    <div className="absolute right-0 mt-2 w-60 system-menu z-50">
+                                        <div className="system-menu-viewport">
+                                            <div className="px-3 py-2.5 mb-0.5">
+                                                <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
+                                                    {auth?.user?.full_name}
+                                                </p>
+                                                <p className="text-xs text-surface-500 truncate">{auth?.user?.email}</p>
+                                            </div>
+                                            <div className="system-menu-separator" />
+
+                                            <Link
+                                                href="/profile"
+                                                onClick={() => setMenuOpen(false)}
+                                                className="system-menu-item !pl-3 gap-3"
+                                            >
+                                                <Settings className="w-4 h-4 shrink-0 opacity-70" />
+                                                Settings
+                                            </Link>
+
+                                            <button
+                                                type="button"
+                                                onClick={toggleTheme}
+                                                className="system-menu-item w-full !pl-3 gap-3"
+                                            >
+                                                {isDark ? <Sun className="w-4 h-4 shrink-0 opacity-70" /> : <Moon className="w-4 h-4 shrink-0 opacity-70" />}
+                                                {isDark ? 'Light mode' : 'Dark mode'}
+                                            </button>
+
+                                            <div className="system-menu-separator" />
+
+                                            <button
+                                                type="button"
+                                                onClick={() => router.post(route('logout'))}
+                                                className="system-menu-item w-full !pl-3 gap-3"
+                                            >
+                                                <LogOut className="w-4 h-4 shrink-0 opacity-70" />
+                                                Sign out
+                                            </button>
                                         </div>
-
-                                        <Link
-                                            href="/profile"
-                                            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                        >
-                                            <Settings className="w-4 h-4" />
-                                            Settings
-                                        </Link>
-
-                                        <button
-                                            onClick={toggleTheme}
-                                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                        >
-                                            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                            {isDark ? 'Light mode' : 'Dark mode'}
-                                        </button>
-
-                                        <button
-                                            onClick={() => router.post(route('logout'))}
-                                            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            Sign out
-                                        </button>
                                     </div>
                                 </>
                             )}

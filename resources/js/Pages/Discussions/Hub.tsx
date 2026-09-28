@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import { CheckCircle2, MessageSquare, Pin, Plus, Search, X } from 'lucide-react';
+import { CheckCircle2, MessageSquare, Pin, Plus, Search } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SegmentedControl from '@/Components/SegmentedControl';
 import SystemSelect from '@/Components/SystemSelect';
@@ -17,14 +17,13 @@ interface Thread {
     created_at: string;
     author: { id: string; full_name: string } | null;
     lesson: { id: string; title: string } | null;
+    course: { id: string; title: string; slug: string } | null;
 }
 
 interface Props extends PageProps {
-    course: { id: string; title: string; slug: string };
     discussions: Paginated<Thread>;
-    lessons: Array<{ id: string; title: string }>;
-    filters: { filter: string; lesson: string; search: string };
-    canModerate: boolean;
+    courses: Array<{ id: string; title: string; slug: string }>;
+    filters: { filter: string; course: string; search: string };
 }
 
 const FILTERS = [
@@ -46,31 +45,34 @@ function relative(iso: string | null): string {
     return `${Math.round(minutes / 1440)}d ago`;
 }
 
-export default function DiscussionsIndex({ course, discussions, lessons, filters, canModerate }: Props) {
+export default function DiscussionsHub({ discussions, courses, filters }: Props) {
     const [composing, setComposing] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
 
     const apply = (patch: Record<string, string>) =>
-        router.get(route('discussions.index', course.slug), { ...filters, search, ...patch }, {
+        router.get(route('dashboard.discussions'), { ...filters, search, ...patch }, {
             preserveState: true,
             replace: true,
         });
 
-    const form = useForm({ title: '', body: '', lesson_id: '' });
+    const defaultCourse = filters.course || courses[0]?.id || '';
+    const form = useForm({ title: '', body: '', lesson_id: '', course_slug: courses.find((c) => c.id === defaultCourse)?.slug ?? courses[0]?.slug ?? '' });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        form.post(route('discussions.store', course.slug), {
+        if (!form.data.course_slug) return;
+
+        form.post(route('discussions.store', form.data.course_slug), {
             onSuccess: () => {
-                form.reset();
+                form.reset('title', 'body', 'lesson_id');
                 setComposing(false);
             },
         });
     };
 
     return (
-        <DashboardLayout header={`${course.title} — discussions`}>
-            <Head title={`Discussions — ${course.title}`} />
+        <DashboardLayout header="Discussions">
+            <Head title="Discussions — Gmora STEM" />
 
             <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-6">
                 <SegmentedControl
@@ -100,24 +102,45 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
                 </form>
 
                 <SystemSelect
-                    value={filters.lesson || '__all__'}
-                    onValueChange={(lesson) => apply({ lesson: lesson === '__all__' ? '' : lesson })}
-                    aria-label="Filter by lesson"
+                    value={filters.course || '__all__'}
+                    onValueChange={(course) => apply({ course: course === '__all__' ? '' : course })}
+                    aria-label="Filter by course"
                     triggerClassName="rounded-full max-w-[220px] w-auto"
                     options={[
-                        { value: '__all__', label: 'All lessons' },
-                        ...lessons.map((lesson) => ({ value: lesson.id, label: lesson.title })),
+                        { value: '__all__', label: 'All courses' },
+                        ...courses.map((course) => ({ value: course.id, label: course.title })),
                     ]}
                 />
 
-                <button onClick={() => setComposing((open) => !open)} className="btn-primary lg:ml-auto">
+                <button
+                    type="button"
+                    onClick={() => setComposing((open) => !open)}
+                    className="btn-primary lg:ml-auto"
+                    disabled={courses.length === 0}
+                >
                     <Plus className="w-4 h-4" />
                     Ask a question
                 </button>
             </div>
 
-            {composing && (
+            {composing && courses.length > 0 && (
                 <form onSubmit={submit} className="card p-6 mb-5 space-y-4">
+                    <div>
+                        <label htmlFor="hub_course" className="block text-sm font-medium mb-1.5">
+                            Course
+                        </label>
+                        <SystemSelect
+                            id="hub_course"
+                            value={form.data.course_slug || courses[0].slug}
+                            onValueChange={(slug) => form.setData('course_slug', slug)}
+                            triggerClassName="max-w-md"
+                            options={courses.map((course) => ({
+                                value: course.slug,
+                                label: course.title,
+                            }))}
+                        />
+                    </div>
+
                     <div>
                         <label htmlFor="title" className="block text-sm font-medium mb-1.5">
                             Question
@@ -149,24 +172,6 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
                         {form.errors.body && <p className="text-xs text-red-500 mt-1">{form.errors.body}</p>}
                     </div>
 
-                    <div>
-                        <label htmlFor="lesson_id" className="block text-sm font-medium mb-1.5">
-                            Related lesson <span className="text-surface-400">(optional)</span>
-                        </label>
-                        <SystemSelect
-                            id="lesson_id"
-                            value={form.data.lesson_id || '__none__'}
-                            onValueChange={(lessonId) =>
-                                form.setData('lesson_id', lessonId === '__none__' ? '' : lessonId)
-                            }
-                            triggerClassName="max-w-md"
-                            options={[
-                                { value: '__none__', label: 'Not about a specific lesson' },
-                                ...lessons.map((lesson) => ({ value: lesson.id, label: lesson.title })),
-                            ]}
-                        />
-                    </div>
-
                     <div className="flex items-center gap-3">
                         <button type="submit" disabled={form.processing} className="btn-primary">
                             {form.processing ? 'Posting…' : 'Post question'}
@@ -182,10 +187,12 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
                 <div className="card p-12 text-center">
                     <MessageSquare className="w-8 h-8 text-surface-300 dark:text-surface-600 mx-auto mb-3" />
                     <h2 className="text-base font-semibold text-surface-900 dark:text-white mb-1.5">
-                        Nothing here yet
+                        {courses.length === 0 ? 'No courses yet' : 'Nothing here yet'}
                     </h2>
                     <p className="text-sm text-surface-500">
-                        Be the first to ask — your classmates probably have the same question.
+                        {courses.length === 0
+                            ? 'Enroll in a course to join its discussion board.'
+                            : 'Ask a question — your classmates probably have the same one.'}
                     </p>
                 </div>
             ) : (
@@ -221,6 +228,9 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
                                     <span className="text-sm font-semibold text-surface-900 dark:text-white">
                                         {thread.title}
                                     </span>
+                                    {thread.course && (
+                                        <span className="badge-muted">{thread.course.title}</span>
+                                    )}
                                     {thread.lesson && <span className="badge-muted">{thread.lesson.title}</span>}
                                 </span>
 
@@ -259,13 +269,6 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
                         />
                     ))}
                 </nav>
-            )}
-
-            {canModerate && (
-                <p className="flex items-center gap-2 text-xs text-surface-400 mt-4">
-                    <X className="w-3 h-3" />
-                    You can pin, mark solved, and remove posts on this board.
-                </p>
             )}
         </DashboardLayout>
     );

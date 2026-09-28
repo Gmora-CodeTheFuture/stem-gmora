@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { LifeBuoy, MessageSquare, Plus } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 
 interface Ticket {
@@ -90,37 +91,35 @@ export default function SupportIndex({ tickets, categories, courses, draft }: Pr
                             <label htmlFor="category" className="block text-sm font-medium mb-1.5">
                                 Category
                             </label>
-                            <select
+                            <SystemSelect
                                 id="category"
                                 value={form.data.category}
-                                onChange={(e) => form.setData('category', e.target.value)}
-                                className="input capitalize"
-                            >
-                                {categories.map((category) => (
-                                    <option key={category} value={category}>
-                                        {category}
-                                    </option>
-                                ))}
-                            </select>
+                                onValueChange={(category) => form.setData('category', category)}
+                                options={categories.map((category) => ({
+                                    value: category,
+                                    label: category.charAt(0).toUpperCase() + category.slice(1),
+                                }))}
+                            />
                         </div>
 
                         <div>
                             <label htmlFor="course_id" className="block text-sm font-medium mb-1.5">
                                 Related course <span className="text-surface-400">(optional)</span>
                             </label>
-                            <select
+                            <SystemSelect
                                 id="course_id"
-                                value={form.data.course_id}
-                                onChange={(e) => form.setData('course_id', e.target.value)}
-                                className="input"
-                            >
-                                <option value="">Not about a course</option>
-                                {courses.map((course) => (
-                                    <option key={course.id} value={course.id}>
-                                        {course.title}
-                                    </option>
-                                ))}
-                            </select>
+                                value={form.data.course_id || '__none__'}
+                                onValueChange={(courseId) =>
+                                    form.setData('course_id', courseId === '__none__' ? '' : courseId)
+                                }
+                                options={[
+                                    { value: '__none__', label: 'Not about a course' },
+                                    ...courses.map((course) => ({
+                                        value: course.id,
+                                        label: course.title,
+                                    })),
+                                ]}
+                            />
                         </div>
                     </div>
 

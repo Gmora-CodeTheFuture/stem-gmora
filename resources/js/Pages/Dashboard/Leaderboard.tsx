@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Flame, Medal, Trophy, Users } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import SegmentedControl from '@/Components/SegmentedControl';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 
 interface Row {
@@ -60,18 +61,16 @@ export default function Leaderboard({ board, rows, you, courses, selectedCourse 
                 />
 
                 {board === 'course' && courses.length > 0 && (
-                    <select
+                    <SystemSelect
                         value={selectedCourse}
-                        onChange={(e) => go({ course: e.target.value })}
+                        onValueChange={(course) => go({ course })}
                         aria-label="Choose a course"
-                        className="input rounded-full max-w-xs"
-                    >
-                        {courses.map((course) => (
-                            <option key={course.id} value={course.id}>
-                                {course.title}
-                            </option>
-                        ))}
-                    </select>
+                        triggerClassName="rounded-full max-w-xs w-auto"
+                        options={courses.map((course) => ({
+                            value: course.id,
+                            label: course.title,
+                        }))}
+                    />
                 )}
 
                 {you && (

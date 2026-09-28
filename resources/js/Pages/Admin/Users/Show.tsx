@@ -3,6 +3,7 @@ import { ArrowLeft, Award, BookOpen, Edit, Flame, Mail, Shield, Users } from 'lu
 import { FormEventHandler } from 'react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import InputLabel from '@/Components/InputLabel';
+import SystemSelect from '@/Components/SystemSelect';
 import { Certificate, Course, Enrollment, PageProps, Role, User } from '@/types';
 
 interface TargetUser extends User {
@@ -114,19 +115,24 @@ export default function UserShow({ targetUser, instructors }: Props) {
                             <form onSubmit={assignInstructor} className="space-y-3">
                                 <div>
                                     <InputLabel htmlFor="assigned_instructor_id" value="Instructor" />
-                                    <select
+                                    <SystemSelect
                                         id="assigned_instructor_id"
-                                        value={assignForm.data.assigned_instructor_id}
-                                        onChange={(e) => assignForm.setData('assigned_instructor_id', e.target.value)}
-                                        className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                    >
-                                        <option value="">Unassigned</option>
-                                        {instructors.map((instructor) => (
-                                            <option key={instructor.id} value={instructor.id}>
-                                                {instructor.full_name} ({instructor.email})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        value={assignForm.data.assigned_instructor_id || '__none__'}
+                                        onValueChange={(v) =>
+                                            assignForm.setData(
+                                                'assigned_instructor_id',
+                                                v === '__none__' ? '' : v,
+                                            )
+                                        }
+                                        triggerClassName="mt-1 w-full"
+                                        options={[
+                                            { value: '__none__', label: 'Unassigned' },
+                                            ...instructors.map((instructor) => ({
+                                                value: instructor.id,
+                                                label: `${instructor.full_name} (${instructor.email})`,
+                                            })),
+                                        ]}
+                                    />
                                 </div>
                                 {targetUser.assigned_instructor && (
                                     <p className="text-sm text-surface-500">

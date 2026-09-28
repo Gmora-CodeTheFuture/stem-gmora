@@ -5,6 +5,7 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import QuizBuilderPanel from '@/Components/Tutor/QuizBuilderPanel';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Course, Module, Lesson, Assignment, LiveSession, User } from '@/types';
 import { FormEventHandler, useState } from 'react';
 import { Plus, GripVertical, Trash2, Video, FileText, CheckCircle, AlertCircle, Clock, Globe, Upload, Pencil, HelpCircle, Radio, ClipboardCheck } from 'lucide-react';
@@ -23,6 +24,20 @@ interface Props extends PageProps {
     instructors?: Array<Pick<User, 'id' | 'full_name' | 'email'>>;
     canAssignInstructor?: boolean;
 }
+
+const LESSON_TYPE_OPTIONS = [
+    { value: 'youtube', label: 'YouTube Video' },
+    { value: 'pdf', label: 'PDF Document' },
+    { value: 'html', label: 'HTML Presentation' },
+    { value: 'quiz', label: 'Quiz' },
+    { value: 'live', label: 'Live Session' },
+];
+
+const DIFFICULTY_OPTIONS = [
+    { value: 'beginner', label: 'Beginner' },
+    { value: 'intermediate', label: 'Intermediate' },
+    { value: 'advanced', label: 'Advanced' },
+];
 
 const STATUS_STYLE: Record<string, string> = {
     draft: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-300',
@@ -400,19 +415,16 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                             {canAssignInstructor && (
                                 <div>
                                     <InputLabel htmlFor="instructor_id" value="Assigned instructor *" />
-                                    <select
+                                    <SystemSelect
                                         id="instructor_id"
                                         value={data.instructor_id}
-                                        onChange={(e) => setData('instructor_id', e.target.value)}
-                                        className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                        required
-                                    >
-                                        {instructors.map((instructor) => (
-                                            <option key={instructor.id} value={instructor.id}>
-                                                {instructor.full_name} ({instructor.email})
-                                            </option>
-                                        ))}
-                                    </select>
+                                        onValueChange={(instructor_id) => setData('instructor_id', instructor_id)}
+                                        triggerClassName="mt-1 w-full"
+                                        options={instructors.map((instructor) => ({
+                                            value: instructor.id,
+                                            label: `${instructor.full_name} (${instructor.email})`,
+                                        }))}
+                                    />
                                     <InputError className="mt-2" message={errors.instructor_id} />
                                 </div>
                             )}
@@ -424,12 +436,13 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                 </div>
                                 <div>
                                     <InputLabel htmlFor="difficulty" value="Difficulty *" />
-                                    <select id="difficulty" value={data.difficulty} onChange={(e) => setData('difficulty', e.target.value as any)}
-                                        className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm">
-                                        <option value="beginner">Beginner</option>
-                                        <option value="intermediate">Intermediate</option>
-                                        <option value="advanced">Advanced</option>
-                                    </select>
+                                    <SystemSelect
+                                        id="difficulty"
+                                        value={data.difficulty}
+                                        onValueChange={(difficulty) => setData('difficulty', difficulty as typeof data.difficulty)}
+                                        triggerClassName="mt-1 w-full"
+                                        options={DIFFICULTY_OPTIONS}
+                                    />
                                 </div>
                             </div>
 
@@ -560,13 +573,14 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 </div>
                                                 <div>
                                                     <InputLabel value="Type" />
-                                                    <select value={editingLesson.type} onChange={(e) => setEditingLesson({ ...editingLesson, type: e.target.value })} className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 rounded-md">
-                                                        <option value="youtube">YouTube Video</option>
-                                                        <option value="pdf">PDF Document</option>
-                                                        <option value="html">HTML Presentation</option>
-                                                        <option value="quiz">Quiz</option>
-                                                        <option value="live">Live Session</option>
-                                                    </select>
+                                                    <SystemSelect
+                                                        value={editingLesson.type}
+                                                        onValueChange={(type) =>
+                                                            setEditingLesson({ ...editingLesson, type })
+                                                        }
+                                                        triggerClassName="mt-1 w-full"
+                                                        options={LESSON_TYPE_OPTIONS}
+                                                    />
                                                 </div>
                                             </div>
 
@@ -730,13 +744,14 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 </div>
                                                 <div>
                                                     <InputLabel value="Type" />
-                                                    <select value={lessonData.type} onChange={(e) => setLessonData({ ...lessonData, type: e.target.value })} className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 rounded-md">
-                                                        <option value="youtube">YouTube Video</option>
-                                                        <option value="pdf">PDF Document</option>
-                                                        <option value="html">HTML Presentation</option>
-                                                        <option value="quiz">Quiz</option>
-                                                        <option value="live">Live Session</option>
-                                                    </select>
+                                                    <SystemSelect
+                                                        value={lessonData.type}
+                                                        onValueChange={(type) =>
+                                                            setLessonData({ ...lessonData, type })
+                                                        }
+                                                        triggerClassName="mt-1 w-full"
+                                                        options={LESSON_TYPE_OPTIONS}
+                                                    />
                                                 </div>
                                             </div>
                                             {lessonData.type !== 'html' && lessonData.type !== 'quiz' && lessonData.type !== 'live' && (

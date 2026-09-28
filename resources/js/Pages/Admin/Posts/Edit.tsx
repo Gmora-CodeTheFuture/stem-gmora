@@ -2,6 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { ArrowLeft, Eye, X } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 
 interface EditablePost {
@@ -139,15 +140,18 @@ export default function PostEdit({ post }: Props) {
                         <label htmlFor="status" className="block text-sm font-medium mb-1.5">
                             Status
                         </label>
-                        <select
+                        <SystemSelect
                             id="status"
                             value={form.data.status}
-                            onChange={(e) => form.setData('status', e.target.value as 'draft' | 'published')}
-                            className="input"
-                        >
-                            <option value="draft">Draft</option>
-                            <option value="published">Published</option>
-                        </select>
+                            onValueChange={(status) =>
+                                form.setData('status', status as 'draft' | 'published')
+                            }
+                            triggerClassName="w-full"
+                            options={[
+                                { value: 'draft', label: 'Draft' },
+                                { value: 'published', label: 'Published' },
+                            ]}
+                        />
                         <p className="text-xs text-surface-400 mt-1.5">
                             Drafts are invisible on the public blog.
                         </p>

@@ -4,6 +4,7 @@ import DashboardLayout from '@/Layouts/DashboardLayout';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SystemSelect from '@/Components/SystemSelect';
 import { PageProps } from '@/types';
 import { useState, FormEventHandler } from 'react';
 
@@ -90,14 +91,19 @@ export default function BadgesIndex({ badges }: Props) {
                             </div>
                             <div>
                                 <InputLabel htmlFor="type" value="Type" />
-                                <select id="type" value={data.type} onChange={(e) => setData('type', e.target.value)}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm">
-                                    <option value="achievement">Achievement</option>
-                                    <option value="course_completion">Course Completion</option>
-                                    <option value="level_up">Level Up</option>
-                                    <option value="streak">Streak</option>
-                                    <option value="special">Special</option>
-                                </select>
+                                <SystemSelect
+                                    id="type"
+                                    value={data.type}
+                                    onValueChange={(type) => setData('type', type)}
+                                    triggerClassName="mt-1 w-full"
+                                    options={[
+                                        { value: 'achievement', label: 'Achievement' },
+                                        { value: 'course_completion', label: 'Course Completion' },
+                                        { value: 'level_up', label: 'Level Up' },
+                                        { value: 'streak', label: 'Streak' },
+                                        { value: 'special', label: 'Special' },
+                                    ]}
+                                />
                             </div>
                         </div>
                         <div>
@@ -108,16 +114,18 @@ export default function BadgesIndex({ badges }: Props) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <InputLabel htmlFor="metric" value="Criteria metric" />
-                                <select
+                                <SystemSelect
                                     id="metric"
                                     value={data.criteria.metric}
-                                    onChange={(e) => setData('criteria', { ...data.criteria, metric: e.target.value })}
-                                    className="mt-1 block w-full border-surface-300 dark:border-surface-700 dark:bg-surface-900 dark:text-surface-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm"
-                                >
-                                    {METRICS.map((metric) => (
-                                        <option key={metric.value} value={metric.value}>{metric.label}</option>
-                                    ))}
-                                </select>
+                                    onValueChange={(metric) =>
+                                        setData('criteria', { ...data.criteria, metric })
+                                    }
+                                    triggerClassName="mt-1 w-full"
+                                    options={METRICS.map((metric) => ({
+                                        value: metric.value,
+                                        label: metric.label,
+                                    }))}
+                                />
                             </div>
                             <div>
                                 <InputLabel htmlFor="threshold" value="Threshold" />

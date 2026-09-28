@@ -249,4 +249,37 @@ class DiscussionTest extends TestCase
 
         $this->assertNull($thread->refresh()->solved_reply_id);
     }
+
+    public function test_dashboard_hub_lists_threads_from_enrolled_courses(): void
+    {
+        $this->thread(['title' => 'Hub visible thread']);
+
+        $this->actingAs($this->student)
+            ->get(route('dashboard.discussions'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Discussions/Hub')
+                ->has('discussions.data', 1)
+                ->where('discussions.data.0.title', 'Hub visible thread')
+                ->has('courses', 1));
+    }
+
+    public function test_dashboard_hub_hides_threads_from_courses_the_user_is_not_in(): void
+    {
+        $other = Course::factory()->create(['instructor_id' => $this->instructor->id]);
+        Discussion::create([
+            'course_id' => $other->id,
+            'user_id' => $this->instructor->id,
+            'title' => 'Private other board',
+            'body' => 'Should not appear.',
+            'last_activity_at' => now(),
+        ]);
+
+        $this->actingAs($this->student)
+            ->get(route('dashboard.discussions'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Discussions/Hub')
+                ->has('discussions.data', 0));
+    }
 }
