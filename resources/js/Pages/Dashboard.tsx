@@ -55,6 +55,48 @@ function relative(iso: string): string {
     return future ? `in ${months} month${months > 1 ? 's' : ''}` : `${months} month${months > 1 ? 's' : ''} ago`;
 }
 
+/** GitHub-style 0–4 intensity from a day's count relative to the busiest day. */
+function activityLevel(count: number, max: number): 0 | 1 | 2 | 3 | 4 {
+    if (count <= 0) {
+        return 0;
+    }
+    if (max <= 1) {
+        return 1;
+    }
+    const ratio = count / max;
+    if (ratio <= 0.25) return 1;
+    if (ratio <= 0.5) return 2;
+    if (ratio <= 0.75) return 3;
+    return 4;
+}
+
+const ACTIVITY_LEVEL_CLASS = [
+    'bg-surface-100 dark:bg-surface-800',
+    'bg-primary-200 dark:bg-primary-900',
+    'bg-primary-400 dark:bg-primary-700',
+    'bg-primary-500 dark:bg-primary-600',
+    'bg-primary-700 dark:bg-primary-400',
+] as const;
+
+type ActivityDay = { date: string; count: number; pad?: boolean };
+
+/** Pad the front of the series so columns align to weeks (Sun → Sat), like GitHub. */
+function contributionCells(activity: Array<{ date: string; count: number }>): ActivityDay[] {
+    if (activity.length === 0) {
+        return [];
+    }
+
+    const first = new Date(`${activity[0].date}T12:00:00`);
+    const weekday = first.getDay(); // 0 = Sunday
+    const pads: ActivityDay[] = Array.from({ length: weekday }, (_, i) => {
+        const d = new Date(first);
+        d.setDate(d.getDate() - (weekday - i));
+        return { date: d.toISOString().slice(0, 10), count: 0, pad: true };
+    });
+
+    return [...pads, ...activity.map((day) => ({ ...day, pad: false }))];
+}
+
 export default function Dashboard({
     auth, stats, streak, activity, enrollments, resume, upcoming, dueSoon, certificates, badges,
 }: DashboardProps) {
@@ -67,6 +109,7 @@ export default function Dashboard({
     ];
 
     const busiest = Math.max(...activity.map((day) => day.count), 1);
+    const cells = contributionCells(activity);
 
     return (
         <DashboardLayout>
@@ -137,20 +180,37 @@ export default function Dashboard({
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Last 4 weeks
                         </p>
-                        <div className="grid grid-cols-7 grid-flow-row gap-1">
-                            {activity.map((day) => (
-                                <span
-                                    key={day.date}
-                                    title={`${day.count} lesson${day.count === 1 ? '' : 's'} on ${day.date}`}
-                                    className={`w-3 h-3 rounded-sm ${
-                                        day.count === 0
-                                            ? 'bg-surface-100 dark:bg-surface-800'
-                                            : day.count >= busiest
-                                              ? 'bg-primary-600'
-                                              : 'bg-primary-300 dark:bg-primary-800'
-                                    }`}
-                                />
+                        <div
+                            className="grid grid-rows-7 grid-flow-col gap-1"
+                            role="img"
+                            aria-label="Lessons completed over the last four weeks"
+                        >
+                            {cells.map((day) => {
+                                const level = day.pad ? 0 : activityLevel(day.count, busiest);
+                                const label = day.pad
+                                    ? undefined
+                                    : `${day.count} lesson${day.count === 1 ? '' : 's'} on ${day.date}`;
+
+                                return (
+                                    <span
+                                        key={`${day.pad ? 'pad-' : ''}${day.date}`}
+                                        title={label}
+                                        aria-label={label}
+                                        className={`w-3 h-3 rounded-sm ${
+                                            day.pad
+                                                ? 'bg-transparent'
+                                                : ACTIVITY_LEVEL_CLASS[level]
+                                        }`}
+                                    />
+                                );
+                            })}
+                        </div>
+                        <div className="mt-2 flex items-center gap-1 text-[10px] text-surface-400">
+                            <span>Less</span>
+                            {ACTIVITY_LEVEL_CLASS.map((cls, level) => (
+                                <span key={level} className={`w-2.5 h-2.5 rounded-sm ${cls}`} aria-hidden />
                             ))}
+                            <span>More</span>
                         </div>
                     </div>
                 </div>

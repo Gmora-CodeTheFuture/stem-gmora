@@ -41,18 +41,22 @@ const item = (registration?: Registration) => ({
 });
 
 /**
- * The grid shows events; the detail panel — RSVP included — only fills in once
- * one is chosen. So each case opens the event first.
+ * The grid and upcoming list both show the event title; open details via the
+ * upcoming panel button so the click target is unambiguous.
  */
 async function selectEvent() {
-    await userEvent.click(screen.getByText('Robotics workshop'));
+    const upcoming = screen.getByRole('heading', { name: /upcoming/i }).closest('aside');
+    const button = upcoming?.querySelector('button');
+    expect(button).toBeTruthy();
+    await userEvent.click(button!);
 }
 
 describe('Calendar registration', () => {
-    it('starts with nothing selected', () => {
+    it('starts with upcoming list when nothing is selected', () => {
         render(<Calendar {...base} items={[item()]} />);
 
-        expect(screen.getByText(/select an event/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /upcoming/i })).toBeInTheDocument();
+        expect(screen.getAllByText('Robotics workshop').length).toBeGreaterThan(0);
     });
 
     it('offers a register button when sign-ups are open', async () => {
