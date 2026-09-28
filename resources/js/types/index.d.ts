@@ -211,27 +211,43 @@ export interface QuizAttempt {
     submitted_at?: string;
 }
 
+export interface AssignmentQuestion {
+    id: string;
+    assignment_id: string;
+    type: 'mcq' | 'short_answer' | 'normal';
+    body: string;
+    options?: Array<{ index?: number; text: string; is_correct?: boolean }>;
+    correct_answer?: unknown;
+    points: number;
+    order_index: number;
+}
+
 export interface Assignment {
     id: string;
     course_id: string;
     lesson_id?: string;
+    module_id?: string | null;
+    order_index?: number;
     title: string;
     description?: string;
     deadline_at?: string;
     rubric?: Array<{ name: string; max_marks: number; description: string }>;
     max_marks: number;
     is_published: boolean;
+    is_required?: boolean;
+    questions?: AssignmentQuestion[];
 }
 
 export interface Submission {
     id: string;
     assignment_id: string;
     user_id: string;
-    type: 'file' | 'repo' | 'link';
+    type: 'file' | 'repo' | 'link' | 'answers';
     file_url?: string;
     repo_url?: string;
     link_url?: string;
     notes?: string;
+    answers?: Record<string, unknown>;
     marks_awarded?: number;
     feedback?: string;
     status: 'pending' | 'graded' | 'returned';

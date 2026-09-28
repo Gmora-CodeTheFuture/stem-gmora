@@ -119,6 +119,7 @@ class CourseBuilderController extends Controller
             'modules.lessons.quiz.questions',
             'modules.lessons.presentation:id,lesson_id,original_filename',
             'assignments' => fn ($q) => $q->orderByDesc('created_at'),
+            'assignments.questions' => fn ($q) => $q->orderBy('order_index'),
         ]);
 
         // `content_ref` is hidden from every student-facing response; the tutor
@@ -137,6 +138,10 @@ class CourseBuilderController extends Controller
                 // Authors need the answer key while editing questions.
                 $lesson->quiz?->questions?->each->makeVisible('correct_answer');
             });
+        });
+
+        $course->assignments->each(function ($assignment) {
+            $assignment->questions->each->makeVisible('correct_answer');
         });
 
         return Inertia::render('Tutor/Courses/Edit', [

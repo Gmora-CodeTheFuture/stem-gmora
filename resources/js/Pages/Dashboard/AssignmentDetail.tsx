@@ -2,7 +2,8 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { ArrowLeft, CheckCircle2, Clock, Download, FileUp, Github, Link2, Lock } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { PageProps } from '@/types';
+import AssignmentAttemptPanel from '@/Components/Learn/AssignmentAttemptPanel';
+import { AssignmentQuestion, PageProps } from '@/types';
 
 type SubmissionType = 'file' | 'repo' | 'link';
 
@@ -16,14 +17,17 @@ interface Props extends PageProps {
         rubric?: { criteria?: Array<{ name: string; max_marks: number; description: string }> } | null;
         course?: { id: string; title: string; slug: string };
         is_overdue: boolean;
+        is_required?: boolean;
+        questions?: AssignmentQuestion[];
     };
     submission: {
         id: string;
-        type: SubmissionType;
+        type: SubmissionType | 'answers';
         file_url?: string | null;
         repo_url?: string | null;
         link_url?: string | null;
         notes?: string | null;
+        answers?: Record<string, unknown> | null;
         status: 'pending' | 'graded' | 'returned';
         marks_awarded: number | null;
         feedback: string | null;
@@ -58,6 +62,16 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+
+        if (type === 'repo') {
+            const repo = form.data.repo_url.trim();
+            if (!/^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+/i.test(repo)) {
+                form.setError('repo_url', 'Enter a valid GitHub repository URL (https://github.com/owner/repo).');
+                return;
+            }
+            form.clearErrors('repo_url');
+        }
+
         form.post(route('assignments.submit', assignment.id), { forceFormData: true });
     };
 
@@ -112,6 +126,20 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
 
                     {/* Submission form */}
                     <div className="card p-7">
+                        {(assignment.questions?.length ?? 0) > 0 ? (
+                            <AssignmentAttemptPanel
+                                assignment={{
+                                    id: assignment.id,
+                                    title: assignment.title,
+                                    description: assignment.description,
+                                    max_marks: assignment.max_marks,
+                                    is_required: assignment.is_required,
+                                    questions: assignment.questions ?? [],
+                                    submission,
+                                }}
+                            />
+                        ) : (
+                        <>
                         <h2 className="font-semibold text-surface-900 dark:text-white mb-1">
                             {submission ? 'Update your submission' : 'Submit your work'}
                         </h2>
@@ -149,11 +177,12 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
                                         <input
                                             id="file"
                                             type="file"
+                                            accept=".pdf,.zip,.png,.jpg,.jpeg,.gif,.webp,application/pdf,application/zip,image/png,image/jpeg,image/gif,image/webp"
                                             onChange={(e) => form.setData('file', e.target.files?.[0] ?? null)}
                                             className="input"
                                         />
                                         <p className="text-xs text-surface-400 mt-1.5">
-                                            PDF, ZIP, images, documents, or notebooks — up to 20 MB.
+                                            Images, PDF, or ZIP — up to 20 MB.
                                         </p>
                                         {form.errors.file && (
                                             <p className="text-sm text-red-500 mt-1.5">{form.errors.file}</p>
@@ -171,7 +200,7 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
                                             type="url"
                                             value={form.data.repo_url}
                                             onChange={(e) => form.setData('repo_url', e.target.value)}
-                                            placeholder="https://github.com/you/project"
+                                            placeholder="https://github.com/user/repo"
                                             className="input"
                                         />
                                         {form.errors.repo_url && (
@@ -216,6 +245,8 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
                                     {form.processing ? 'Submitting…' : submission ? 'Resubmit' : 'Submit'}
                                 </button>
                             </form>
+                        )}
+                        </>
                         )}
                     </div>
                 </div>

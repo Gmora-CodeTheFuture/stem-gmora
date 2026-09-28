@@ -116,36 +116,36 @@ export default function Dashboard({
             <Head title="Home — Gmora STEM" />
 
             {/* ── Welcome + at-a-glance ──────────────────────── */}
-            <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-8 mb-10">
-                <div className="flex-1">
-                    <h1 className="text-3xl font-semibold text-surface-900 dark:text-white mb-1.5">
+            <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 sm:gap-8 mb-10">
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-semibold text-surface-900 dark:text-white mb-1.5">
                         Welcome, {auth?.user?.full_name?.split(' ')[0]}
                     </h1>
-                    <p className="text-surface-500">Jump back in, or start something new.</p>
+                    <p className="text-surface-500 text-sm sm:text-base">Jump back in, or start something new.</p>
                 </div>
 
-                <div className="flex flex-wrap items-start gap-6 sm:gap-10">
-                    <div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-6 w-full sm:w-auto sm:flex sm:flex-wrap sm:items-start sm:gap-8 xl:gap-10">
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Level
                         </p>
                         <div className="flex items-baseline gap-2">
-                            <Shield className="w-5 h-5 text-indigo-500" />
+                            <Shield className="w-5 h-5 text-indigo-500 shrink-0" />
                             <span className="text-3xl font-semibold text-surface-900 dark:text-white leading-none">
                                 {stats.level}
                             </span>
                         </div>
-                        <p className="text-xs text-surface-400 mt-2">
+                        <p className="text-xs text-surface-400 mt-2 leading-snug">
                             {stats.xp} XP · {stats.xp_to_next_level} to level {stats.level + 1}
                         </p>
                     </div>
 
-                    <div>
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Learning streak
                         </p>
                         <div className="flex items-baseline gap-2">
-                            <Flame className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            <Flame className="w-5 h-5 text-primary-600 dark:text-primary-400 shrink-0" />
                             <span className="text-3xl font-semibold text-surface-900 dark:text-white leading-none">
                                 {streak.current}
                             </span>
@@ -156,7 +156,7 @@ export default function Dashboard({
                         <p className="text-xs text-surface-400 mt-2">Longest: {streak.longest} days</p>
                     </div>
 
-                    <div>
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Overall progress
                         </p>
@@ -176,7 +176,7 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                    <div className="hidden sm:block">
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
                         <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Last 4 weeks
                         </p>
@@ -205,7 +205,7 @@ export default function Dashboard({
                                 );
                             })}
                         </div>
-                        <div className="mt-2 flex items-center gap-1 text-[10px] text-surface-400">
+                        <div className="mt-2 flex items-center justify-center sm:justify-start gap-1 text-[10px] text-surface-400">
                             <span>Less</span>
                             {ACTIVITY_LEVEL_CLASS.map((cls, level) => (
                                 <span key={level} className={`w-2.5 h-2.5 rounded-sm ${cls}`} aria-hidden />

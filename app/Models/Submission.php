@@ -14,7 +14,7 @@ class Submission extends Model
 
     protected $fillable = [
         'assignment_id', 'user_id', 'type', 'file_url', 'repo_url',
-        'link_url', 'notes', 'marks_awarded', 'feedback', 'status',
+        'link_url', 'notes', 'answers', 'marks_awarded', 'feedback', 'status',
         'graded_at', 'graded_by',
     ];
 
@@ -22,6 +22,7 @@ class Submission extends Model
     {
         return [
             'graded_at' => 'datetime',
+            'answers' => 'array',
         ];
     }
 

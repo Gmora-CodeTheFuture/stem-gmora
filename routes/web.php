@@ -217,6 +217,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('discussions.reply.destroy');
 
         Route::get('/learn/{course:slug}', [LearningController::class, 'show'])->name('learn.show');
+        Route::get('/learn/{course:slug}/assignments/{assignment}', [LearningController::class, 'showAssignment'])
+            ->name('learn.assignment');
         Route::get('/learn/{course:slug}/{lesson}', [LearningController::class, 'show'])->name('learn.lesson');
 
         // Presentations — served in a new tab with sandboxed CSP
@@ -403,6 +405,10 @@ Route::middleware(['auth', 'verified', 'role:admin,instructor'])
         Route::post('/courses/{course}/assignments', [TutorAssignmentController::class, 'store'])->name('tutor.assignments.store');
         Route::patch('/assignments/{assignment}', [TutorAssignmentController::class, 'update'])->name('tutor.assignments.update');
         Route::delete('/assignments/{assignment}', [TutorAssignmentController::class, 'destroy'])->name('tutor.assignments.destroy');
+        Route::post('/assignments/{assignment}/questions', [\App\Http\Controllers\Tutor\AssignmentQuestionController::class, 'store'])
+            ->name('tutor.assignment-questions.store');
+        Route::delete('/assignment-questions/{assignmentQuestion}', [\App\Http\Controllers\Tutor\AssignmentQuestionController::class, 'destroy'])
+            ->name('tutor.assignment-questions.destroy');
 
         // Students
         Route::get('/courses/{course}/students', [StudentController::class, 'index'])->name('tutor.students.index');

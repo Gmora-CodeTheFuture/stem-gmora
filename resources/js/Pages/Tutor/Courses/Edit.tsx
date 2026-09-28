@@ -5,6 +5,7 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import QuizBuilderPanel from '@/Components/Tutor/QuizBuilderPanel';
+import AssignmentQuestionBuilder from '@/Components/Tutor/AssignmentQuestionBuilder';
 import SystemSelect from '@/Components/SystemSelect';
 import { PageProps, Course, Module, Lesson, Assignment, LiveSession, User } from '@/types';
 import { FormEventHandler, useState } from 'react';
@@ -193,27 +194,64 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         );
     };
 
-    // Assignments (course-level)
-    const blankAssignment = { title: '', description: '', deadline_at: '', max_marks: 100, is_published: true };
+    // Assignments (course-level + optional curriculum placement)
+    type AssignmentDraft = {
+        title: string;
+        description: string;
+        deadline_at: string;
+        max_marks: number;
+        is_published: boolean;
+        is_required: boolean;
+        module_id: string;
+        after_lesson_id: string;
+    };
+    const blankAssignment: AssignmentDraft = {
+        title: '',
+        description: '',
+        deadline_at: '',
+        max_marks: 100,
+        is_published: true,
+        is_required: false,
+        module_id: '__none__',
+        after_lesson_id: '__start__',
+    };
     const [assignmentForm, setAssignmentForm] = useState(blankAssignment);
-    const [editingAssignment, setEditingAssignment] = useState<(typeof blankAssignment & { id: string }) | null>(null);
+    const [editingAssignment, setEditingAssignment] = useState<(AssignmentDraft & { id: string }) | null>(null);
+
+    const lessonsForModule = (moduleId: string) =>
+        (course.modules ?? []).find((m) => m.id === moduleId)?.lessons ?? [];
+
+    const moduleOptions = [
+        { value: '__none__', label: 'Not in curriculum (course list only)' },
+        ...(course.modules ?? []).map((m) => ({ value: m.id, label: m.title })),
+    ];
+
+    const afterLessonOptions = (moduleId: string) => [
+        { value: '__start__', label: 'At start of module' },
+        ...lessonsForModule(moduleId).map((l) => ({ value: l.id, label: `After: ${l.title}` })),
+    ];
+
+    const assignmentPayload = (draft: AssignmentDraft) => ({
+        title: draft.title,
+        description: draft.description,
+        deadline_at: draft.deadline_at || null,
+        max_marks: draft.max_marks,
+        is_published: draft.is_published,
+        is_required: draft.is_required,
+        module_id: !draft.module_id || draft.module_id === '__none__' ? null : draft.module_id,
+        after_lesson_id: !draft.after_lesson_id || draft.after_lesson_id === '__start__' ? null : draft.after_lesson_id,
+    });
 
     const saveAssignment: FormEventHandler = (e) => {
         e.preventDefault();
         if (editingAssignment) {
-            router.patch(`/tutor/assignments/${editingAssignment.id}`, {
-                title: editingAssignment.title,
-                description: editingAssignment.description,
-                deadline_at: editingAssignment.deadline_at || null,
-                max_marks: editingAssignment.max_marks,
-                is_published: editingAssignment.is_published,
-            }, { preserveScroll: true, onSuccess: () => setEditingAssignment(null) });
+            router.patch(`/tutor/assignments/${editingAssignment.id}`, assignmentPayload(editingAssignment), {
+                preserveScroll: true,
+                onSuccess: () => setEditingAssignment(null),
+            });
             return;
         }
-        router.post(`/tutor/courses/${course.id}/assignments`, {
-            ...assignmentForm,
-            deadline_at: assignmentForm.deadline_at || null,
-        }, {
+        router.post(`/tutor/courses/${course.id}/assignments`, assignmentPayload(assignmentForm), {
             preserveScroll: true,
             onSuccess: () => setAssignmentForm(blankAssignment),
         });
@@ -223,6 +261,18 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         if (confirm('Delete this assignment?')) {
             router.delete(`/tutor/assignments/${id}`, { preserveScroll: true });
         }
+    };
+
+    const placementLabel = (assignment: Assignment) => {
+        if (!assignment.module_id) return 'Course list only';
+        const mod = (course.modules ?? []).find((m) => m.id === assignment.module_id);
+        const lessons = mod?.lessons ?? [];
+        const before = lessons.filter((l) => (l.order_index ?? 0) < (assignment.order_index ?? 0)).at(-1);
+        const after = lessons.find((l) => (l.order_index ?? 0) >= (assignment.order_index ?? 0));
+        if (before && after) return `${mod?.title}: between “${before.title}” and “${after.title}”`;
+        if (before) return `${mod?.title}: after “${before.title}”`;
+        if (after) return `${mod?.title}: before “${after.title}”`;
+        return mod?.title ?? 'In curriculum';
     };
 
     const saveLiveSession = (lesson: Lesson, session: Partial<LiveSession>) => {
@@ -831,7 +881,9 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
 
                 {activeTab === 'assignments' && (
                     <div className="space-y-4">
-                        <p className="text-sm text-surface-500">Assignments appear on the student calendar when they have a deadline. Students submit from Assignments in their dashboard.</p>
+                        <p className="text-sm text-surface-500">
+                            Published assignments show under Assignments for enrolled students (with a notification). Place one between lessons and mark Required so students must submit before the next lesson unlocks.
+                        </p>
 
                         {(course.assignments ?? []).map((assignment: Assignment) => (
                             <div key={assignment.id} className="card p-4">
@@ -839,7 +891,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                     <form onSubmit={saveAssignment} className="space-y-3">
                                         <TextInput className="block w-full" value={editingAssignment.title} onChange={(e) => setEditingAssignment({ ...editingAssignment, title: e.target.value })} required />
                                         <textarea className="block w-full rounded-md border-surface-300 dark:border-surface-700 dark:bg-surface-900 text-sm" rows={3} value={editingAssignment.description} onChange={(e) => setEditingAssignment({ ...editingAssignment, description: e.target.value })} />
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div>
                                                 <InputLabel value="Deadline" />
                                                 <TextInput type="datetime-local" className="mt-1 block w-full" value={editingAssignment.deadline_at} onChange={(e) => setEditingAssignment({ ...editingAssignment, deadline_at: e.target.value })} />
@@ -848,9 +900,37 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 <InputLabel value="Max marks" />
                                                 <TextInput type="number" min={1} className="mt-1 block w-full" value={editingAssignment.max_marks} onChange={(e) => setEditingAssignment({ ...editingAssignment, max_marks: Number(e.target.value) })} />
                                             </div>
-                                            <label className="flex items-end gap-2 text-sm pb-2">
+                                            <div>
+                                                <InputLabel value="Curriculum module" />
+                                                <SystemSelect
+                                                    className="mt-1"
+                                                    value={editingAssignment.module_id || '__none__'}
+                                                    onValueChange={(value) => setEditingAssignment({ ...editingAssignment, module_id: value, after_lesson_id: '__start__' })}
+                                                    options={moduleOptions}
+                                                    triggerClassName="mt-1 w-full"
+                                                />
+                                            </div>
+                                            {editingAssignment.module_id && editingAssignment.module_id !== '__none__' && (
+                                                <div>
+                                                    <InputLabel value="Place after lesson" />
+                                                    <SystemSelect
+                                                        className="mt-1"
+                                                        value={editingAssignment.after_lesson_id || '__start__'}
+                                                        onValueChange={(value) => setEditingAssignment({ ...editingAssignment, after_lesson_id: value })}
+                                                        options={afterLessonOptions(editingAssignment.module_id)}
+                                                        triggerClassName="mt-1 w-full"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-4">
+                                            <label className="flex items-center gap-2 text-sm">
                                                 <input type="checkbox" checked={editingAssignment.is_published} onChange={(e) => setEditingAssignment({ ...editingAssignment, is_published: e.target.checked })} className="rounded text-primary-600" />
-                                                Published
+                                                Visible to students
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm">
+                                                <input type="checkbox" checked={editingAssignment.is_required} onChange={(e) => setEditingAssignment({ ...editingAssignment, is_required: e.target.checked })} className="rounded text-primary-600" />
+                                                Required (blocks next lesson until submitted)
                                             </label>
                                         </div>
                                         <div className="flex gap-2">
@@ -861,29 +941,39 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                 ) : (
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <ClipboardCheck className="w-4 h-4 text-primary-500" />
                                                 <h3 className="font-semibold text-surface-900 dark:text-white">{assignment.title}</h3>
                                                 {!assignment.is_published && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Draft</span>}
+                                                {assignment.is_required && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-100 text-primary-700">Required</span>}
                                             </div>
                                             {assignment.description && <p className="text-sm text-surface-500 mt-1">{assignment.description}</p>}
                                             <p className="text-xs text-surface-400 mt-2">
                                                 {assignment.max_marks} marks
                                                 {assignment.deadline_at ? ` · due ${new Date(assignment.deadline_at).toLocaleString()}` : ' · no deadline'}
+                                                {' · '}{placementLabel(assignment)}
+                                                {(assignment.questions?.length ?? 0) > 0 ? ` · ${assignment.questions!.length} question${assignment.questions!.length === 1 ? '' : 's'}` : ''}
                                             </p>
                                         </div>
                                         <div className="flex gap-1">
                                             <button
                                                 type="button"
                                                 className="btn-icon"
-                                                onClick={() => setEditingAssignment({
-                                                    id: assignment.id,
-                                                    title: assignment.title,
-                                                    description: assignment.description ?? '',
-                                                    deadline_at: assignment.deadline_at ? assignment.deadline_at.slice(0, 16) : '',
-                                                    max_marks: assignment.max_marks,
-                                                    is_published: assignment.is_published,
-                                                })}
+                                                onClick={() => {
+                                                    const lessons = lessonsForModule(assignment.module_id ?? '');
+                                                    const after = lessons.filter((l) => (l.order_index ?? 0) < (assignment.order_index ?? 0)).at(-1);
+                                                    setEditingAssignment({
+                                                        id: assignment.id,
+                                                        title: assignment.title,
+                                                        description: assignment.description ?? '',
+                                                        deadline_at: assignment.deadline_at ? assignment.deadline_at.slice(0, 16) : '',
+                                                        max_marks: assignment.max_marks,
+                                                        is_published: assignment.is_published,
+                                                        is_required: assignment.is_required ?? false,
+                                                        module_id: assignment.module_id ?? '__none__',
+                                                        after_lesson_id: after?.id ?? '__start__',
+                                                    });
+                                                }}
                                             >
                                                 <Pencil className="w-4 h-4" />
                                             </button>
@@ -893,6 +983,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                         </div>
                                     </div>
                                 )}
+                                <AssignmentQuestionBuilder assignment={assignment} />
                             </div>
                         ))}
 
@@ -915,7 +1006,47 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                     <InputLabel value="Max marks" />
                                     <TextInput type="number" min={1} className="mt-1 block w-full" value={assignmentForm.max_marks} onChange={(e) => setAssignmentForm({ ...assignmentForm, max_marks: Number(e.target.value) })} />
                                 </div>
+                                <div>
+                                    <InputLabel value="Curriculum module" />
+                                    <SystemSelect
+                                        className="mt-1"
+                                        value={assignmentForm.module_id || '__none__'}
+                                        onValueChange={(value) => setAssignmentForm({ ...assignmentForm, module_id: value, after_lesson_id: '__start__' })}
+                                        options={moduleOptions}
+                                        triggerClassName="mt-1 w-full"
+                                    />
+                                </div>
+                                {assignmentForm.module_id && assignmentForm.module_id !== '__none__' && (
+                                    <div>
+                                        <InputLabel value="Place after lesson" />
+                                        <SystemSelect
+                                            className="mt-1"
+                                            value={assignmentForm.after_lesson_id || '__start__'}
+                                            onValueChange={(value) => setAssignmentForm({ ...assignmentForm, after_lesson_id: value })}
+                                            options={afterLessonOptions(assignmentForm.module_id)}
+                                            triggerClassName="mt-1 w-full"
+                                        />
+                                    </div>
+                                )}
                             </div>
+                            <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-200">
+                                <input
+                                    type="checkbox"
+                                    checked={assignmentForm.is_published}
+                                    onChange={(e) => setAssignmentForm({ ...assignmentForm, is_published: e.target.checked })}
+                                    className="rounded text-primary-600"
+                                />
+                                Publish for enrolled students (sends a notification)
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-200">
+                                <input
+                                    type="checkbox"
+                                    checked={assignmentForm.is_required}
+                                    onChange={(e) => setAssignmentForm({ ...assignmentForm, is_required: e.target.checked })}
+                                    className="rounded text-primary-600"
+                                />
+                                Required — students must submit before the next lesson
+                            </label>
                             <PrimaryButton>Create assignment</PrimaryButton>
                         </form>
                     </div>

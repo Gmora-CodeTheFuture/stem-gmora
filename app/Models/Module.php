@@ -34,4 +34,9 @@ class Module extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('order_index');
     }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(Assignment::class)->orderBy('order_index');
+    }
 }
