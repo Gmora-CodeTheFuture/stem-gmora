@@ -363,7 +363,7 @@
     align-items:center;
     justify-content:flex-start;
     gap:8px;
-    background:var(--course);
+    background:#111;
     color:#fff;
     border:none;
     border-radius:8px;
@@ -383,7 +383,7 @@
     display: flex;
     justify-content: flex-end;
   }
-  .run-btn:hover{ background:var(--course-hover); }
+  .run-btn:hover{ background:#000; }
   .run-btn:active{ transform:scale(.99); }
   .run-btn:disabled{ opacity:.5; cursor:default; }
 
