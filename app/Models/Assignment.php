@@ -16,13 +16,14 @@ class Assignment extends Model
 
     protected $fillable = [
         'course_id', 'lesson_id', 'module_id', 'order_index', 'title', 'description',
-        'deadline_at', 'rubric', 'max_marks', 'is_published', 'is_required',
+        'deadline_at', 'rubric', 'max_marks', 'is_published', 'publish_at', 'is_required',
     ];
 
     protected function casts(): array
     {
         return [
             'deadline_at' => 'datetime',
+            'publish_at' => 'datetime',
             'rubric' => 'array',
             'is_published' => 'boolean',
             'is_required' => 'boolean',
@@ -59,5 +60,50 @@ class Assignment extends Model
     public function isInCurriculum(): bool
     {
         return $this->module_id !== null;
+    }
+
+    /**
+     * Ready to publish or schedule: title, marks, and at least one complete question.
+     */
+    public function isReadyToPublish(): bool
+    {
+        if (! filled($this->title) || (int) $this->max_marks < 1) {
+            return false;
+        }
+
+        $this->loadMissing('questions');
+
+        if ($this->questions->isEmpty()) {
+            return false;
+        }
+
+        return $this->questions->every(fn (AssignmentQuestion $q) => $q->isComplete());
+    }
+
+    public function readinessErrors(): array
+    {
+        $errors = [];
+
+        if (! filled($this->title)) {
+            $errors[] = 'Title is required.';
+        }
+
+        if ((int) $this->max_marks < 1) {
+            $errors[] = 'Max marks must be at least 1.';
+        }
+
+        $this->loadMissing('questions');
+
+        if ($this->questions->isEmpty()) {
+            $errors[] = 'Add at least one question before publishing.';
+        } else {
+            foreach ($this->questions as $index => $question) {
+                if (! $question->isComplete()) {
+                    $errors[] = 'Question '.($index + 1).' is incomplete.';
+                }
+            }
+        }
+
+        return $errors;
     }
 }

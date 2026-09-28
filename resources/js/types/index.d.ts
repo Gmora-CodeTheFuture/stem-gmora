@@ -231,6 +231,7 @@ export interface Assignment {
     title: string;
     description?: string;
     deadline_at?: string;
+    publish_at?: string | null;
     rubric?: Array<{ name: string; max_marks: number; description: string }>;
     max_marks: number;
     is_published: boolean;

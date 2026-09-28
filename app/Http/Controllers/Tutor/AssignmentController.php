@@ -17,10 +17,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
- * Course-level assignment authoring with optional curriculum placement
- * between lessons and nested question banks.
+ * Course-level assignment authoring. Creates are always drafts; publish or
+ * schedule only after questions are complete.
  */
 class AssignmentController extends Controller
 {
@@ -31,15 +32,19 @@ class AssignmentController extends Controller
         $this->authorizeTutor($request, $course);
 
         $validated = $this->validateAssignment($request, $course);
-        $validated['is_published'] = $request->boolean('is_published', true);
+        // Never publish on create — questions must be added first.
+        $validated['is_published'] = false;
+        $validated['publish_at'] = null;
         $validated['is_required'] = $request->boolean('is_required', false);
 
         $moduleId = $validated['module_id'] ?? null;
         $afterLessonId = $validated['after_lesson_id'] ?? null;
-        unset($validated['module_id'], $validated['after_lesson_id']);
+        unset($validated['module_id'], $validated['after_lesson_id'], $validated['is_published']);
 
         $assignment = $course->assignments()->create([
             ...$validated,
+            'is_published' => false,
+            'publish_at' => null,
             'module_id' => null,
             'order_index' => 0,
         ]);
@@ -52,17 +57,9 @@ class AssignmentController extends Controller
             $this->curriculum->placeAfterLesson($assignment, $module, $afterLesson);
         }
 
-        $assignment->load('course:id,title,slug');
-
-        if ($assignment->is_published) {
-            $this->notifyEnrolledStudents($assignment, $request->user()->id);
-        }
-
         return Redirect::back()->with(
             'success',
-            $assignment->is_published
-                ? "Assignment \"{$assignment->title}\" published — enrolled students have been notified."
-                : "Assignment \"{$assignment->title}\" saved as a draft."
+            "Assignment \"{$assignment->title}\" saved as a draft — add questions, then publish or schedule."
         );
     }
 
@@ -70,10 +67,10 @@ class AssignmentController extends Controller
     {
         $this->authorizeTutor($request, $assignment->course);
 
-        $wasPublished = $assignment->is_published;
         $validated = $this->validateAssignment($request, $assignment->course);
-        $validated['is_published'] = $request->boolean('is_published', $wasPublished);
         $validated['is_required'] = $request->boolean('is_required', $assignment->is_required);
+        // Publish state is managed via publish / schedule / unpublish endpoints.
+        unset($validated['is_published'], $validated['publish_at']);
 
         $moduleId = array_key_exists('module_id', $validated) ? $validated['module_id'] : $assignment->module_id;
         $afterLessonId = $validated['after_lesson_id'] ?? null;
@@ -95,13 +92,72 @@ class AssignmentController extends Controller
             }
         }
 
-        if ($assignment->is_published && ! $wasPublished) {
-            $this->notifyEnrolledStudents($assignment, $request->user()->id);
-        } elseif ($assignment->is_published) {
+        if ($assignment->is_published) {
             $this->forgetDashboardCaches($assignment);
         }
 
         return Redirect::back()->with('success', 'Assignment updated.');
+    }
+
+    public function publish(Request $request, Assignment $assignment): RedirectResponse
+    {
+        $this->authorizeTutor($request, $assignment->course);
+        $this->assertReady($assignment);
+
+        $wasPublished = $assignment->is_published;
+
+        $assignment->forceFill([
+            'is_published' => true,
+            'publish_at' => null,
+        ])->save();
+
+        $assignment->load('course:id,title,slug');
+
+        if (! $wasPublished) {
+            $this->notifyEnrolledStudents($assignment, $request->user()->id);
+        } else {
+            $this->forgetDashboardCaches($assignment);
+        }
+
+        return Redirect::back()->with(
+            'success',
+            "Assignment \"{$assignment->title}\" published — enrolled students have been notified."
+        );
+    }
+
+    public function schedule(Request $request, Assignment $assignment): RedirectResponse
+    {
+        $this->authorizeTutor($request, $assignment->course);
+        $this->assertReady($assignment);
+
+        $validated = $request->validate([
+            'publish_at' => ['required', 'date', 'after:now'],
+        ]);
+
+        $assignment->forceFill([
+            'is_published' => false,
+            'publish_at' => $validated['publish_at'],
+        ])->save();
+
+        return Redirect::back()->with(
+            'success',
+            "Assignment \"{$assignment->title}\" scheduled for ".
+            $assignment->publish_at->timezone(config('app.timezone'))->format('M j, Y g:i A').'.'
+        );
+    }
+
+    public function unpublish(Request $request, Assignment $assignment): RedirectResponse
+    {
+        $this->authorizeTutor($request, $assignment->course);
+
+        $assignment->forceFill([
+            'is_published' => false,
+            'publish_at' => null,
+        ])->save();
+
+        $this->forgetDashboardCaches($assignment);
+
+        return Redirect::back()->with('success', "Assignment \"{$assignment->title}\" unpublished.");
     }
 
     public function destroy(Request $request, Assignment $assignment): RedirectResponse
@@ -115,6 +171,17 @@ class AssignmentController extends Controller
         $this->forgetDashboardCachesForCourse($courseId);
 
         return Redirect::back()->with('success', "Assignment \"{$title}\" deleted.");
+    }
+
+    private function assertReady(Assignment $assignment): void
+    {
+        $errors = $assignment->readinessErrors();
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages([
+                'questions' => $errors,
+            ]);
+        }
     }
 
     /** @return array<string, mixed> */

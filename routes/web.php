@@ -404,6 +404,9 @@ Route::middleware(['auth', 'verified', 'role:admin,instructor'])
         // Assignments
         Route::post('/courses/{course}/assignments', [TutorAssignmentController::class, 'store'])->name('tutor.assignments.store');
         Route::patch('/assignments/{assignment}', [TutorAssignmentController::class, 'update'])->name('tutor.assignments.update');
+        Route::post('/assignments/{assignment}/publish', [TutorAssignmentController::class, 'publish'])->name('tutor.assignments.publish');
+        Route::post('/assignments/{assignment}/schedule', [TutorAssignmentController::class, 'schedule'])->name('tutor.assignments.schedule');
+        Route::post('/assignments/{assignment}/unpublish', [TutorAssignmentController::class, 'unpublish'])->name('tutor.assignments.unpublish');
         Route::delete('/assignments/{assignment}', [TutorAssignmentController::class, 'destroy'])->name('tutor.assignments.destroy');
         Route::post('/assignments/{assignment}/questions', [\App\Http\Controllers\Tutor\AssignmentQuestionController::class, 'store'])
             ->name('tutor.assignment-questions.store');

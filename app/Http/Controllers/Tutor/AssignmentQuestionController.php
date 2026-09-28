@@ -59,7 +59,10 @@ class AssignmentQuestionController extends Controller
         $type = $validated['type'];
 
         if ($type === AssignmentQuestion::TYPE_MCQ) {
-            $options = $validated['options'] ?? [];
+            $options = collect($validated['options'] ?? [])
+                ->filter(fn ($o) => filled(trim((string) ($o['text'] ?? ''))))
+                ->values()
+                ->all();
             abort_if(count($options) < 2, 422, 'Multiple choice needs at least two options.');
 
             $correct = [];
@@ -73,7 +76,7 @@ class AssignmentQuestionController extends Controller
 
             $validated['correct_answer'] = array_values($correct);
             $validated['options'] = array_map(
-                fn ($o) => ['text' => $o['text'], 'is_correct' => ! empty($o['is_correct'])],
+                fn ($o) => ['text' => trim($o['text']), 'is_correct' => ! empty($o['is_correct'])],
                 $options,
             );
         }

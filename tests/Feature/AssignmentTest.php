@@ -245,31 +245,22 @@ class AssignmentTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_creating_a_published_assignment_notifies_enrolled_students(): void
+    public function test_creating_assignment_always_saves_as_draft(): void
     {
         $this->actingAs($this->instructor)->post(route('tutor.assignments.store', $this->course), [
             'title' => 'Mock Test 1',
             'description' => 'give python code for hello world',
             'max_marks' => 100,
-            'is_published' => true,
+            'is_published' => true, // client cannot force publish on create
         ])->assertRedirect();
 
         $assignment = Assignment::where('title', 'Mock Test 1')->firstOrFail();
-        $this->assertTrue($assignment->is_published);
-
-        $notification = $this->student->fresh()->notifications()->first();
-        $this->assertNotNull($notification);
-        $this->assertSame(\App\Notifications\AssignmentPublished::class, $notification->type);
-        $this->assertStringContainsString('Mock Test 1', $notification->data['body']);
-
-        $this->actingAs($this->student)
-            ->get(route('dashboard.assignments'))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->has('assignments', 2));
+        $this->assertFalse($assignment->is_published);
+        $this->assertNull($assignment->publish_at);
+        $this->assertSame(0, $this->student->fresh()->notifications()->count());
     }
 
-    public function test_publishing_a_draft_notifies_enrolled_students(): void
+    public function test_publishing_requires_complete_questions_then_notifies(): void
     {
         $draft = Assignment::create([
             'course_id' => $this->course->id,
@@ -278,11 +269,33 @@ class AssignmentTest extends TestCase
             'is_published' => false,
         ]);
 
-        $this->actingAs($this->instructor)->patch(route('tutor.assignments.update', $draft), [
-            'title' => 'Draft then publish',
-            'max_marks' => 40,
-            'is_published' => true,
+        $this->actingAs($this->instructor)
+            ->post(route('tutor.assignments.publish', $draft))
+            ->assertSessionHasErrors('questions');
+
+        $this->actingAs($this->instructor)->post(route('tutor.assignment-questions.store', $draft), [
+            'type' => 'mcq',
+            'body' => 'Pick one',
+            'points' => 1,
+            'options' => [
+                ['text' => 'A', 'is_correct' => false],
+                ['text' => 'B', 'is_correct' => false],
+            ],
+        ])->assertStatus(422);
+
+        $this->actingAs($this->instructor)->post(route('tutor.assignment-questions.store', $draft), [
+            'type' => 'mcq',
+            'body' => 'Pick one',
+            'points' => 1,
+            'options' => [
+                ['text' => 'A', 'is_correct' => false],
+                ['text' => 'B', 'is_correct' => true],
+            ],
         ])->assertRedirect();
+
+        $this->actingAs($this->instructor)
+            ->post(route('tutor.assignments.publish', $draft))
+            ->assertRedirect();
 
         $this->assertTrue($draft->fresh()->is_published);
         $this->assertSame(1, $this->student->fresh()->notifications()->count());
@@ -290,6 +303,43 @@ class AssignmentTest extends TestCase
             \App\Notifications\AssignmentPublished::class,
             $this->student->fresh()->notifications()->first()->type,
         );
+    }
+
+    public function test_schedule_keeps_unpublished_until_command_runs(): void
+    {
+        $draft = Assignment::create([
+            'course_id' => $this->course->id,
+            'title' => 'Scheduled quiz',
+            'max_marks' => 10,
+            'is_published' => false,
+        ]);
+
+        $draft->questions()->create([
+            'type' => 'normal',
+            'body' => 'Explain briefly',
+            'options' => [],
+            'correct_answer' => null,
+            'points' => 2,
+            'order_index' => 0,
+        ]);
+
+        $this->actingAs($this->instructor)->post(route('tutor.assignments.schedule', $draft), [
+            'publish_at' => now()->addHour()->toDateTimeString(),
+        ])->assertRedirect();
+
+        $draft->refresh();
+        $this->assertFalse($draft->is_published);
+        $this->assertNotNull($draft->publish_at);
+        $this->assertSame(0, $this->student->fresh()->notifications()->count());
+
+        // Pretend the scheduled time has arrived.
+        $draft->forceFill(['publish_at' => now()->subMinute()])->save();
+
+        $this->artisan('assignments:publish-scheduled')->assertSuccessful();
+
+        $this->assertTrue($draft->fresh()->is_published);
+        $this->assertNull($draft->fresh()->publish_at);
+        $this->assertSame(1, $this->student->fresh()->notifications()->count());
     }
 
     public function test_required_assignment_blocks_next_lesson_until_submitted(): void

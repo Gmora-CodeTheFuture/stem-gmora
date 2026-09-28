@@ -44,6 +44,40 @@ class AssignmentQuestion extends Model
         return in_array($this->type, [self::TYPE_MCQ, self::TYPE_SHORT_ANSWER], true);
     }
 
+    /** True when all fields required for this question type are present. */
+    public function isComplete(): bool
+    {
+        if (! filled($this->body) || (int) $this->points < 1) {
+            return false;
+        }
+
+        if (! in_array($this->type, [self::TYPE_MCQ, self::TYPE_SHORT_ANSWER, self::TYPE_NORMAL], true)) {
+            return false;
+        }
+
+        if ($this->type === self::TYPE_MCQ) {
+            $options = collect($this->options ?? [])
+                ->filter(fn ($o) => filled(is_array($o) ? ($o['text'] ?? '') : $o));
+
+            if ($options->count() < 2) {
+                return false;
+            }
+
+            $correct = collect($this->correct_answer ?? [])->filter(fn ($v) => $v !== null && $v !== '');
+
+            return $correct->isNotEmpty();
+        }
+
+        if ($this->type === self::TYPE_SHORT_ANSWER) {
+            return collect($this->correct_answer ?? [])
+                ->filter(fn ($v) => filled(trim((string) $v)))
+                ->isNotEmpty();
+        }
+
+        // normal / open text
+        return true;
+    }
+
     /**
      * Public-safe projection. Strips the answer key and MCQ is_correct flags.
      *

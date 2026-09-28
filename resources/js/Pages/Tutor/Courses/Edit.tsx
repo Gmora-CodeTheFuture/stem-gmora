@@ -200,7 +200,6 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         description: string;
         deadline_at: string;
         max_marks: number;
-        is_published: boolean;
         is_required: boolean;
         module_id: string;
         after_lesson_id: string;
@@ -210,13 +209,14 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         description: '',
         deadline_at: '',
         max_marks: 100,
-        is_published: true,
         is_required: false,
         module_id: '__none__',
         after_lesson_id: '__start__',
     };
     const [assignmentForm, setAssignmentForm] = useState(blankAssignment);
     const [editingAssignment, setEditingAssignment] = useState<(AssignmentDraft & { id: string }) | null>(null);
+    const [scheduleForId, setScheduleForId] = useState<string | null>(null);
+    const [scheduleAt, setScheduleAt] = useState('');
 
     const lessonsForModule = (moduleId: string) =>
         (course.modules ?? []).find((m) => m.id === moduleId)?.lessons ?? [];
@@ -236,11 +236,13 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         description: draft.description,
         deadline_at: draft.deadline_at || null,
         max_marks: draft.max_marks,
-        is_published: draft.is_published,
         is_required: draft.is_required,
         module_id: !draft.module_id || draft.module_id === '__none__' ? null : draft.module_id,
         after_lesson_id: !draft.after_lesson_id || draft.after_lesson_id === '__start__' ? null : draft.after_lesson_id,
     });
+
+    const assignmentReady = (assignment: Assignment) =>
+        (assignment.questions?.length ?? 0) > 0 && Boolean(assignment.title) && assignment.max_marks >= 1;
 
     const saveAssignment: FormEventHandler = (e) => {
         e.preventDefault();
@@ -261,6 +263,29 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         if (confirm('Delete this assignment?')) {
             router.delete(`/tutor/assignments/${id}`, { preserveScroll: true });
         }
+    };
+
+    const publishAssignment = (id: string) => {
+        router.post(`/tutor/assignments/${id}/publish`, {}, { preserveScroll: true });
+    };
+
+    const unpublishAssignment = (id: string) => {
+        router.post(`/tutor/assignments/${id}/unpublish`, {}, { preserveScroll: true });
+    };
+
+    const scheduleAssignment = (id: string) => {
+        if (!scheduleAt) return;
+        router.post(
+            `/tutor/assignments/${id}/schedule`,
+            { publish_at: scheduleAt },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setScheduleForId(null);
+                    setScheduleAt('');
+                },
+            },
+        );
     };
 
     const placementLabel = (assignment: Assignment) => {
@@ -882,7 +907,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                 {activeTab === 'assignments' && (
                     <div className="space-y-4">
                         <p className="text-sm text-surface-500">
-                            Published assignments show under Assignments for enrolled students (with a notification). Place one between lessons and mark Required so students must submit before the next lesson unlocks.
+                            New assignments are saved as drafts. Add complete questions, then publish now or schedule a go-live time. Students only see published assignments.
                         </p>
 
                         {(course.assignments ?? []).map((assignment: Assignment) => (
@@ -923,28 +948,29 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex flex-wrap gap-4">
-                                            <label className="flex items-center gap-2 text-sm">
-                                                <input type="checkbox" checked={editingAssignment.is_published} onChange={(e) => setEditingAssignment({ ...editingAssignment, is_published: e.target.checked })} className="rounded text-primary-600" />
-                                                Visible to students
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm">
-                                                <input type="checkbox" checked={editingAssignment.is_required} onChange={(e) => setEditingAssignment({ ...editingAssignment, is_required: e.target.checked })} className="rounded text-primary-600" />
-                                                Required (blocks next lesson until submitted)
-                                            </label>
-                                        </div>
+                                        <label className="flex items-center gap-2 text-sm">
+                                            <input type="checkbox" checked={editingAssignment.is_required} onChange={(e) => setEditingAssignment({ ...editingAssignment, is_required: e.target.checked })} className="rounded text-primary-600" />
+                                            Required (blocks next lesson until submitted)
+                                        </label>
                                         <div className="flex gap-2">
                                             <button type="button" onClick={() => setEditingAssignment(null)} className="text-sm text-surface-600">Cancel</button>
                                             <PrimaryButton>Save</PrimaryButton>
                                         </div>
                                     </form>
                                 ) : (
+                                    <>
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <ClipboardCheck className="w-4 h-4 text-primary-500" />
                                                 <h3 className="font-semibold text-surface-900 dark:text-white">{assignment.title}</h3>
-                                                {!assignment.is_published && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Draft</span>}
+                                                {assignment.is_published ? (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">Published</span>
+                                                ) : assignment.publish_at ? (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700">Scheduled</span>
+                                                ) : (
+                                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Draft</span>
+                                                )}
                                                 {assignment.is_required && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-100 text-primary-700">Required</span>}
                                             </div>
                                             {assignment.description && <p className="text-sm text-surface-500 mt-1">{assignment.description}</p>}
@@ -952,7 +978,10 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 {assignment.max_marks} marks
                                                 {assignment.deadline_at ? ` · due ${new Date(assignment.deadline_at).toLocaleString()}` : ' · no deadline'}
                                                 {' · '}{placementLabel(assignment)}
-                                                {(assignment.questions?.length ?? 0) > 0 ? ` · ${assignment.questions!.length} question${assignment.questions!.length === 1 ? '' : 's'}` : ''}
+                                                {(assignment.questions?.length ?? 0) > 0 ? ` · ${assignment.questions!.length} question${assignment.questions!.length === 1 ? '' : 's'}` : ' · no questions yet'}
+                                                {assignment.publish_at && !assignment.is_published
+                                                    ? ` · goes live ${new Date(assignment.publish_at).toLocaleString()}`
+                                                    : ''}
                                             </p>
                                         </div>
                                         <div className="flex gap-1">
@@ -968,7 +997,6 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                         description: assignment.description ?? '',
                                                         deadline_at: assignment.deadline_at ? assignment.deadline_at.slice(0, 16) : '',
                                                         max_marks: assignment.max_marks,
-                                                        is_published: assignment.is_published,
                                                         is_required: assignment.is_required ?? false,
                                                         module_id: assignment.module_id ?? '__none__',
                                                         after_lesson_id: after?.id ?? '__start__',
@@ -982,6 +1010,71 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                             </button>
                                         </div>
                                     </div>
+
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                        {assignment.is_published ? (
+                                            <button
+                                                type="button"
+                                                className="text-xs font-medium px-2.5 py-1.5 rounded-lg text-surface-600 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                                onClick={() => unpublishAssignment(assignment.id)}
+                                            >
+                                                Unpublish
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    disabled={!assignmentReady(assignment)}
+                                                    title={assignmentReady(assignment) ? 'Publish for enrolled students' : 'Add at least one question first'}
+                                                    className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
+                                                        assignmentReady(assignment)
+                                                            ? 'bg-primary-600 text-white hover:bg-primary-700'
+                                                            : 'bg-surface-100 text-surface-400 cursor-not-allowed'
+                                                    }`}
+                                                    onClick={() => publishAssignment(assignment.id)}
+                                                >
+                                                    Publish now
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={!assignmentReady(assignment)}
+                                                    className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors ${
+                                                        assignmentReady(assignment)
+                                                            ? 'text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
+                                                            : 'text-surface-400 cursor-not-allowed'
+                                                    }`}
+                                                    onClick={() => {
+                                                        setScheduleForId(assignment.id);
+                                                        setScheduleAt(assignment.publish_at ? assignment.publish_at.slice(0, 16) : '');
+                                                    }}
+                                                >
+                                                    Schedule
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {scheduleForId === assignment.id && (
+                                        <div className="mt-3 flex flex-wrap items-end gap-2 rounded-lg border border-surface-200 dark:border-surface-700 p-3">
+                                            <div className="flex-1 min-w-[12rem]">
+                                                <InputLabel value="Publish at" />
+                                                <TextInput
+                                                    type="datetime-local"
+                                                    className="mt-1 block w-full"
+                                                    value={scheduleAt}
+                                                    onChange={(e) => setScheduleAt(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <button type="button" className="btn-primary text-sm h-10" onClick={() => scheduleAssignment(assignment.id)} disabled={!scheduleAt}>
+                                                Save schedule
+                                            </button>
+                                            <button type="button" className="text-sm text-surface-600 h-10 px-2" onClick={() => setScheduleForId(null)}>
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    )}
+                                    </>
                                 )}
                                 <AssignmentQuestionBuilder assignment={assignment} />
                             </div>
@@ -989,6 +1082,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
 
                         <form onSubmit={saveAssignment} className="card p-5 space-y-4 border-2 border-dashed border-surface-300 dark:border-surface-700">
                             <h3 className="font-semibold flex items-center gap-2"><Plus className="w-4 h-4" /> New assignment</h3>
+                            <p className="text-xs text-surface-500">Creates a draft. Add questions after saving, then publish or schedule.</p>
                             <div>
                                 <InputLabel value="Title" />
                                 <TextInput className="mt-1 block w-full" value={assignmentForm.title} onChange={(e) => setAssignmentForm({ ...assignmentForm, title: e.target.value })} required />
@@ -1032,22 +1126,13 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                             <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-200">
                                 <input
                                     type="checkbox"
-                                    checked={assignmentForm.is_published}
-                                    onChange={(e) => setAssignmentForm({ ...assignmentForm, is_published: e.target.checked })}
-                                    className="rounded text-primary-600"
-                                />
-                                Publish for enrolled students (sends a notification)
-                            </label>
-                            <label className="flex items-center gap-2 text-sm text-surface-700 dark:text-surface-200">
-                                <input
-                                    type="checkbox"
                                     checked={assignmentForm.is_required}
                                     onChange={(e) => setAssignmentForm({ ...assignmentForm, is_required: e.target.checked })}
                                     className="rounded text-primary-600"
                                 />
                                 Required — students must submit before the next lesson
                             </label>
-                            <PrimaryButton>Create assignment</PrimaryButton>
+                            <PrimaryButton>Save as draft</PrimaryButton>
                         </form>
                     </div>
                 )}
@@ -1055,6 +1140,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         </DashboardLayout>
     );
 }
+
 
 function LiveSessionFields({
     lesson,

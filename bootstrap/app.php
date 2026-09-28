@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         // [v2] Purge the expired-token trail once past its retention window.
         $schedule->job(new PurgeExpiredVideoTokens)->hourly();
+        $schedule->command('assignments:publish-scheduled')->everyMinute();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
