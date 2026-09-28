@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Presentation;
 use App\Services\PresentationService;
@@ -112,7 +113,9 @@ class PresentationController extends Controller
         // If this is the HTML entry file, rewrite relative asset paths so they
         // route through our asset controller instead of hitting 404s.
         if ($mime === 'text/html') {
+            $presentation->loadMissing('lesson.module.course:id,color,category');
             $content = $this->rewriteAssetPaths($content, $presentation->lesson_id);
+            $content = $this->injectCourseColor($content, $presentation->lesson?->module?->course);
         }
 
         return response($content, 200, [
@@ -120,10 +123,52 @@ class PresentationController extends Controller
             'Content-Disposition' => 'inline',
             // Sandbox: allows scripts inside the HTML but isolates it from
             // the main app origin — no cookie/localStorage/parent access.
-            'Content-Security-Policy' => "sandbox allow-scripts allow-same-origin; default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:; font-src * data:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'",
+            'Content-Security-Policy' => "sandbox allow-scripts allow-same-origin allow-modals allow-forms; default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:; font-src * data:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'; worker-src blob: data: https:; connect-src * data: blob:",
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'no-store',
         ]);
+    }
+
+    /**
+     * Inject the course brand colour so deck controls (Next, fullscreen, Run)
+     * match the course rather than a hardcoded blue.
+     */
+    private function injectCourseColor(string $html, ?Course $course): string
+    {
+        $color = $this->resolveCourseColor($course);
+        $style = ':root{--course:'.$color.';--course-hover:color-mix(in srgb, var(--course) 82%, #000);--course-soft:color-mix(in srgb, var(--course) 12%, #fff);}';
+
+        if (stripos($html, '<head>') !== false) {
+            return preg_replace(
+                '/<head>/i',
+                '<head><style id="gmora-course-color">'.$style.'</style>',
+                $html,
+                1,
+            ) ?? $html;
+        }
+
+        return $html;
+    }
+
+    /** @return non-empty-string */
+    private function resolveCourseColor(?Course $course): string
+    {
+        $candidate = $course?->color;
+
+        if (is_string($candidate) && preg_match('/^#[0-9A-Fa-f]{6}$/', $candidate)) {
+            return strtolower($candidate);
+        }
+
+        // Category fallbacks when a course has no explicit colour.
+        return match ($course?->category) {
+            'Programming' => '#b9790a',
+            'Artificial Intelligence' => '#7c3aed',
+            'Robotics' => '#0f766e',
+            'Mathematics' => '#1d4ed8',
+            'Electronics' => '#c2410c',
+            'Cybersecurity' => '#be123c',
+            default => '#2563eb',
+        };
     }
 
     /**

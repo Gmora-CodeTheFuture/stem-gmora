@@ -16,7 +16,7 @@ class Course extends Model
 
     protected $fillable = [
         'instructor_id', 'title', 'slug', 'subtitle', 'description',
-        'category', 'difficulty', 'language', 'price', 'currency',
+        'category', 'color', 'difficulty', 'language', 'price', 'currency',
         'thumbnail_url', 'preview_video_url', 'status',
         'duration_minutes', 'total_lessons', 'total_enrollments', 'average_rating',
         'review_notes', 'reviewed_at', 'reviewed_by', 'submitted_for_review_at',

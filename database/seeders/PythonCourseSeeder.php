@@ -50,6 +50,7 @@ class PythonCourseSeeder extends Seeder
                 'subtitle' => 'Learn Python from first principles — syntax, data structures, OOP, and real-world tools.',
                 'description' => "A hands-on beginner course for secondary and early-university students.\n\nWork through interactive HTML lessons covering core Python, collections, control flow, functions, object-oriented programming, files, and more. Many lessons include in-browser code you can run as you learn.",
                 'category' => 'Programming',
+                'color' => '#b9790a',
                 'difficulty' => 'beginner',
                 'language' => 'en',
                 'price' => 0,

@@ -40,6 +40,8 @@ export interface Course {
     subtitle?: string;
     description?: string;
     category: string;
+    /** Brand accent for the course (hex, e.g. #b9790a). */
+    color?: string | null;
     difficulty: 'beginner' | 'intermediate' | 'advanced';
     language: string;
     price: number;

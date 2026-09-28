@@ -382,38 +382,147 @@
   }
 
   /* ---------- Pyodide Run buttons ---------- */
+  const PYODIDE_INDEX = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/';
   let pyodideReadyPromise = null;
-  if (typeof loadPyodide !== 'undefined') {
+
+  function ensurePyodide() {
+    if (pyodideReadyPromise) return pyodideReadyPromise;
+    if (typeof loadPyodide === 'undefined') {
+      return Promise.reject(new Error('Python engine failed to load. Check your network and try again.'));
+    }
+    // indexURL must be absolute — presentations inject a <base href> that would
+    // otherwise break relative package fetches from the CDN.
     pyodideReadyPromise = loadPyodide({
-      stdin: () => prompt('Python Input:') || '',
+      indexURL: PYODIDE_INDEX,
+      stdin: () => prompt('Python input:') || '',
     });
+    return pyodideReadyPromise;
   }
 
+  /** Strip shared leading indentation from HTML-pretty-printed code samples. */
+  function dedentCode(code) {
+    const lines = String(code).replace(/\t/g, '  ').replace(/\r/g, '').split('\n');
+    while (lines.length && lines[0].trim() === '') lines.shift();
+    while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+
+    const indents = lines
+      .filter((line) => line.trim().length > 0)
+      .map((line) => {
+        const match = line.match(/^ */);
+        return match ? match[0].length : 0;
+      });
+    if (!indents.length) return '';
+
+    let min = Math.min(...indents);
+    // Pretty-printed HTML often leaves the first line flush-left and indents the rest.
+    if (min === 0 && indents.some((n) => n > 0)) {
+      const positive = indents.filter((n) => n > 0);
+      min = Math.min(...positive);
+      return lines
+        .map((line) => {
+          if (!line.trim()) return '';
+          const cur = (line.match(/^ */) || [''])[0].length;
+          return cur >= min ? line.slice(min) : line;
+        })
+        .join('\n');
+    }
+
+    return lines.map((line) => line.slice(Math.min(min, line.length))).join('\n');
+  }
+
+  function codeSourceForButton(btn) {
+    const wrap = btn.closest('.run-btn-wrap');
+    if (wrap) {
+      const prev = wrap.previousElementSibling;
+      if (prev && (prev.classList.contains('code-block') || prev.classList.contains('terminal'))) {
+        return prev;
+      }
+    }
+    let prev = btn.previousElementSibling;
+    while (prev && prev.nodeType === 1 && !prev.classList.contains('code-block') && !prev.classList.contains('terminal')) {
+      // Skip non-code siblings (e.g. empty text wrappers)
+      prev = prev.previousElementSibling;
+    }
+    if (prev && (prev.classList.contains('code-block') || prev.classList.contains('terminal'))) {
+      return prev;
+    }
+    const slide = btn.closest('.slide');
+    if (!slide) return null;
+    return slide.querySelector('.code-block, .terminal');
+  }
+
+  /** Pull runnable Python from either a .code-block or a .terminal widget. */
+  function extractCode(source) {
+    if (!source) return '';
+    if (source.classList.contains('code-block')) {
+      const codeEl = source.querySelector('code');
+      return dedentCode(codeEl ? codeEl.textContent : '');
+    }
+    const body = source.classList.contains('terminal-body')
+      ? source
+      : source.querySelector('.terminal-body');
+    if (!body) return '';
+    const parts = [];
+    body.childNodes.forEach((node) => {
+      if (node.nodeType !== 1) return;
+      if (node.classList.contains('out-line')) return;
+      const text = node.textContent.replace(/\u00a0/g, ' ').trimEnd();
+      if (text.trim()) parts.push(text.trimStart());
+    });
+    return parts.join('\n');
+  }
+
+  function outputTarget(source) {
+    let outLine = source.querySelector('.out-line');
+    if (outLine) return outLine;
+    outLine = document.createElement('div');
+    outLine.className = 'out-line';
+    outLine.setAttribute('aria-live', 'polite');
+    const container = source.querySelector('pre') || source.querySelector('.terminal-body') || source;
+    container.appendChild(outLine);
+    return outLine;
+  }
+
+  // Ensure every .code-block sample has a Run control (terminals already ship with one).
+  document.querySelectorAll('.code-block').forEach((block) => {
+    const next = block.nextElementSibling;
+    if (next && (next.classList.contains('run-btn-wrap') || next.classList.contains('run-btn'))) return;
+    if (block.closest('.cover')) return;
+    const code = block.querySelector('code');
+    if (!code || !code.textContent.trim()) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'run-btn-wrap';
+    wrap.innerHTML = '<button type="button" class="run-btn">▶ Run</button>';
+    block.insertAdjacentElement('afterend', wrap);
+  });
+
   document.querySelectorAll('.run-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.textContent = 'Running...';
-      const codeBlock = btn.parentElement.previousElementSibling;
-      if (!codeBlock) {
-        btn.textContent = '↻ Run again';
-        btn.disabled = false;
+    if (!btn.getAttribute('type')) btn.setAttribute('type', 'button');
+    btn.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const source = codeSourceForButton(btn);
+      if (!source) {
+        console.warn('[gmora-deck] No code source found for Run button');
         return;
       }
-      const codeEl = codeBlock.querySelector('code');
-      const codeText = codeEl ? codeEl.textContent : '';
-      let outLine = codeBlock.querySelector('.out-line');
-      if (!outLine) {
-        outLine = document.createElement('div');
-        outLine.className = 'out-line';
-        outLine.style.cssText = 'display:block;margin-top:10px;color:var(--code-success);min-height:20px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;white-space:pre-wrap;';
-        const container = codeBlock.querySelector('pre') || codeBlock.querySelector('.terminal-body');
-        if (container) container.appendChild(outLine);
+
+      const codeText = extractCode(source);
+      if (!codeText.trim()) {
+        console.warn('[gmora-deck] Empty code for Run button');
+        return;
       }
-      outLine.textContent = 'Initializing Python engine...';
+
+      btn.disabled = true;
+      const originalLabel = btn.textContent;
+      btn.textContent = 'Running…';
+
+      const outLine = outputTarget(source);
+      outLine.textContent = 'Loading Python…';
       outLine.style.color = 'var(--code-success)';
       try {
-        if (!pyodideReadyPromise) throw new Error('Pyodide failed to load.');
-        const pyodide = await pyodideReadyPromise;
+        const pyodide = await ensurePyodide();
         outLine.textContent = '';
         pyodide.setStdout({ batched: (msg) => { outLine.textContent += msg + '\n'; } });
         pyodide.setStderr({ batched: (msg) => { outLine.textContent += msg + '\n'; } });
@@ -421,17 +530,26 @@
         if (outLine.textContent.endsWith('\n')) {
           outLine.textContent = outLine.textContent.slice(0, -1);
         }
+        if (!outLine.textContent.trim()) {
+          outLine.textContent = '(ran successfully — no output)';
+          outLine.style.color = 'var(--code-comment)';
+        }
       } catch (err) {
         outLine.style.color = '#ff6b6b';
-        outLine.textContent += String(err);
+        outLine.textContent = String(err);
       } finally {
-        const container = codeBlock.querySelector('pre') || codeBlock.querySelector('.terminal-body');
+        const container = source.querySelector('pre') || source.querySelector('.terminal-body');
         if (container) container.scrollTop = container.scrollHeight;
         btn.disabled = false;
-        btn.textContent = '↻ Run again';
+        btn.textContent = /again/i.test(originalLabel) ? originalLabel : '↻ Run again';
       }
     });
   });
+
+  // Warm the engine in the background so the first Run feels snappy.
+  if (document.querySelector('.run-btn') && typeof loadPyodide !== 'undefined') {
+    ensurePyodide().catch(() => { /* surfaced on first Run click */ });
+  }
 
   render();
 })();
