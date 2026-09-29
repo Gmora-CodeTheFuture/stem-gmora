@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The student home: resume learning, upcoming work, and a short course list.
+ * The student home: progress summary, resume learning, and upcoming work.
  */
 class DashboardController extends Controller
 {
@@ -23,21 +23,9 @@ class DashboardController extends Controller
             return redirect()->route('instructor.home');
         }
 
-        $full = DashboardCache::remember(
+        return Inertia::render('Dashboard', DashboardCache::remember(
             $user->id,
             fn () => $this->dashboard->build($user),
-        );
-
-        return Inertia::render('Dashboard', [
-            'stats' => [
-                'progress_percentage' => $full['stats']['progress_percentage'],
-                'certificates' => $full['stats']['certificates'],
-            ],
-            'streak' => $full['streak'],
-            'enrollments' => array_slice($full['enrollments'], 0, 3),
-            'resume' => $full['resume'],
-            'upcoming' => $full['upcoming'],
-            'dueSoon' => $full['dueSoon'],
-        ]);
+        ));
     }
 }

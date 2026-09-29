@@ -245,7 +245,7 @@ export default function CourseLayout({
                             </div>
                         </div>
 
-                        <div className="flex-1 min-h-0 px-2 py-2">
+                        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-2 py-2">
                             <CourseCurriculum
                                 modules={modules}
                                 curriculum={curriculum}

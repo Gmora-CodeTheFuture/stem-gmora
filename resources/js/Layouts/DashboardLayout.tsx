@@ -189,7 +189,6 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             label: 'Learning',
             items: [
                 { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
-                { name: 'My Progress', href: '/dashboard/progress', icon: BarChart3 },
             ],
         },
         {

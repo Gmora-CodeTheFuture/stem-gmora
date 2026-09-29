@@ -220,7 +220,7 @@ class GamificationTest extends TestCase
         $this->assertCount(1, $this->student->fresh()->badges);
     }
 
-    public function test_the_progress_page_reports_the_real_level_and_streak(): void
+    public function test_the_dashboard_reports_the_real_level_and_streak(): void
     {
         $lesson = $this->lesson();
         $this->lesson();
@@ -228,10 +228,10 @@ class GamificationTest extends TestCase
         $this->actingAs($this->student)->patch(route('learn.progress', $lesson), ['watch_percentage' => 95]);
 
         $this->actingAs($this->student)
-            ->get(route('dashboard.progress'))
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Dashboard/Progress')
+                ->component('Dashboard')
                 ->where('stats.xp', config('gamification.xp.lesson_completed'))
                 ->where('stats.level', 1)
                 ->where('streak.current', 1)

@@ -50,7 +50,7 @@ export default function CourseCurriculum({
     dense = false,
 }: Props) {
     return (
-        <div className="overflow-y-auto scrollbar-thin flex-1 min-h-0 pr-1">
+        <div className="pr-1">
             {modules.map((module) => {
                 const items = curriculum.filter((item) => item.module_id === module.id);
                 const doneInModule = items.filter((item) => item.completed || item.submitted).length;

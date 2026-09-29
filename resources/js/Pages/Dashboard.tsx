@@ -1,17 +1,26 @@
 import { Head, Link } from '@inertiajs/react';
 import {
-    ArrowUpRight, BookOpen, CalendarClock, ClipboardCheck,
-    Flame, PlayCircle,
+    ArrowUpRight, Award, BookOpen, CalendarClock, ClipboardCheck,
+    Flame, GraduationCap, PlayCircle, Shield, Zap
 } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { Course, PageProps } from '@/types';
+import { Certificate, Course, PageProps } from '@/types';
 
 interface DashboardProps extends PageProps {
     stats: {
+        courses: number;
+        lessons_completed: number;
         certificates: number;
+        submissions: number;
+        hours_learned: number;
         progress_percentage: number;
+        level: number;
+        xp: number;
+        xp_to_next_level: number;
     };
     streak: { current: number; longest: number };
+    badges: Array<{ id: string; name: string; description: string; earned_at: string }>;
+    activity: Array<{ date: string; count: number }>;
     enrollments: Array<{
         id: string;
         course?: Course;
@@ -29,6 +38,7 @@ interface DashboardProps extends PageProps {
     } | null;
     upcoming: Array<{ id: string; title: string; type: string; starts_at: string; course_title?: string }>;
     dueSoon: Array<{ id: string; title: string; deadline_at: string; course_title?: string }>;
+    certificates: Array<Certificate & { course?: Course }>;
 }
 
 function relative(iso: string): string {
@@ -45,91 +55,205 @@ function relative(iso: string): string {
     return future ? `in ${months} month${months > 1 ? 's' : ''}` : `${months} month${months > 1 ? 's' : ''} ago`;
 }
 
+/** GitHub-style 0–4 intensity from a day's count relative to the busiest day. */
+function activityLevel(count: number, max: number): 0 | 1 | 2 | 3 | 4 {
+    if (count <= 0) {
+        return 0;
+    }
+    if (max <= 1) {
+        return 1;
+    }
+    const ratio = count / max;
+    if (ratio <= 0.25) return 1;
+    if (ratio <= 0.5) return 2;
+    if (ratio <= 0.75) return 3;
+    return 4;
+}
+
+const ACTIVITY_LEVEL_CLASS = [
+    'bg-surface-100 dark:bg-surface-800',
+    'bg-primary-200 dark:bg-primary-900',
+    'bg-primary-400 dark:bg-primary-700',
+    'bg-primary-500 dark:bg-primary-600',
+    'bg-primary-700 dark:bg-primary-400',
+] as const;
+
+type ActivityDay = { date: string; count: number; pad?: boolean };
+
+/** Pad the front of the series so columns align to weeks (Sun → Sat), like GitHub. */
+function contributionCells(activity: Array<{ date: string; count: number }>): ActivityDay[] {
+    if (activity.length === 0) {
+        return [];
+    }
+
+    const first = new Date(`${activity[0].date}T12:00:00`);
+    const weekday = first.getDay(); // 0 = Sunday
+    const pads: ActivityDay[] = Array.from({ length: weekday }, (_, i) => {
+        const d = new Date(first);
+        d.setDate(d.getDate() - (weekday - i));
+        return { date: d.toISOString().slice(0, 10), count: 0, pad: true };
+    });
+
+    return [...pads, ...activity.map((day) => ({ ...day, pad: false }))];
+}
+
 export default function Dashboard({
-    auth, stats, streak, enrollments, resume, upcoming, dueSoon,
+    auth, stats, streak, activity, enrollments, resume, upcoming, dueSoon, certificates, badges,
 }: DashboardProps) {
+    const tiles = [
+        { label: 'Courses', value: stats.courses, caption: 'enrolled', icon: BookOpen },
+        { label: 'Lessons', value: stats.lessons_completed, caption: 'completed', icon: GraduationCap },
+        { label: 'Assignments', value: stats.submissions, caption: 'submitted', icon: ClipboardCheck },
+        { label: 'Certificates', value: stats.certificates, caption: 'earned', icon: Award },
+        { label: 'Hours', value: stats.hours_learned, caption: 'of content watched', icon: PlayCircle },
+    ];
+
+    const busiest = Math.max(...activity.map((day) => day.count), 1);
+    const cells = contributionCells(activity);
+
     return (
         <DashboardLayout>
             <Head title="Home — Gmora STEM" />
 
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-10">
+            {/* ── Welcome + at-a-glance ──────────────────────── */}
+            <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 sm:gap-8 mb-10">
                 <div className="flex-1 min-w-0">
                     <h1 className="text-2xl sm:text-3xl font-semibold text-surface-900 dark:text-white mb-1.5">
                         Welcome, {auth?.user?.full_name?.split(' ')[0]}
                     </h1>
-                    <p className="text-surface-600 dark:text-surface-400 text-sm sm:text-base">
-                        Jump back in, or start something new.
-                    </p>
+                    <p className="text-surface-500 text-sm sm:text-base">Jump back in, or start something new.</p>
                 </div>
 
-                <div className="flex items-center gap-6 sm:gap-8">
-                    <div className="min-w-0 flex flex-col items-start">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-2">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 w-full sm:w-auto">
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
+                            Level
+                        </p>
+                        <div className="h-[6.75rem] flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-indigo-500 shrink-0" />
+                            <span className="text-3xl font-semibold text-surface-900 dark:text-white leading-none">
+                                {stats.level}
+                            </span>
+                        </div>
+                        <p className="text-xs text-surface-400 mt-2 min-h-[1rem] leading-snug">
+                            {stats.xp} XP · {stats.xp_to_next_level} to level {stats.level + 1}
+                        </p>
+                    </div>
+
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Learning streak
                         </p>
-                        <div className="flex items-baseline gap-2">
+                        <div className="h-[6.75rem] flex items-center gap-2">
                             <Flame className="w-5 h-5 text-primary-600 dark:text-primary-400 shrink-0" />
                             <span className="text-3xl font-semibold text-surface-900 dark:text-white leading-none">
                                 {streak.current}
                             </span>
-                            <span className="text-sm text-surface-600 dark:text-surface-400">
+                            <span className="text-sm text-surface-500">
                                 day{streak.current === 1 ? '' : 's'}
                             </span>
                         </div>
+                        <p className="text-xs text-surface-400 mt-2 min-h-[1rem]">
+                            Longest: {streak.longest} days
+                        </p>
                     </div>
 
-                    <div className="min-w-0 flex flex-col items-start">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-2">
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                             Overall progress
                         </p>
-                        <div className="relative w-14 h-14">
-                            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100" aria-hidden>
-                                <circle cx="50" cy="50" r="45" strokeWidth="8" fill="none" className="stroke-surface-100 dark:stroke-surface-800" />
-                                <circle
-                                    cx="50" cy="50" r="45" strokeWidth="8" fill="none" strokeLinecap="round"
-                                    className="stroke-primary-600"
-                                    strokeDasharray={2 * Math.PI * 45}
-                                    strokeDashoffset={2 * Math.PI * 45 * (1 - stats.progress_percentage / 100)}
-                                />
-                            </svg>
-                            <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-surface-900 dark:text-white">
-                                {stats.progress_percentage}%
-                            </span>
+                        <div className="h-[6.75rem] flex items-center">
+                            <div className="relative w-16 h-16">
+                                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100" aria-hidden>
+                                    <circle cx="50" cy="50" r="45" strokeWidth="8" fill="none" className="stroke-surface-100 dark:stroke-surface-800" />
+                                    <circle
+                                        cx="50" cy="50" r="45" strokeWidth="8" fill="none" strokeLinecap="round"
+                                        className="stroke-primary-600"
+                                        strokeDasharray={2 * Math.PI * 45}
+                                        strokeDashoffset={2 * Math.PI * 45 * (1 - stats.progress_percentage / 100)}
+                                    />
+                                </svg>
+                                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-surface-900 dark:text-white">
+                                    {stats.progress_percentage}%
+                                </span>
+                            </div>
                         </div>
+                        <p className="text-xs text-surface-400 mt-2 min-h-[1rem]" aria-hidden>&nbsp;</p>
                     </div>
 
-                    <Link
-                        href={route('dashboard.progress')}
-                        className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline self-end sm:self-center"
-                    >
-                        See all progress
-                    </Link>
+                    <div className="min-w-0 flex flex-col items-center text-center sm:items-start sm:text-left">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
+                            Last 4 weeks
+                        </p>
+                        <div className="h-[6.75rem] flex items-center">
+                            <div
+                                className="grid grid-rows-7 grid-flow-col gap-1"
+                                role="img"
+                                aria-label="Lessons completed over the last four weeks"
+                            >
+                                {cells.map((day) => {
+                                    const level = day.pad ? 0 : activityLevel(day.count, busiest);
+                                    const label = day.pad
+                                        ? undefined
+                                        : `${day.count} lesson${day.count === 1 ? '' : 's'} on ${day.date}`;
+
+                                    return (
+                                        <span
+                                            key={`${day.pad ? 'pad-' : ''}${day.date}`}
+                                            title={label}
+                                            aria-label={label}
+                                            className={`w-3 h-3 rounded-sm ${
+                                                day.pad
+                                                    ? 'bg-transparent'
+                                                    : ACTIVITY_LEVEL_CLASS[level]
+                                            }`}
+                                        />
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="mt-2 min-h-[1rem] flex items-center justify-center sm:justify-start gap-1 text-[10px] text-surface-400">
+                            <span>Less</span>
+                            {ACTIVITY_LEVEL_CLASS.map((cls, level) => (
+                                <span key={level} className={`w-2.5 h-2.5 rounded-sm ${cls}`} aria-hidden />
+                            ))}
+                            <span>More</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* ── Stat row ───────────────────────────────────── */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-surface-200 dark:bg-surface-800 rounded-3xl overflow-hidden border border-surface-200 dark:border-surface-800 mb-10">
+                {tiles.map((tile) => (
+                    <div key={tile.label} className="bg-white dark:bg-surface-900 p-5">
+                        <div className="flex items-center gap-2 text-surface-500 mb-3">
+                            <tile.icon className="w-4 h-4" />
+                            <span className="text-sm font-medium">{tile.label}</span>
+                        </div>
+                        <p className="text-2xl font-semibold text-surface-900 dark:text-white leading-none">
+                            {tile.value}
+                        </p>
+                        <p className="text-xs text-surface-400 mt-1.5">{tile.caption}</p>
+                    </div>
+                ))}
+            </div>
+
+            {/* ── Next steps ─────────────────────────────────── */}
             <div className="flex items-center gap-2 mb-6">
                 <ArrowUpRight className="w-5 h-5 text-surface-900 dark:text-white" />
                 <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Next steps</h2>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-10">
+                {/* Jump back in */}
                 <section>
-                    <div className="flex items-center justify-between gap-3 mb-4">
-                        <h3 className="text-sm font-semibold text-surface-900 dark:text-white">Jump back in</h3>
-                        {enrollments.length > 0 && (
-                            <Link
-                                href={route('dashboard.courses')}
-                                className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
-                            >
-                                Your courses
-                            </Link>
-                        )}
-                    </div>
+                    <h3 className="text-sm font-semibold text-surface-900 dark:text-white mb-4">Jump back in</h3>
 
                     {enrollments.length === 0 ? (
                         <div className="card p-8 text-center">
                             <BookOpen className="w-8 h-8 text-surface-300 dark:text-surface-600 mx-auto mb-3" />
-                            <p className="text-sm text-surface-600 dark:text-surface-400 mb-5">
+                            <p className="text-sm text-surface-500 mb-5">
                                 You're not enrolled in anything yet.
                             </p>
                             <Link href={route('dashboard.courses')} className="btn-primary">
@@ -150,7 +274,7 @@ export default function Dashboard({
                                         <span className="block text-sm font-semibold text-surface-900 dark:text-white truncate">
                                             {resume.course_title}
                                         </span>
-                                        <span className="block text-xs text-surface-600 dark:text-surface-400 truncate">
+                                        <span className="block text-xs text-surface-500 truncate">
                                             {resume.lesson_title} · {relative(resume.updated_at)}
                                         </span>
                                     </span>
@@ -174,20 +298,17 @@ export default function Dashboard({
                                         className="flex items-center gap-4 p-4 -mx-4 rounded-2xl hover:bg-surface-100 dark:hover:bg-surface-900 transition-colors"
                                     >
                                         <span className="w-11 h-11 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
-                                            <BookOpen className="w-4 h-4 text-surface-500" />
+                                            <BookOpen className="w-4 h-4 text-surface-400" />
                                         </span>
                                         <span className="flex-1 min-w-0">
                                             <span className="block text-sm font-semibold text-surface-900 dark:text-white truncate">
                                                 {enrollment.course?.title}
                                             </span>
-                                            <span className="block text-xs text-surface-600 dark:text-surface-400">
+                                            <span className="block text-xs text-surface-500">
                                                 {enrollment.completed_lessons_count} of{' '}
                                                 {enrollment.course?.total_lessons ?? 0} lessons ·{' '}
                                                 {enrollment.percentage}%
                                             </span>
-                                        </span>
-                                        <span className="hidden sm:inline text-sm text-primary-600 dark:text-primary-400 font-medium shrink-0">
-                                            Continue →
                                         </span>
                                     </Link>
                                 ))}
@@ -195,6 +316,7 @@ export default function Dashboard({
                     )}
                 </section>
 
+                {/* More things to do */}
                 <section>
                     <h3 className="text-sm font-semibold text-surface-900 dark:text-white mb-4">
                         More things to do
@@ -212,7 +334,7 @@ export default function Dashboard({
                                     </h4>
                                     <ul className="mt-1.5 space-y-1.5">
                                         {dueSoon.map((assignment) => (
-                                            <li key={assignment.id} className="text-sm text-surface-600 dark:text-surface-400">
+                                            <li key={assignment.id} className="text-sm text-surface-500">
                                                 <Link
                                                     href={route('assignments.show', assignment.id)}
                                                     className="text-primary-600 dark:text-primary-400 hover:underline"
@@ -238,7 +360,7 @@ export default function Dashboard({
                                     </h4>
                                     <ul className="mt-1.5 space-y-1.5">
                                         {upcoming.map((item) => (
-                                            <li key={`${item.type}-${item.id}`} className="text-sm text-surface-600 dark:text-surface-400">
+                                            <li key={`${item.type}-${item.id}`} className="text-sm text-surface-500">
                                                 {item.title}
                                                 {item.course_title ? ` · ${item.course_title}` : ''} —{' '}
                                                 {new Date(item.starts_at).toLocaleString(undefined, {
@@ -258,7 +380,31 @@ export default function Dashboard({
                             </div>
                         )}
 
-                        {dueSoon.length === 0 && upcoming.length === 0 && (
+                        {certificates.length > 0 && (
+                            <div className="flex items-start gap-4">
+                                <span className="w-10 h-10 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
+                                    <Award className="w-4 h-4 text-surface-500" />
+                                </span>
+                                <div className="min-w-0">
+                                    <h4 className="text-sm font-semibold text-surface-900 dark:text-white">
+                                        Your certificates
+                                    </h4>
+                                    <p className="text-sm text-surface-500 mt-1.5">
+                                        You've earned {stats.certificates} certificate
+                                        {stats.certificates === 1 ? '' : 's'}.{' '}
+                                        <Link
+                                            href={route('dashboard.certificates')}
+                                            className="text-primary-600 dark:text-primary-400 hover:underline"
+                                        >
+                                            View them
+                                        </Link>
+                                        .
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {dueSoon.length === 0 && upcoming.length === 0 && certificates.length === 0 && (
                             <div className="flex items-start gap-4">
                                 <span className="w-10 h-10 rounded-full border border-surface-200 dark:border-surface-700 flex items-center justify-center shrink-0">
                                     <BookOpen className="w-4 h-4 text-surface-500" />
@@ -267,7 +413,7 @@ export default function Dashboard({
                                     <h4 className="text-sm font-semibold text-surface-900 dark:text-white">
                                         Explore the catalog
                                     </h4>
-                                    <p className="text-sm text-surface-600 dark:text-surface-400 mt-1.5">
+                                    <p className="text-sm text-surface-500 mt-1.5">
                                         Nothing is due right now.{' '}
                                         <Link
                                             href={route('dashboard.courses', { filter: 'all' })}

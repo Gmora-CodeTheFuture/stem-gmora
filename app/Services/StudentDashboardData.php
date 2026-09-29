@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Shared student dashboard aggregates for Home and My Progress.
+ * Student home dashboard aggregates (stats, activity, enrollments, upcoming work).
  */
 class StudentDashboardData
 {
