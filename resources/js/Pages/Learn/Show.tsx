@@ -1,25 +1,30 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ArrowLeft, CheckCircle2, ChevronDown, Circle, ClipboardCheck, FileText,
-    Globe, HelpCircle, ListChecks, Lock, MessageSquare, PlayCircle, Radio, Video, PanelRight, X
+    ArrowLeft,
+    CheckCircle2,
+    ClipboardCheck,
+    FileText,
+    Globe,
+    HelpCircle,
+    LayoutList,
+    Lock,
+    PlayCircle,
+    Radio,
 } from 'lucide-react';
-import DashboardLayout from '@/Layouts/DashboardLayout';
+import CourseLayout from '@/Layouts/CourseLayout';
 import SecureVideoPlayer from '@/Components/SecureVideoPlayer';
 import AssignmentAttemptPanel from '@/Components/Learn/AssignmentAttemptPanel';
+import CourseCurriculum from '@/Components/Learn/CourseCurriculum';
+import CourseGradesPanel from '@/Components/Learn/CourseGradesPanel';
+import {
+    CurriculumItem,
+    curriculumItemHref,
+    isModuleLocked,
+    moduleProgress,
+    nextIncompleteItem,
+} from '@/Components/Learn/courseShell';
 import { Lesson, Module, PageProps } from '@/types';
-
-type CurriculumItem = {
-    kind: 'lesson' | 'assignment';
-    id: string;
-    module_id: string;
-    title: string;
-    type: string;
-    order_index: number;
-    completed: boolean;
-    submitted: boolean;
-    is_required: boolean;
-};
 
 type CurrentAssignment = {
     id: string;
@@ -61,15 +66,6 @@ interface DeckMessage {
     complete?: boolean;
 }
 
-const typeIcon = {
-    youtube: Video,
-    live: Radio,
-    pdf: FileText,
-    quiz: HelpCircle,
-    html: Globe,
-    assignment: ClipboardCheck,
-} as const;
-
 function formatDuration(seconds: number): string {
     if (!seconds) return '—';
     const minutes = Math.round(seconds / 60);
@@ -78,9 +74,13 @@ function formatDuration(seconds: number): string {
 }
 
 function itemHref(courseSlug: string, item: CurriculumItem): string {
-    return item.kind === 'assignment'
-        ? route('learn.assignment', [courseSlug, item.id])
-        : route('learn.lesson', [courseSlug, item.id]);
+    return curriculumItemHref(courseSlug, item);
+}
+
+function useTabFromUrl(): 'content' | 'grades' {
+    const { url } = usePage();
+    const query = url.includes('?') ? url.slice(url.indexOf('?')) : '';
+    return new URLSearchParams(query).get('tab') === 'grades' ? 'grades' : 'content';
 }
 
 export default function LearnShow({
@@ -91,45 +91,25 @@ export default function LearnShow({
     currentAssignment,
     completionPercentage,
 }: LearnPageProps) {
+    const activeTab = useTabFromUrl();
     const [openModules, setOpenModules] = useState<string[]>(modules.map((m) => m.id));
-    const [curriculumOpen, setCurriculumOpen] = useState(() => {
-        if (typeof window !== 'undefined') {
-            if (window.innerWidth < 1024) {
-                return false;
-            }
-            const stored = localStorage.getItem('gmora_curriculum_open');
-            if (stored !== null) {
-                return stored === 'true';
-            }
-            return true;
-        }
-        return true;
-    });
-    const [progressSheetOpen, setProgressSheetOpen] = useState(false);
+    const [mobileMode, setMobileMode] = useState<'overview' | 'player'>('player');
 
-    const toggleCurriculum = () => {
-        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-            setProgressSheetOpen(true);
-            return;
+    useEffect(() => {
+        if (window.innerWidth < 1024) {
+            setMobileMode('overview');
         }
-        const nextState = !curriculumOpen;
-        setCurriculumOpen(nextState);
-        localStorage.setItem('gmora_curriculum_open', String(nextState));
-    };
+    }, []);
+    const [selectedModuleId, setSelectedModuleId] = useState<string | null>(() => {
+        const itemId = currentAssignment?.id ?? currentLesson?.id;
+        if (itemId) {
+            return curriculum.find((c) => c.id === itemId)?.module_id ?? modules[0]?.id ?? null;
+        }
+        return modules[0]?.id ?? null;
+    });
 
     const toggleModule = (id: string) =>
         setOpenModules((open) => (open.includes(id) ? open.filter((m) => m !== id) : [...open, id]));
-
-    useEffect(() => {
-        if (!progressSheetOpen) {
-            return;
-        }
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = prev;
-        };
-    }, [progressSheetOpen]);
 
     const reportProgress = useCallback(
         (percentage: number, completed: boolean) => {
@@ -152,9 +132,6 @@ export default function LearnShow({
     const prevItem = currentIndex > 0 ? curriculum[currentIndex - 1] : null;
     const nextItem = currentIndex !== -1 && currentIndex + 1 < curriculum.length ? curriculum[currentIndex + 1] : null;
 
-    const allLessons = modules.flatMap((m) => m.lessons ?? []);
-    const completedCount = allLessons.filter((l) => l.progress?.status === 'completed').length;
-
     const canAdvance = currentAssignment
         ? Boolean(currentAssignment.submission) || !currentAssignment.is_required
         : currentLesson?.progress?.status === 'completed';
@@ -165,6 +142,24 @@ export default function LearnShow({
     useEffect(() => {
         lastDeckPercent.current = Number(currentLesson?.progress?.watch_percentage ?? 0);
     }, [currentLesson?.id, currentLesson?.progress?.watch_percentage]);
+
+    // Sync selected module when navigating curriculum
+    useEffect(() => {
+        const fromCurriculum = curriculum.find((c) => c.id === currentId)?.module_id;
+        if (fromCurriculum) {
+            setSelectedModuleId(fromCurriculum);
+        }
+    }, [currentId, curriculum]);
+
+    // When deep-linking to a lesson on mobile, open the player
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (window.innerWidth >= 1024) {
+            setMobileMode('player');
+            return;
+        }
+        // Keep overview as default on first paint; switching items while in player stays in player
+    }, [currentId]);
 
     useEffect(() => {
         if (currentLesson?.type !== 'html') {
@@ -221,237 +216,199 @@ export default function LearnShow({
                         setShowCongrats(true);
                     }
                 },
-            }
+            },
         );
     };
 
+    const upNext = useMemo(() => nextIncompleteItem(curriculum), [curriculum]);
+    const activeModule = modules.find((m) => m.id === selectedModuleId) ?? modules[0] ?? null;
+    const activeModuleProgress = activeModule
+        ? moduleProgress(activeModule.id, curriculum)
+        : { done: 0, total: 0, percent: 0 };
+
     const pageTitle = currentAssignment?.title ?? currentLesson?.title ?? course.title;
-    const isComplete = canAdvance;
+
+    const goToPlayer = (item?: CurriculumItem | null) => {
+        const target = item ?? upNext ?? (currentId ? curriculum.find((c) => c.id === currentId) : null);
+        if (!target) return;
+        setMobileMode('player');
+        if (target.id !== currentId) {
+            router.visit(itemHref(course.slug, target));
+        }
+    };
 
     return (
-        <DashboardLayout header={course.title} noScroll={true}>
+        <CourseLayout
+            course={course}
+            modules={modules}
+            curriculum={curriculum}
+            completionPercentage={completionPercentage}
+            activeTab={activeTab === 'grades' ? 'grades' : 'content'}
+            currentItemId={currentId}
+            headerBack={
+                activeTab === 'content' && mobileMode === 'player'
+                    ? () => setMobileMode('overview')
+                    : undefined
+            }
+        >
             <Head title={`${pageTitle} — ${course.title}`} />
 
-            <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
-                <div className="mb-4 flex items-center justify-between gap-4 flex-wrap shrink-0">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={route('dashboard.courses')}
-                            className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            My Courses
-                        </Link>
-
-                        <Link
-                            href={route('discussions.index', course.slug)}
-                            className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors"
-                        >
-                            <MessageSquare className="w-4 h-4" />
-                            Discussions
-                        </Link>
+            <div className="flex flex-col min-h-full">
+                {activeTab === 'grades' ? (
+                    <div className="p-4 sm:p-6 lg:p-8">
+                        <CourseGradesPanel
+                            courseSlug={course.slug}
+                            curriculum={curriculum}
+                            modules={modules}
+                        />
                     </div>
-
-                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                        <div className="flex-1 sm:flex-none flex items-center gap-2 min-w-0">
-                            <div className="flex-1 sm:w-40 progress-track">
-                                <div
-                                    className="progress-fill"
-                                    style={{ width: `${completionPercentage}%` }}
-                                />
-                            </div>
-                            <span className="text-sm font-semibold text-surface-600 dark:text-surface-300 whitespace-nowrap">
-                                {completionPercentage}%
-                                <span className="hidden sm:inline"> complete</span>
-                            </span>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={toggleCurriculum}
-                            className={`inline-flex items-center gap-1.5 rounded-lg transition-colors shrink-0 ${
-                                curriculumOpen || progressSheetOpen
-                                    ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400'
-                                    : 'text-surface-500 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100 dark:hover:bg-surface-800'
-                            } px-2.5 py-2 lg:p-2`}
-                            title="View course progress"
-                            aria-label="View course progress"
-                        >
-                            <ListChecks className="w-5 h-5 lg:hidden" />
-                            <PanelRight className="w-5 h-5 hidden lg:block" />
-                            <span className="text-sm font-medium lg:hidden">Progress</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div className={`grid gap-6 flex-1 min-h-0 overflow-hidden transition-all duration-300 ${curriculumOpen ? 'lg:grid-cols-[1fr_340px]' : 'lg:grid-cols-1 max-w-5xl mx-auto w-full'}`}>
-                    <div className="min-w-0 min-h-0 h-full overflow-y-auto scrollbar-thin flex flex-col pb-6 lg:pb-2">
-                        {currentAssignment ? (
-                            <>
-                                <div className="flex-1 flex flex-col min-h-[20rem]">
-                                    <AssignmentAttemptPanel assignment={currentAssignment} />
-                                </div>
-                                <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 flex flex-col bg-white dark:bg-surface-950">
-                                    <div className="shrink-0">
-                                        <p className="text-xs uppercase tracking-wider text-primary-500 font-semibold mb-1">
-                                            Assignment{currentAssignment.is_required ? ' · Required' : ''}
-                                        </p>
-                                        <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
-                                            {currentAssignment.title}
-                                        </h1>
-                                        {currentAssignment.description && (
-                                            <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block whitespace-pre-line">
-                                                {currentAssignment.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <NavActions
-                                        courseSlug={course.slug}
-                                        prevItem={prevItem}
-                                        nextItem={nextItem}
-                                        canAdvance={canAdvance}
-                                        showComplete={false}
-                                    />
-                                </div>
-                            </>
-                        ) : currentLesson ? (
-                            <>
-                        <div className={`flex-1 flex flex-col ${currentLesson.type === 'html' ? 'min-h-[min(48dvh,24rem)] sm:min-h-[22rem] lg:min-h-[min(72dvh,40rem)]' : 'min-h-[20rem]'}`}>
-                            {currentLesson.type === 'youtube' && currentLesson.has_video ? (
-                                <SecureVideoPlayer
-                                    key={currentLesson.id}
-                                    lessonId={currentLesson.id}
-                                    title={currentLesson.title}
-                                    initialPercentage={Number(currentLesson.progress?.watch_percentage ?? 0)}
-                                    onProgress={reportProgress}
-                                />
-                            ) : currentLesson.type === 'live' ? (
-                                <LivePanel lesson={currentLesson} />
-                            ) : currentLesson.type === 'quiz' ? (
-                                <QuizPanel lesson={currentLesson} />
-                            ) : currentLesson.type === 'html' ? (
-                                <PresentationPanel lesson={currentLesson} />
-                            ) : currentLesson.type === 'pdf' ? (
-                                <DocumentPanel lesson={currentLesson} />
-                            ) : (
-                                <PlaceholderPanel lesson={currentLesson} />
-                            )}
-                        </div>
-
-                        <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 flex flex-col bg-white dark:bg-surface-950">
-                            <div className="shrink-0">
-                                <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
-                                    {currentLesson.title}
-                                </h1>
-                                {currentLesson.description && (
-                                    <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block">{currentLesson.description}</p>
-                                )}
-                            </div>
-
-                            <NavActions
-                                courseSlug={course.slug}
-                                prevItem={prevItem}
-                                nextItem={nextItem}
-                                canAdvance={isComplete}
-                                showComplete
-                                isComplete={currentLesson.progress?.status === 'completed'}
-                                onMarkComplete={markComplete}
-                                durationLabel={formatDuration(currentLesson.duration_seconds)}
-                            />
-                        </div>
-                            </>
-                        ) : null}
-                    </div>
-
-                    {curriculumOpen && (
-                        <aside className="hidden lg:flex card p-2 flex-col min-h-0 h-full overflow-hidden fade-in">
-                            <CurriculumList
+                ) : (
+                    <>
+                        {/* Mobile overview */}
+                        <div className={`lg:hidden ${mobileMode === 'overview' ? 'block' : 'hidden'}`}>
+                            <MobileOverview
+                                course={course}
                                 modules={modules}
                                 curriculum={curriculum}
-                                courseSlug={course.slug}
-                                currentId={currentId}
+                                completionPercentage={completionPercentage}
+                                selectedModuleId={activeModule?.id ?? null}
+                                onSelectModule={setSelectedModuleId}
+                                activeModule={activeModule}
+                                activeModuleProgress={activeModuleProgress}
+                                upNext={upNext}
+                                onContinue={() => goToPlayer(upNext)}
                                 openModules={openModules}
                                 onToggleModule={toggleModule}
+                                currentId={currentId}
+                                onNavigateItem={() => setMobileMode('player')}
                             />
-                        </aside>
-                    )}
-                </div>
-            </div>
-
-            {progressSheetOpen && (
-                <div className="lg:hidden fixed inset-0 z-[60] flex flex-col justify-end">
-                    <button
-                        type="button"
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                        aria-label="Close progress"
-                        onClick={() => setProgressSheetOpen(false)}
-                    />
-                    <div
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Course progress"
-                        className="relative z-10 flex flex-col max-h-[85dvh] rounded-t-3xl bg-white dark:bg-surface-900 shadow-2xl border-t border-surface-200 dark:border-surface-800 pb-[env(safe-area-inset-bottom)]"
-                    >
-                        <div className="flex justify-center pt-3 pb-1 shrink-0">
-                            <span className="w-10 h-1 rounded-full bg-surface-300 dark:bg-surface-700" aria-hidden />
                         </div>
 
-                        <div className="flex items-start justify-between gap-3 px-5 pb-4 border-b border-surface-100 dark:border-surface-800 shrink-0">
-                            <div className="min-w-0">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-1">
-                                    Course progress
-                                </p>
-                                <h2 className="text-lg font-semibold text-surface-900 dark:text-white truncate">
-                                    {course.title}
-                                </h2>
-                                <p className="text-sm text-surface-500 mt-1">
-                                    {completedCount} of {allLessons.length} lessons complete
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <div className="relative w-14 h-14">
-                                    <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100" aria-hidden>
-                                        <circle cx="50" cy="50" r="42" strokeWidth="8" fill="none" className="stroke-surface-100 dark:stroke-surface-800" />
-                                        <circle
-                                            cx="50"
-                                            cy="50"
-                                            r="42"
-                                            strokeWidth="8"
-                                            fill="none"
-                                            strokeLinecap="round"
-                                            className="stroke-primary-600"
-                                            strokeDasharray={2 * Math.PI * 42}
-                                            strokeDashoffset={2 * Math.PI * 42 * (1 - completionPercentage / 100)}
-                                        />
-                                    </svg>
-                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-surface-900 dark:text-white">
-                                        {completionPercentage}%
-                                    </span>
-                                </div>
+                        {/* Player (desktop always; mobile when mode=player) */}
+                        <div
+                            className={`flex flex-col flex-1 min-h-0 ${
+                                mobileMode === 'player' ? 'flex' : 'hidden lg:flex'
+                            }`}
+                        >
+                            <div className="lg:hidden flex items-center gap-2 px-3 py-2 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900 shrink-0">
                                 <button
                                     type="button"
-                                    onClick={() => setProgressSheetOpen(false)}
-                                    className="btn-icon"
-                                    aria-label="Close"
+                                    onClick={() => setMobileMode('overview')}
+                                    className="inline-flex items-center gap-1.5 text-sm text-surface-500 hover:text-primary-600"
                                 >
-                                    <X className="w-4 h-4" />
+                                    <LayoutList className="w-4 h-4" />
+                                    Overview
                                 </button>
+                                <span className="text-surface-300">·</span>
+                                <span className="text-sm font-medium text-surface-800 dark:text-surface-100 truncate">
+                                    {pageTitle}
+                                </span>
+                            </div>
+
+                            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-3 sm:px-5 lg:px-8 py-3 lg:py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8">
+                                {currentAssignment ? (
+                                    <>
+                                        <div className="flex-1 flex flex-col min-h-[20rem]">
+                                            <AssignmentAttemptPanel assignment={currentAssignment} />
+                                        </div>
+                                        <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 bg-white dark:bg-surface-950">
+                                            <p className="text-xs uppercase tracking-wider text-primary-500 font-semibold mb-1">
+                                                Assignment{currentAssignment.is_required ? ' · Required' : ''}
+                                            </p>
+                                            <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
+                                                {currentAssignment.title}
+                                            </h1>
+                                            {currentAssignment.description && (
+                                                <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block whitespace-pre-line">
+                                                    {currentAssignment.description}
+                                                </p>
+                                            )}
+                                            <div className="hidden lg:block">
+                                                <NavActions
+                                                    courseSlug={course.slug}
+                                                    prevItem={prevItem}
+                                                    nextItem={nextItem}
+                                                    canAdvance={canAdvance}
+                                                    showComplete={false}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : currentLesson ? (
+                                    <>
+                                        <div
+                                            className={`flex flex-col ${
+                                                currentLesson.type === 'html'
+                                                    ? 'min-h-[min(48dvh,24rem)] sm:min-h-[22rem] lg:min-h-[min(72dvh,40rem)]'
+                                                    : 'min-h-[20rem]'
+                                            }`}
+                                        >
+                                            {currentLesson.type === 'youtube' && currentLesson.has_video ? (
+                                                <SecureVideoPlayer
+                                                    key={currentLesson.id}
+                                                    lessonId={currentLesson.id}
+                                                    title={currentLesson.title}
+                                                    initialPercentage={Number(
+                                                        currentLesson.progress?.watch_percentage ?? 0,
+                                                    )}
+                                                    onProgress={reportProgress}
+                                                />
+                                            ) : currentLesson.type === 'live' ? (
+                                                <LivePanel lesson={currentLesson} />
+                                            ) : currentLesson.type === 'quiz' ? (
+                                                <QuizPanel lesson={currentLesson} />
+                                            ) : currentLesson.type === 'html' ? (
+                                                <PresentationPanel lesson={currentLesson} />
+                                            ) : currentLesson.type === 'pdf' ? (
+                                                <DocumentPanel lesson={currentLesson} />
+                                            ) : (
+                                                <PlaceholderPanel lesson={currentLesson} />
+                                            )}
+                                        </div>
+
+                                        <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 bg-white dark:bg-surface-950">
+                                            <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
+                                                {currentLesson.title}
+                                            </h1>
+                                            {currentLesson.description && (
+                                                <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block">
+                                                    {currentLesson.description}
+                                                </p>
+                                            )}
+                                            <div className="hidden lg:block">
+                                                <NavActions
+                                                    courseSlug={course.slug}
+                                                    prevItem={prevItem}
+                                                    nextItem={nextItem}
+                                                    canAdvance={canAdvance}
+                                                    showComplete
+                                                    isComplete={currentLesson.progress?.status === 'completed'}
+                                                    onMarkComplete={markComplete}
+                                                    durationLabel={formatDuration(currentLesson.duration_seconds)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : null}
+                            </div>
+
+                            {/* Mobile sticky next / complete */}
+                            <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 border-t border-surface-200 dark:border-surface-800 bg-white/95 dark:bg-surface-900/95 backdrop-blur px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                                <MobileStickyNav
+                                    courseSlug={course.slug}
+                                    prevItem={prevItem}
+                                    nextItem={nextItem}
+                                    canAdvance={canAdvance}
+                                    showComplete={Boolean(currentLesson) && !currentAssignment}
+                                    isComplete={currentLesson?.progress?.status === 'completed'}
+                                    onMarkComplete={markComplete}
+                                    onCongrats={() => setShowCongrats(true)}
+                                />
                             </div>
                         </div>
-
-                        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3">
-                            <CurriculumList
-                                modules={modules}
-                                curriculum={curriculum}
-                                courseSlug={course.slug}
-                                currentId={currentId}
-                                openModules={openModules}
-                                onToggleModule={toggleModule}
-                                onNavigate={() => setProgressSheetOpen(false)}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
+                    </>
+                )}
+            </div>
 
             {showCongrats && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in">
@@ -477,7 +434,189 @@ export default function LearnShow({
                     </div>
                 </div>
             )}
-        </DashboardLayout>
+        </CourseLayout>
+    );
+}
+
+function MobileOverview({
+    course,
+    modules,
+    curriculum,
+    completionPercentage,
+    selectedModuleId,
+    onSelectModule,
+    activeModule,
+    activeModuleProgress,
+    upNext,
+    onContinue,
+    openModules,
+    onToggleModule,
+    currentId,
+    onNavigateItem,
+}: {
+    course: { slug: string; title: string };
+    modules: Module[];
+    curriculum: CurriculumItem[];
+    completionPercentage: number;
+    selectedModuleId: string | null;
+    onSelectModule: (id: string) => void;
+    activeModule: Module | null;
+    activeModuleProgress: { done: number; total: number; percent: number };
+    upNext: CurriculumItem | null;
+    onContinue: () => void;
+    openModules: string[];
+    onToggleModule: (id: string) => void;
+    currentId: string | null;
+    onNavigateItem: () => void;
+}) {
+    return (
+        <div className="px-4 pt-4 pb-8 space-y-5">
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                {modules.map((module, index) => {
+                    const locked = isModuleLocked(modules, curriculum, module.id);
+                    const active = module.id === selectedModuleId;
+
+                    return (
+                        <button
+                            key={module.id}
+                            type="button"
+                            disabled={locked}
+                            onClick={() => onSelectModule(module.id)}
+                            className={`shrink-0 inline-flex items-center justify-center gap-1.5 min-w-[2.75rem] h-10 px-3 rounded-full text-sm font-semibold transition-colors ${
+                                active
+                                    ? 'bg-primary-600 text-white'
+                                    : locked
+                                      ? 'bg-surface-100 dark:bg-surface-800 text-surface-400'
+                                      : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-200'
+                            }`}
+                            title={module.title}
+                        >
+                            {locked ? <Lock className="w-3.5 h-3.5" /> : index + 1}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div>
+                <p className="text-sm font-medium text-surface-700 dark:text-surface-200">
+                    {activeModuleProgress.percent}% Module Completed
+                </p>
+                <div className="mt-2 progress-track">
+                    <div className="progress-fill" style={{ width: `${activeModuleProgress.percent}%` }} />
+                </div>
+                <p className="text-xs text-surface-400 mt-1.5">
+                    Course {completionPercentage}% · {activeModuleProgress.done}/{activeModuleProgress.total} in this
+                    module
+                </p>
+            </div>
+
+            {upNext && (
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-2 text-center">
+                        Up Next
+                    </p>
+                    <div className="card p-4 border-2 border-primary-200 dark:border-primary-800">
+                        <h3 className="text-base font-semibold text-surface-900 dark:text-white leading-snug">
+                            {upNext.title}
+                        </h3>
+                        <div className="mt-4 flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300">
+                                {upNext.kind === 'assignment' ? (
+                                    <ClipboardCheck className="w-3.5 h-3.5" />
+                                ) : (
+                                    <PlayCircle className="w-3.5 h-3.5" />
+                                )}
+                                {upNext.kind === 'assignment' ? 'Assignment' : upNext.type}
+                            </span>
+                            <button type="button" onClick={onContinue} className="btn-primary ml-auto">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeModule && (
+                <div>
+                    <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-1">
+                        {activeModule.title}
+                    </h2>
+                    {activeModule.description && (
+                        <p className="text-sm text-surface-500 leading-relaxed mb-3">{activeModule.description}</p>
+                    )}
+                    <div className="card p-2">
+                        <CourseCurriculum
+                            modules={modules.filter((m) => m.id === activeModule.id)}
+                            curriculum={curriculum}
+                            courseSlug={course.slug}
+                            currentId={currentId}
+                            openModules={openModules.includes(activeModule.id) ? [activeModule.id] : [activeModule.id]}
+                            onToggleModule={onToggleModule}
+                            onNavigate={onNavigateItem}
+                            dense
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function MobileStickyNav({
+    courseSlug,
+    prevItem,
+    nextItem,
+    canAdvance,
+    showComplete,
+    isComplete = false,
+    onMarkComplete,
+    onCongrats,
+}: {
+    courseSlug: string;
+    prevItem: CurriculumItem | null;
+    nextItem: CurriculumItem | null;
+    canAdvance: boolean;
+    showComplete: boolean;
+    isComplete?: boolean;
+    onMarkComplete?: () => void;
+    onCongrats?: () => void;
+}) {
+    return (
+        <div className="flex items-center gap-2">
+            {prevItem && (
+                <Link
+                    href={itemHref(courseSlug, prevItem)}
+                    className="btn-secondary h-11 px-3 shrink-0"
+                    aria-label="Previous"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                </Link>
+            )}
+
+            {showComplete && onMarkComplete && !isComplete && (
+                <button type="button" onClick={onMarkComplete} className="btn-secondary h-11 flex-1 justify-center">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Complete
+                </button>
+            )}
+
+            {nextItem ? (
+                canAdvance ? (
+                    <Link href={itemHref(courseSlug, nextItem)} className="btn-primary h-11 flex-1 justify-center">
+                        Go to next item
+                    </Link>
+                ) : (
+                    <button type="button" disabled className="btn-secondary h-11 flex-1 justify-center">
+                        <Lock className="w-3.5 h-3.5 mr-1" />
+                        Locked
+                    </button>
+                )
+            ) : canAdvance ? (
+                <button type="button" onClick={onCongrats} className="btn-primary h-11 flex-1 justify-center">
+                    Finish course
+                </button>
+            ) : null}
+        </div>
     );
 }
 
@@ -507,8 +646,7 @@ function NavActions({
                     href={itemHref(courseSlug, prevItem)}
                     className="btn-secondary h-11 w-full sm:w-auto justify-center px-4"
                 >
-                    <span className="sm:hidden">Previous</span>
-                    <span className="hidden sm:inline">Previous</span>
+                    Previous
                 </Link>
             ) : null}
 
@@ -518,8 +656,7 @@ function NavActions({
                         href={itemHref(courseSlug, nextItem)}
                         className={`btn-secondary h-11 w-full sm:w-auto justify-center px-4 ${prevItem ? '' : 'col-span-2 sm:col-auto'}`}
                     >
-                        <span className="sm:hidden">Next</span>
-                        <span className="hidden sm:inline">Next</span>
+                        Next
                     </Link>
                 ) : (
                     <button
@@ -529,8 +666,7 @@ function NavActions({
                         className={`btn-secondary h-11 w-full sm:w-auto justify-center px-4 ${prevItem ? '' : 'col-span-2 sm:col-auto'}`}
                     >
                         <Lock className="w-3.5 h-3.5 mr-1" />
-                        <span className="sm:hidden">Next</span>
-                        <span className="hidden sm:inline">Next</span>
+                        Next
                     </button>
                 )
             ) : null}
@@ -543,106 +679,10 @@ function NavActions({
                     className={`col-span-2 sm:col-auto h-11 w-full sm:w-auto justify-center px-4 ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
                 >
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span className="sm:hidden">{isComplete ? 'Completed' : 'Complete'}</span>
-                    <span className="hidden sm:inline">{isComplete ? 'Completed' : 'Mark as complete'}</span>
+                    {isComplete ? 'Completed' : 'Mark as complete'}
                 </button>
             )}
-            {durationLabel && (
-                <span className="hidden sm:inline text-sm text-surface-400">{durationLabel}</span>
-            )}
-        </div>
-    );
-}
-
-function CurriculumList({
-    modules,
-    curriculum,
-    courseSlug,
-    currentId,
-    openModules,
-    onToggleModule,
-    onNavigate,
-}: {
-    modules: Module[];
-    curriculum: CurriculumItem[];
-    courseSlug: string;
-    currentId: string | null;
-    openModules: string[];
-    onToggleModule: (id: string) => void;
-    onNavigate?: () => void;
-}) {
-    return (
-        <div className="overflow-y-auto scrollbar-thin flex-1 min-h-0 pr-1">
-            {modules.map((module) => {
-                const items = curriculum.filter((item) => item.module_id === module.id);
-                const doneInModule = items.filter((item) => item.completed || item.submitted).length;
-
-                return (
-                    <div key={module.id} className="mb-1">
-                        <button
-                            type="button"
-                            onClick={() => onToggleModule(module.id)}
-                            className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors"
-                        >
-                            <span className="min-w-0">
-                                <span className="block text-sm font-semibold text-surface-900 dark:text-white">
-                                    {module.title}
-                                </span>
-                                <span className="block text-[11px] text-surface-400 mt-0.5">
-                                    {doneInModule}/{items.length} complete
-                                </span>
-                            </span>
-                            <ChevronDown
-                                className={`w-4 h-4 text-surface-400 shrink-0 transition-transform ${
-                                    openModules.includes(module.id) ? 'rotate-180' : ''
-                                }`}
-                            />
-                        </button>
-
-                        {openModules.includes(module.id) && (
-                            <ul className="mt-0.5 space-y-0.5">
-                                {items.map((item) => {
-                                    const Icon = typeIcon[item.type as keyof typeof typeIcon] ?? (item.kind === 'assignment' ? ClipboardCheck : PlayCircle);
-                                    const active = item.id === currentId;
-                                    const done = item.completed || item.submitted;
-
-                                    return (
-                                        <li key={`${item.kind}-${item.id}`}>
-                                            <Link
-                                                href={itemHref(courseSlug, item)}
-                                                preserveScroll
-                                                onClick={onNavigate}
-                                                className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                                                    active
-                                                        ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 font-medium'
-                                                        : 'text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800'
-                                                }`}
-                                            >
-                                                {done ? (
-                                                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-accent-500" />
-                                                ) : item.is_required ? (
-                                                    <Lock className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
-                                                ) : (
-                                                    <Circle className="w-4 h-4 mt-0.5 shrink-0 text-surface-300 dark:text-surface-600" />
-                                                )}
-                                                <span className="flex-1 leading-snug">
-                                                    {item.title}
-                                                    {item.kind === 'assignment' && (
-                                                        <span className="block text-[10px] text-surface-400 font-normal">
-                                                            Assignment{item.is_required ? ' · Required' : ''}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0 text-surface-400" />
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        )}
-                    </div>
-                );
-            })}
+            {durationLabel && <span className="hidden sm:inline text-sm text-surface-400">{durationLabel}</span>}
         </div>
     );
 }
@@ -664,9 +704,6 @@ function LivePanel({ lesson }: { lesson: Lesson }) {
                     {session?.duration_minutes ? ` · ${session.duration_minutes} min` : ''}
                 </p>
             )}
-
-            {/* [v2] The join link only appears near the scheduled start, not
-                indefinitely in the lesson list. */}
             {soon && session?.zoom_join_url ? (
                 <a href={session.zoom_join_url} target="_blank" rel="noreferrer" className="btn-primary mt-5">
                     Join on Zoom
@@ -693,14 +730,14 @@ function QuizPanel({ lesson }: { lesson: Lesson }) {
             {lesson.quiz ? (
                 <>
                     <p className="text-surface-500 mt-2">
-                        Check what you've picked up before moving on. Passing marks this lesson complete.
+                        Check what you&apos;ve picked up before moving on. Passing marks this lesson complete.
                     </p>
                     <Link href={route('quiz.show', lesson.quiz.id)} className="btn-primary mt-5">
                         Open quiz
                     </Link>
                 </>
             ) : (
-                <p className="text-surface-500 mt-2">This quiz hasn't been published yet.</p>
+                <p className="text-surface-500 mt-2">This quiz hasn&apos;t been published yet.</p>
             )}
         </div>
     );
@@ -777,12 +814,8 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 flex items-center justify-center mx-auto mb-4">
                     <Globe className="w-7 h-7 text-violet-600 dark:text-violet-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
-                    Interactive Presentation
-                </h2>
-                <p className="text-sm text-surface-400 mt-5">
-                    The presentation hasn't been uploaded yet.
-                </p>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Interactive Presentation</h2>
+                <p className="text-sm text-surface-400 mt-5">The presentation hasn&apos;t been uploaded yet.</p>
             </div>
         );
     }
@@ -819,7 +852,7 @@ function DocumentPanel({ lesson }: { lesson: Lesson }) {
                     <FileText className="w-7 h-7 text-primary-500" />
                 </div>
                 <h2 className="text-lg font-semibold text-surface-900 dark:text-white">{lesson.title}</h2>
-                <p className="text-surface-500 mt-2">The document for this lesson hasn't been uploaded yet.</p>
+                <p className="text-surface-500 mt-2">The document for this lesson hasn&apos;t been uploaded yet.</p>
             </div>
         );
     }
@@ -827,13 +860,10 @@ function DocumentPanel({ lesson }: { lesson: Lesson }) {
     const src = route('lesson.pdf', lesson.id);
 
     return (
-        <div className="card overflow-hidden h-full flex flex-col">
-            {/* The browser's own viewer handles paging, zoom and search. */}
-            <object data={src} type="application/pdf" className="w-full flex-1 min-h-0">
+        <div className="card overflow-hidden h-full flex flex-col min-h-[24rem]">
+            <object data={src} type="application/pdf" className="w-full flex-1 min-h-[20rem]">
                 <div className="p-8 text-center">
-                    <p className="text-surface-500">
-                        Your browser can't display PDFs inline.
-                    </p>
+                    <p className="text-surface-500">Your browser can&apos;t display PDFs inline.</p>
                     <a href={src} target="_blank" rel="noopener noreferrer" className="btn-primary mt-4">
                         Open the document
                     </a>

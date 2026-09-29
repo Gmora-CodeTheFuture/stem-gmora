@@ -25,7 +25,7 @@ class CalendarEventPublished extends Notification
         return [
             'title' => 'New calendar event',
             'body' => $this->event->title,
-            'url' => route('dashboard.calendar'),
+            'url' => route('dashboard.calendar', ['open' => $this->event->id]),
             'icon' => 'calendar',
         ];
     }

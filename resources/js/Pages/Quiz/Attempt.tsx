@@ -1,11 +1,17 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Clock, Save } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowLeft, ArrowUp, Check, ChevronLeft, ChevronRight, Clock, Save } from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps, Question, QuizAnswer } from '@/types';
 
 interface Props extends PageProps {
-    quiz: { id: string; title: string; time_limit_seconds: number | null; passing_score: number };
+    quiz: {
+        id: string;
+        title: string;
+        time_limit_seconds: number | null;
+        passing_score: number;
+        course?: { id: string; title: string; slug: string } | null;
+    };
     attempt: {
         id: string;
         answers: Record<string, QuizAnswer>;
@@ -106,6 +112,16 @@ export default function QuizAttempt({ quiz, attempt, questions }: Props) {
     return (
         <DashboardLayout header={quiz.title}>
             <Head title={`${quiz.title} — attempt`} />
+
+            {quiz.course && (
+                <Link
+                    href={route('learn.show', quiz.course.slug)}
+                    className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors mb-4"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to {quiz.course.title}
+                </Link>
+            )}
 
             {/* Status bar */}
             <div className="card p-4 mb-5 flex items-center gap-4 flex-wrap">

@@ -53,7 +53,7 @@ export default function QuizShow({ quiz, attempts, attemptsRemaining, activeAtte
                 className="inline-flex items-center gap-2 text-sm text-surface-500 hover:text-primary-600 transition-colors mb-6"
             >
                 <ArrowLeft className="w-4 h-4" />
-                {quiz.course.title}
+                Back to course
             </Link>
 
             <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">

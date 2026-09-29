@@ -1,10 +1,11 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { CheckCircle2, MessageSquare, Pin, Plus, Search, X } from 'lucide-react';
-import DashboardLayout from '@/Layouts/DashboardLayout';
+import CourseLayout from '@/Layouts/CourseLayout';
 import SegmentedControl from '@/Components/SegmentedControl';
 import SystemSelect from '@/Components/SystemSelect';
-import { Paginated, PageProps } from '@/types';
+import { CurriculumItem } from '@/Components/Learn/courseShell';
+import { Module, Paginated, PageProps } from '@/types';
 
 interface Thread {
     id: string;
@@ -25,6 +26,9 @@ interface Props extends PageProps {
     lessons: Array<{ id: string; title: string }>;
     filters: { filter: string; lesson: string; search: string };
     canModerate: boolean;
+    modules?: Module[];
+    curriculum?: CurriculumItem[];
+    completionPercentage?: number;
 }
 
 const FILTERS = [
@@ -46,7 +50,16 @@ function relative(iso: string | null): string {
     return `${Math.round(minutes / 1440)}d ago`;
 }
 
-export default function DiscussionsIndex({ course, discussions, lessons, filters, canModerate }: Props) {
+export default function DiscussionsIndex({
+    course,
+    discussions,
+    lessons,
+    filters,
+    canModerate,
+    modules = [],
+    curriculum = [],
+    completionPercentage = 0,
+}: Props) {
     const [composing, setComposing] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -69,9 +82,16 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
     };
 
     return (
-        <DashboardLayout header={`${course.title} — discussions`}>
+        <CourseLayout
+            course={course}
+            modules={modules}
+            curriculum={curriculum}
+            completionPercentage={completionPercentage}
+            activeTab="discussions"
+        >
             <Head title={`Discussions — ${course.title}`} />
 
+            <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full">
             <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-6">
                 <SegmentedControl
                     className="self-start"
@@ -267,6 +287,7 @@ export default function DiscussionsIndex({ course, discussions, lessons, filters
                     You can pin, mark solved, and remove posts on this board.
                 </p>
             )}
-        </DashboardLayout>
+            </div>
+        </CourseLayout>
     );
 }

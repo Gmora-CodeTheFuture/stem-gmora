@@ -27,7 +27,7 @@ class CertificateIssued extends Notification
         return [
             'title' => 'Certificate earned',
             'body' => "You completed \"{$this->certificate->course?->title}\". Your certificate is ready.",
-            'url' => route('certificate.verify', $this->certificate->certificate_code),
+            'url' => route('dashboard.certificates'),
             'icon' => 'award',
         ];
     }

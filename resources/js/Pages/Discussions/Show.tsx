@@ -1,8 +1,10 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { ArrowLeft, BadgeCheck, CheckCircle2, Pin, Reply, Trash2 } from 'lucide-react';
+import CourseLayout from '@/Layouts/CourseLayout';
 import DashboardLayout from '@/Layouts/DashboardLayout';
-import { PageProps } from '@/types';
+import { CurriculumItem } from '@/Components/Learn/courseShell';
+import { Module, PageProps } from '@/types';
 
 interface ReplyNode {
     id: string;
@@ -31,13 +33,24 @@ interface Props extends PageProps {
     replies: ReplyNode[];
     canModerate: boolean;
     isAuthor: boolean;
+    modules?: Module[];
+    curriculum?: CurriculumItem[];
+    completionPercentage?: number;
 }
 
 function when(iso: string): string {
     return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export default function DiscussionShow({ discussion, replies, canModerate, isAuthor }: Props) {
+export default function DiscussionShow({
+    discussion,
+    replies,
+    canModerate,
+    isAuthor,
+    modules = [],
+    curriculum = [],
+    completionPercentage = 0,
+}: Props) {
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
     const form = useForm({ body: '', parent_id: '' });
@@ -168,10 +181,11 @@ export default function DiscussionShow({ discussion, replies, canModerate, isAut
         </div>
     );
 
-    return (
-        <DashboardLayout header={discussion.title}>
+    const body = (
+            <>
             <Head title={`${discussion.title} — discussion`} />
 
+            <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto w-full">
             {discussion.course && (
                 <Link
                     href={route('discussions.index', discussion.course.slug)}
@@ -269,6 +283,23 @@ export default function DiscussionShow({ discussion, replies, canModerate, isAut
                     {form.processing ? 'Posting…' : 'Post reply'}
                 </button>
             </form>
-        </DashboardLayout>
+            </div>
+            </>
     );
+
+    if (discussion.course) {
+        return (
+            <CourseLayout
+                course={discussion.course}
+                modules={modules}
+                curriculum={curriculum}
+                completionPercentage={completionPercentage}
+                activeTab="discussions"
+            >
+                {body}
+            </CourseLayout>
+        );
+    }
+
+    return <DashboardLayout header={discussion.title}>{body}</DashboardLayout>;
 }

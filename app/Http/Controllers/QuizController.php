@@ -96,7 +96,7 @@ class QuizController extends Controller
                 ->with('warning', 'Time ran out — your answers were submitted automatically.');
         }
 
-        $quiz = $attempt->quiz;
+        $quiz = $attempt->quiz->loadMissing('course:id,title,slug');
         $questions = $quiz->questions;
 
         if ($quiz->shuffle_questions) {
@@ -104,7 +104,10 @@ class QuizController extends Controller
         }
 
         return Inertia::render('Quiz/Attempt', [
-            'quiz' => $quiz->only(['id', 'title', 'time_limit_seconds', 'passing_score']),
+            'quiz' => [
+                ...$quiz->only(['id', 'title', 'time_limit_seconds', 'passing_score']),
+                'course' => $quiz->course?->only(['id', 'title', 'slug']),
+            ],
             'attempt' => [
                 'id' => $attempt->id,
                 'answers' => (object) ($attempt->answers ?? []),

@@ -1,5 +1,14 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Award, Bell, CheckCheck, ClipboardCheck } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import {
+    Award,
+    Bell,
+    BookOpen,
+    Calendar,
+    CheckCheck,
+    ClipboardCheck,
+    LifeBuoy,
+    MessageSquare,
+} from 'lucide-react';
 import DashboardLayout from '@/Layouts/DashboardLayout';
 import { PageProps } from '@/types';
 
@@ -19,6 +28,10 @@ interface Props extends PageProps {
 const ICONS: Record<string, typeof Bell> = {
     'clipboard-check': ClipboardCheck,
     award: Award,
+    'book-open': BookOpen,
+    calendar: Calendar,
+    'message-square': MessageSquare,
+    'life-buoy': LifeBuoy,
 };
 
 function relative(iso: string): string {
@@ -32,10 +45,30 @@ function relative(iso: string): string {
 }
 
 export default function Notifications({ notifications, unreadCount }: Props) {
-    const open = (notification: NotificationRow) => {
+    const markRead = (notification: NotificationRow) => {
         if (!notification.read_at) {
             router.post(route('notifications.read', notification.id), {}, { preserveScroll: true });
         }
+    };
+
+    /** Mark as read first (when needed), then visit the destination — avoids racing Link with back(). */
+    const visitNotification = (notification: NotificationRow) => {
+        const url = notification.data.url;
+
+        if (!url) {
+            markRead(notification);
+            return;
+        }
+
+        if (notification.read_at) {
+            router.visit(url);
+            return;
+        }
+
+        router.post(route('notifications.read', notification.id), {}, {
+            preserveScroll: true,
+            onSuccess: () => router.visit(url),
+        });
     };
 
     return (
@@ -72,8 +105,15 @@ export default function Notifications({ notifications, unreadCount }: Props) {
                 <div className="card divide-y divide-surface-100 dark:divide-surface-800 overflow-hidden">
                     {notifications.map((notification) => {
                         const Icon = ICONS[notification.data.icon ?? ''] ?? Bell;
-                        const body = (
-                            <>
+                        const hasUrl = Boolean(notification.data.url);
+
+                        return (
+                            <button
+                                key={notification.id}
+                                type="button"
+                                onClick={() => visitNotification(notification)}
+                                className="group flex items-start gap-4 p-5 hover:bg-surface-50 dark:hover:bg-surface-800/60 transition-colors w-full text-left"
+                            >
                                 <span
                                     className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                                         notification.read_at
@@ -109,36 +149,31 @@ export default function Notifications({ notifications, unreadCount }: Props) {
                                         {relative(notification.created_at)}
                                     </span>
                                     {!notification.read_at && (
-                                        <button
+                                        <span
+                                            role="button"
+                                            tabIndex={0}
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
-                                                open(notification);
+                                                markRead(notification);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    markRead(notification);
+                                                }
                                             }}
                                             className="text-surface-400 hover:text-primary-600 transition-colors p-1 opacity-0 group-hover:opacity-100"
                                             title="Mark as read"
                                         >
                                             <CheckCheck className="w-4 h-4" />
-                                        </button>
+                                        </span>
+                                    )}
+                                    {hasUrl && (
+                                        <span className="sr-only">Open linked page</span>
                                     )}
                                 </div>
-                            </>
-                        );
-
-                        const className = 'group flex items-start gap-4 p-5 hover:bg-surface-50 dark:hover:bg-surface-800/60 transition-colors w-full text-left';
-
-                        return notification.data.url ? (
-                            <Link
-                                key={notification.id}
-                                href={notification.data.url}
-                                onClick={() => open(notification)}
-                                className={className}
-                            >
-                                {body}
-                            </Link>
-                        ) : (
-                            <button key={notification.id} onClick={() => open(notification)} className={className}>
-                                {body}
                             </button>
                         );
                     })}

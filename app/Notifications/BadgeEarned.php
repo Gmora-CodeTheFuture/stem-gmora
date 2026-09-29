@@ -24,7 +24,7 @@ class BadgeEarned extends Notification
         return [
             'title' => "Badge earned: {$this->badge->name}",
             'body' => $this->badge->description,
-            'url' => route('dashboard'),
+            'url' => route('dashboard.leaderboard'),
             'icon' => 'award',
         ];
     }

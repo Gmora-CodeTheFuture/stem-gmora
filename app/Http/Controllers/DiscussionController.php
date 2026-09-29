@@ -10,6 +10,7 @@ use App\Models\Lesson;
 use App\Notifications\DiscussionReplied;
 use App\Notifications\DiscussionStarted;
 use App\Services\ContentVersion;
+use App\Services\CourseShellBuilder;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,8 @@ use Inertia\Response;
  */
 class DiscussionController extends Controller
 {
+    public function __construct(private readonly CourseShellBuilder $shell) {}
+
     /**
      * Cross-course discussions hub for the sidebar.
      * Course boards at /learn/{course}/discussions stay as-is.
@@ -121,6 +124,19 @@ class DiscussionController extends Controller
                 ->toArray(),
             'filters' => ['filter' => $filter, 'lesson' => $lessonId, 'search' => $search],
             'canModerate' => $this->canModerate($request, $course),
+            ...$this->shellProps($request, $course),
+        ];
+    }
+
+    /** @return array{modules: mixed, curriculum: mixed, completionPercentage: float} */
+    private function shellProps(Request $request, Course $course): array
+    {
+        $shell = $this->shell->build($request->user(), $course, $request->attributes->get('enrollment'));
+
+        return [
+            'modules' => $shell['modules'],
+            'curriculum' => $shell['curriculum'],
+            'completionPercentage' => $shell['completionPercentage'],
         ];
     }
 
@@ -134,6 +150,11 @@ class DiscussionController extends Controller
             'replies.author:id,full_name,avatar_url,role_id',
             'replies.author.role:id,name,display_name',
         ]);
+
+        $course = $discussion->course;
+        $shell = $course
+            ? $this->shellProps($request, $course)
+            : ['modules' => [], 'curriculum' => [], 'completionPercentage' => 0.0];
 
         return Inertia::render('Discussions/Show', [
             'discussion' => [
@@ -153,6 +174,7 @@ class DiscussionController extends Controller
                 ])->values(),
             'canModerate' => $this->canModerate($request, $discussion->course),
             'isAuthor' => $discussion->user_id === $request->user()->id,
+            ...$shell,
         ]);
     }
 

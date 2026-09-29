@@ -3,10 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\Assignment;
+use App\Models\AssignmentQuestion;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Module;
 use App\Models\Submission;
 use App\Models\User;
+use App\Notifications\AssignmentPublished;
+use App\Notifications\EnrollmentConfirmed;
 use App\Notifications\SubmissionGraded;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\Notification;
@@ -45,6 +49,10 @@ class NotificationTest extends TestCase
         $this->assertNotNull($notification);
         $this->assertSame(SubmissionGraded::class, $notification->type);
         $this->assertStringContainsString('88/100', $notification->data['body']);
+        $this->assertSame(
+            route('assignments.show', $assignment->id),
+            $notification->data['url'],
+        );
     }
 
     public function test_notifications_page_lists_and_marks_read(): void
@@ -135,9 +143,62 @@ class NotificationTest extends TestCase
 
         $this->actingAs($student)->post(route('enroll.store', $course))->assertRedirect();
 
+        $notification = $student->fresh()->notifications()->first();
+
+        $this->assertSame(EnrollmentConfirmed::class, $notification?->type);
+        $this->assertSame(route('learn.show', $course->slug), $notification->data['url']);
+    }
+
+    public function test_assignment_published_links_to_learn_assignment(): void
+    {
+        $instructor = User::factory()->admin()->create();
+        $course = Course::factory()->create(['instructor_id' => $instructor->id]);
+        $student = User::factory()->create();
+        Enrollment::factory()->create(['user_id' => $student->id, 'course_id' => $course->id]);
+
+        $module = Module::factory()->create([
+            'course_id' => $course->id,
+            'is_published' => true,
+        ]);
+
+        $assignment = Assignment::create([
+            'course_id' => $course->id,
+            'module_id' => $module->id,
+            'title' => 'Linked assignment',
+            'max_marks' => 50,
+            'is_published' => false,
+            'order_index' => 0,
+        ]);
+
+        AssignmentQuestion::create([
+            'assignment_id' => $assignment->id,
+            'type' => 'normal',
+            'body' => 'Explain your approach',
+            'points' => 5,
+            'order_index' => 0,
+        ]);
+
+        $this->actingAs($instructor)
+            ->post(route('tutor.assignments.publish', $assignment))
+            ->assertRedirect();
+
+        $notification = $student->fresh()->notifications()->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame(AssignmentPublished::class, $notification->type);
         $this->assertSame(
-            \App\Notifications\EnrollmentConfirmed::class,
-            $student->fresh()->notifications()->first()?->type,
+            route('learn.assignment', [$course->slug, $assignment->id]),
+            $notification->data['url'],
         );
+
+        $this->actingAs($student)
+            ->post(route('notifications.read', $notification->id))
+            ->assertRedirect();
+
+        $this->assertNotNull($notification->fresh()->read_at);
+
+        $this->actingAs($student)
+            ->get($notification->data['url'])
+            ->assertOk();
     }
 }

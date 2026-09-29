@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import {
     CalendarDays, Check, ChevronLeft, ChevronRight, Clock, ExternalLink,
@@ -99,14 +99,35 @@ function toLocalInput(date: Date, allDay = false): string {
 export default function Calendar({
     rangeStart, rangeEnd, items, canManage, manageableCourses,
 }: Props) {
+    const { url: pageUrl } = usePage();
     const [composerOpen, setComposerOpen] = useState(false);
     const [editing, setEditing] = useState<CalendarItem | null>(null);
     const [composerDefaults, setComposerDefaults] = useState<{ starts_at?: string; ends_at?: string }>({});
     const [selectedEvent, setSelectedEvent] = useState<CalendarItem | null>(null);
     const [viewTitle, setViewTitle] = useState('');
+    const deepLinkApplied = useRef(false);
 
     const calendarRef = useRef<FullCalendar | null>(null);
     const initialDate = useRef(new Date().toISOString().slice(0, 10));
+
+    // Deep-link from notifications: /dashboard/calendar?open={eventId}
+    useEffect(() => {
+        if (deepLinkApplied.current || items.length === 0) {
+            return;
+        }
+
+        const query = pageUrl.includes('?') ? pageUrl.slice(pageUrl.indexOf('?')) : '';
+        const openId = new URLSearchParams(query).get('open');
+        if (!openId) {
+            return;
+        }
+
+        const match = items.find((i) => i.source === 'event' && i.id === openId);
+        if (match) {
+            setSelectedEvent(match);
+            deepLinkApplied.current = true;
+        }
+    }, [items, pageUrl]);
 
     useEffect(() => {
         if (!selectedEvent) {

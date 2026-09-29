@@ -43,6 +43,18 @@ class LearningController extends Controller
             ]);
         }
 
+        // Grades tab is rendered inside Learn/Show — don't bounce to an assignment.
+        if ($request->string('tab')->toString() === 'grades') {
+            $currentLesson = $lesson?->is_published ? $lesson : $this->defaultLesson($items, $context['progress']);
+
+            return $this->renderLearn($course, $context, [
+                'currentLesson' => $currentLesson
+                    ? $this->lessonPayload($currentLesson, $context['progress'])
+                    : null,
+                'currentAssignment' => null,
+            ]);
+        }
+
         $currentLesson = $lesson?->is_published ? $lesson : null;
 
         if (! $currentLesson) {
@@ -222,6 +234,7 @@ class LearningController extends Controller
                 'live_session' => $l->liveSession?->only([
                     'id', 'title', 'scheduled_start', 'duration_minutes', 'zoom_join_url',
                 ]),
+                'quiz' => $l->quiz?->is_published ? $l->quiz->only(['id', 'title']) : null,
                 'progress' => $progress->get($l->id)?->only(['status', 'watch_percentage']),
             ]),
             'assignments' => $module->assignments->map(fn (Assignment $a) => [
