@@ -133,9 +133,14 @@ class MyCoursesTest extends TestCase
     public function test_enrolled_rows_carry_real_progress(): void
     {
         $course = Course::factory()->create(['total_lessons' => 2]);
-        $module = Module::factory()->create(['course_id' => $course->id]);
-        $lesson = Lesson::factory()->create(['module_id' => $module->id]);
-        Lesson::factory()->create(['module_id' => $module->id, 'order_index' => 1]);
+        $module = Module::factory()->create(['course_id' => $course->id, 'is_published' => true]);
+        $lesson = Lesson::factory()->create(['module_id' => $module->id, 'is_published' => true, 'order_index' => 0]);
+        $next = Lesson::factory()->create([
+            'module_id' => $module->id,
+            'is_published' => true,
+            'order_index' => 1,
+            'title' => 'Neural Networks Basics',
+        ]);
 
         $enrollment = Enrollment::factory()->create([
             'user_id' => $this->student->id,
@@ -155,6 +160,8 @@ class MyCoursesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('enrolled.0.completed_lessons_count', 1)
-                ->where('enrolled.0.percentage', 50));
+                ->where('enrolled.0.percentage', 50)
+                ->where('enrolled.0.next_lesson.id', $next->id)
+                ->where('enrolled.0.next_lesson.title', 'Neural Networks Basics'));
     }
 }

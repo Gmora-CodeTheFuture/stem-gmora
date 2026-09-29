@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Link, router, usePage } from '@inertiajs/react';
 import { FormEventHandler, ReactNode, useEffect, useRef, useState } from 'react';
 import {
-    Award, Bell, BookOpen, Calendar, ClipboardCheck, Download, GraduationCap, Home,
+    Award, Bell, BookOpen, Calendar, ChevronRight, ClipboardCheck, Download, GraduationCap, Home,
     LifeBuoy, LogOut, Menu, Moon, Search, Settings, Sun, X,
     LayoutDashboard, Users, CreditCard, Trophy, Wrench, PenSquare, UserCheck, ShieldCheck, BarChart3,
     PlayCircle, MessageSquare, CheckCircle2, Tag
@@ -174,19 +174,39 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     const isStudent = !isAdmin && !isInstructor;
     const unread = notifications_count ?? 0;
 
-    const navigation = [
+    type NavItem = { name: string; href: string; icon: typeof Home; exact?: boolean; badge?: number };
+    type NavSection = { label: string | null; items: NavItem[] };
+
+    const studentPrimary: NavItem[] = [
         { name: 'Home', href: '/dashboard', icon: Home, exact: true },
         { name: 'Courses', href: '/dashboard/courses', icon: BookOpen },
         { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
         { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, badge: unread },
     ];
 
-    const yourWork = [
-        { name: 'Discussions', href: '/dashboard/discussions', icon: MessageSquare },
-        { name: 'Support', href: '/support', icon: LifeBuoy },
-        { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
-        { name: 'Certificates', href: '/dashboard/certificates', icon: Award },
-        { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
+    const studentSections: NavSection[] = [
+        {
+            label: 'Learning',
+            items: [
+                { name: 'Assignments', href: '/dashboard/assignments', icon: ClipboardCheck },
+                { name: 'My Progress', href: '/dashboard', icon: BarChart3, exact: true },
+            ],
+        },
+        {
+            label: 'Community',
+            items: [
+                { name: 'Discussions', href: '/dashboard/discussions', icon: MessageSquare },
+                { name: 'Leaderboard', href: '/dashboard/leaderboard', icon: Trophy },
+            ],
+        },
+        {
+            label: 'Achievements',
+            items: [{ name: 'Certificates', href: '/dashboard/certificates', icon: Award }],
+        },
+        {
+            label: 'Support',
+            items: [{ name: 'Help & Support', href: '/support', icon: LifeBuoy }],
+        },
     ];
 
     const instructorNav = isInstructor ? [
@@ -249,7 +269,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
     const message = flash?.success || flash?.error || flash?.warning || flash?.info;
     const tone = flash?.error ? 'error' : flash?.warning ? 'warning' : flash?.success ? 'success' : 'info';
 
-    const navLink = (item: { name: string; href: string; icon: typeof Home; exact?: boolean; badge?: number }) => (
+    const navLink = (item: NavItem) => (
         <Link
             key={item.name}
             href={item.href}
@@ -260,13 +280,13 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             } ${
                 isActive(item.href, item.exact)
                     ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 font-semibold before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-8 before:w-1 before:bg-primary-600 dark:before:bg-primary-500 before:rounded-r-full'
-                    : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200'
+                    : 'text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-100'
             }`}
         >
             <item.icon
                 className={`shrink-0 transition-colors ${
                     expanded ? 'w-5 h-5' : 'w-6 h-6'
-                } ${isActive(item.href, item.exact) ? 'text-primary-600 dark:text-primary-400' : 'text-surface-400 dark:text-surface-500 group-hover:text-surface-600 dark:group-hover:text-surface-300'}`}
+                } ${isActive(item.href, item.exact) ? 'text-primary-600 dark:text-primary-400' : 'text-surface-500 dark:text-surface-400 group-hover:text-surface-700 dark:group-hover:text-surface-200'}`}
                 strokeWidth={isActive(item.href, item.exact) ? 2.5 : 2}
             />
             
@@ -285,6 +305,25 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
             )}
         </Link>
     );
+
+    const sectionHeading = (label: string) =>
+        expanded ? (
+            <p className="px-6 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 whitespace-nowrap">
+                {label}
+            </p>
+        ) : (
+            <div className="pt-4 pb-2 px-0 flex justify-center" aria-hidden>
+                <div className="w-4 h-px bg-surface-200 dark:bg-surface-700" />
+            </div>
+        );
+
+    const renderStudentSections = (sections: NavSection[]) =>
+        sections.map((section) => (
+            <div key={section.label ?? 'primary'}>
+                {section.label && sectionHeading(section.label)}
+                <div className="space-y-0.5">{section.items.map(navLink)}</div>
+            </div>
+        ));
 
     return (
         <div className={`bg-surface-50 dark:bg-surface-950 font-sans selection:bg-primary-200 dark:selection:bg-primary-900/40 text-surface-900 dark:text-surface-100 transition-colors duration-200 overflow-x-hidden ${noScroll ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
@@ -323,18 +362,12 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin overflow-x-hidden">
                     {isStudent && (
                         <>
-                            {/* Desktop rail only — on phones these four live in the bottom tab bar. */}
-                            <div className="hidden lg:block space-y-1">{navigation.map(navLink)}</div>
-
-                            <div className={`pb-2 ${expanded ? 'px-6' : 'px-0 text-center'} pt-2 lg:pt-6`}>
-                                {expanded ? (
-                                    <p className="text-xs font-semibold text-surface-500 whitespace-nowrap">Your Work</p>
-                                ) : (
-                                    <div className="w-4 h-px bg-surface-200 dark:bg-surface-800 mx-auto"></div>
-                                )}
+                            {/* Desktop: primary + sectioned list. Mobile drawer: sections only (tabs cover primary four). */}
+                            <div className="hidden lg:block">
+                                <div className="space-y-0.5">{studentPrimary.map(navLink)}</div>
+                                {renderStudentSections(studentSections)}
                             </div>
-
-                            <div className="space-y-1">{yourWork.map(navLink)}</div>
+                            <div className="lg:hidden">{renderStudentSections(studentSections)}</div>
                         </>
                     )}
 
@@ -367,16 +400,32 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 </nav>
 
                 <div className="p-3 border-t border-surface-200 dark:border-surface-800">
-                    <Link
-                        href={route('courses.index')}
-                        className={`flex items-center py-2.5 rounded-xl text-sm font-medium text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors ${
-                            expanded ? 'px-3 gap-3' : 'justify-center'
-                        }`}
-                        title={!expanded ? 'Browse catalog' : undefined}
-                    >
-                        <BookOpen className="w-[18px] h-[18px] shrink-0" />
-                        {expanded && <span className="whitespace-nowrap">Browse catalog</span>}
-                    </Link>
+                    {expanded ? (
+                        <Link
+                            href={route('courses.index')}
+                            className="flex items-center gap-3 rounded-2xl bg-primary-50/90 dark:bg-primary-950/40 px-3 py-3 hover:bg-primary-50 dark:hover:bg-primary-950/60 transition-colors"
+                        >
+                            <span className="flex-1 min-w-0">
+                                <span className="block text-sm font-semibold text-primary-800 dark:text-primary-200">
+                                    Explore new skills
+                                </span>
+                                <span className="block text-xs text-primary-700 dark:text-primary-300 mt-0.5">
+                                    Browse the course catalog
+                                </span>
+                            </span>
+                            <span className="w-8 h-8 rounded-full bg-white dark:bg-surface-900 shadow-sm flex items-center justify-center shrink-0">
+                                <ChevronRight className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                            </span>
+                        </Link>
+                    ) : (
+                        <Link
+                            href={route('courses.index')}
+                            className="flex items-center justify-center py-2.5 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
+                            title="Explore new skills"
+                        >
+                            <BookOpen className="w-[18px] h-[18px] shrink-0" />
+                        </Link>
+                    )}
                 </div>
             </aside>
 

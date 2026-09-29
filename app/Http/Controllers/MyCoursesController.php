@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Lesson;
 use App\Models\Progress;
 use App\Services\ContentVersion;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -52,6 +54,7 @@ class MyCoursesController extends Controller
             ->get();
 
         $enrolledIds = $enrollments->pluck('course_id')->all();
+        $nextLessons = $this->nextLessonsByEnrollment($enrollments);
 
         $enrolled = $enrollments
             ->filter(fn (Enrollment $enrollment) => $this->matches($enrollment->course, $search, $categories))
@@ -60,6 +63,7 @@ class MyCoursesController extends Controller
                 'status' => $enrollment->status,
                 'completed_lessons_count' => $enrollment->completed_lessons_count,
                 'percentage' => $this->percentage($enrollment),
+                'next_lesson' => $nextLessons->get($enrollment->id),
                 ...$this->presentCourse($enrollment->course, true),
             ])
             ->sortByDesc('percentage')
@@ -93,6 +97,61 @@ class MyCoursesController extends Controller
                 'all' => $published->count(),
             ],
         ];
+    }
+
+    /**
+     * First incomplete published lesson per enrollment (module then lesson order).
+     *
+     * @param  Collection<int, Enrollment>  $enrollments
+     * @return Collection<string, array{id: string, title: string, duration_seconds: int}|null>
+     */
+    private function nextLessonsByEnrollment(Collection $enrollments): Collection
+    {
+        if ($enrollments->isEmpty()) {
+            return collect();
+        }
+
+        $courseIds = $enrollments->pluck('course_id')->unique()->values();
+        $enrollmentIds = $enrollments->pluck('id');
+
+        $completedByEnrollment = Progress::query()
+            ->whereIn('enrollment_id', $enrollmentIds)
+            ->where('status', Progress::STATUS_COMPLETED)
+            ->get(['enrollment_id', 'lesson_id'])
+            ->groupBy('enrollment_id')
+            ->map(fn (Collection $rows) => $rows->pluck('lesson_id')->all());
+
+        $lessonsByCourse = Lesson::query()
+            ->where('is_published', true)
+            ->whereHas('module', fn ($q) => $q
+                ->whereIn('course_id', $courseIds)
+                ->where('is_published', true))
+            ->with('module:id,course_id,order_index')
+            ->orderBy('order_index')
+            ->get(['id', 'module_id', 'title', 'duration_seconds', 'order_index'])
+            ->groupBy(fn (Lesson $lesson) => $lesson->module?->course_id)
+            ->map(fn (Collection $lessons) => $lessons
+                ->sortBy([
+                    fn (Lesson $l) => (int) ($l->module?->order_index ?? 0),
+                    fn (Lesson $l) => (int) $l->order_index,
+                ])
+                ->values());
+
+        return $enrollments->mapWithKeys(function (Enrollment $enrollment) use ($completedByEnrollment, $lessonsByCourse) {
+            $completed = $completedByEnrollment->get($enrollment->id, []);
+            $lessons = $lessonsByCourse->get($enrollment->course_id, collect());
+
+            /** @var Lesson|null $next */
+            $next = $lessons->first(fn (Lesson $lesson) => ! in_array($lesson->id, $completed, true));
+
+            return [
+                $enrollment->id => $next ? [
+                    'id' => $next->id,
+                    'title' => $next->title,
+                    'duration_seconds' => (int) $next->duration_seconds,
+                ] : null,
+            ];
+        });
     }
 
     /** @return array<string, mixed> */
