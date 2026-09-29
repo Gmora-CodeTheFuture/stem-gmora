@@ -53,6 +53,15 @@ export default function CourseLayout({
         });
     }, [modules]);
 
+    // Lock document scroll — only inner panes (sidebar list / media) may scroll.
+    useEffect(() => {
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = prev;
+        };
+    }, []);
+
     const toggleModule = (id: string) =>
         setOpenModules((open) => (open.includes(id) ? open.filter((m) => m !== id) : [...open, id]));
 
@@ -249,7 +258,7 @@ export default function CourseLayout({
                     </aside>
                 )}
 
-                <main className="flex-1 min-w-0 min-h-0 overflow-y-auto scrollbar-thin">
+                <main className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
                     {children}
                 </main>
             </div>

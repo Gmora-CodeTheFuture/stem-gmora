@@ -253,9 +253,9 @@ export default function LearnShow({
         >
             <Head title={`${pageTitle} — ${course.title}`} />
 
-            <div className="flex flex-col min-h-full">
+            <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
                 {activeTab === 'grades' ? (
-                    <div className="p-4 sm:p-6 lg:p-8">
+                    <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-4 sm:p-6 lg:p-8">
                         <CourseGradesPanel
                             courseSlug={course.slug}
                             curriculum={curriculum}
@@ -265,7 +265,11 @@ export default function LearnShow({
                 ) : (
                     <>
                         {/* Mobile overview */}
-                        <div className={`lg:hidden ${mobileMode === 'overview' ? 'block' : 'hidden'}`}>
+                        <div
+                            className={`lg:hidden flex-1 min-h-0 overflow-y-auto scrollbar-thin ${
+                                mobileMode === 'overview' ? 'block' : 'hidden'
+                            }`}
+                        >
                             <MobileOverview
                                 course={course}
                                 modules={modules}
@@ -286,7 +290,7 @@ export default function LearnShow({
 
                         {/* Player (desktop always; mobile when mode=player) */}
                         <div
-                            className={`flex flex-col flex-1 min-h-0 ${
+                            className={`flex flex-col flex-1 min-h-0 h-full overflow-hidden ${
                                 mobileMode === 'player' ? 'flex' : 'hidden lg:flex'
                             }`}
                         >
@@ -305,44 +309,22 @@ export default function LearnShow({
                                 </span>
                             </div>
 
-                            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-3 sm:px-5 lg:px-8 py-3 lg:py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8">
+                            {/* Scrollable media only */}
+                            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin px-3 sm:px-5 lg:px-8 py-3 lg:py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-5">
                                 {currentAssignment ? (
-                                    <>
-                                        <div className="flex-1 flex flex-col min-h-[20rem]">
+                                    <div className="flex flex-col min-h-0 h-full gap-3">
+                                        <div className="flex-1 min-h-0 overflow-y-auto">
                                             <AssignmentAttemptPanel assignment={currentAssignment} />
                                         </div>
-                                        <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 bg-white dark:bg-surface-950">
-                                            <p className="text-xs uppercase tracking-wider text-primary-500 font-semibold mb-1">
-                                                Assignment{currentAssignment.is_required ? ' · Required' : ''}
+                                        {currentAssignment.description && (
+                                            <p className="text-sm text-surface-500 leading-relaxed hidden sm:block whitespace-pre-line shrink-0">
+                                                {currentAssignment.description}
                                             </p>
-                                            <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
-                                                {currentAssignment.title}
-                                            </h1>
-                                            {currentAssignment.description && (
-                                                <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block whitespace-pre-line">
-                                                    {currentAssignment.description}
-                                                </p>
-                                            )}
-                                            <div className="hidden lg:block">
-                                                <NavActions
-                                                    courseSlug={course.slug}
-                                                    prevItem={prevItem}
-                                                    nextItem={nextItem}
-                                                    canAdvance={canAdvance}
-                                                    showComplete={false}
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
+                                        )}
+                                    </div>
                                 ) : currentLesson ? (
-                                    <>
-                                        <div
-                                            className={`flex flex-col ${
-                                                currentLesson.type === 'html'
-                                                    ? 'min-h-[min(48dvh,24rem)] sm:min-h-[22rem] lg:min-h-[min(72dvh,40rem)]'
-                                                    : 'min-h-[20rem]'
-                                            }`}
-                                        >
+                                    <div className="flex flex-col min-h-0 h-full gap-3">
+                                        <div className="flex-1 min-h-0 flex flex-col">
                                             {currentLesson.type === 'youtube' && currentLesson.has_video ? (
                                                 <SecureVideoPlayer
                                                     key={currentLesson.id}
@@ -365,31 +347,42 @@ export default function LearnShow({
                                                 <PlaceholderPanel lesson={currentLesson} />
                                             )}
                                         </div>
-
-                                        <div className="card p-4 sm:p-5 lg:p-6 mt-3 lg:mt-5 shrink-0 bg-white dark:bg-surface-950">
-                                            <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-surface-900 dark:text-white">
-                                                {currentLesson.title}
-                                            </h1>
-                                            {currentLesson.description && (
-                                                <p className="text-surface-500 mt-2 leading-relaxed hidden sm:block">
-                                                    {currentLesson.description}
-                                                </p>
-                                            )}
-                                            <div className="hidden lg:block">
-                                                <NavActions
-                                                    courseSlug={course.slug}
-                                                    prevItem={prevItem}
-                                                    nextItem={nextItem}
-                                                    canAdvance={canAdvance}
-                                                    showComplete
-                                                    isComplete={currentLesson.progress?.status === 'completed'}
-                                                    onMarkComplete={markComplete}
-                                                    durationLabel={formatDuration(currentLesson.duration_seconds)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
+                                        {currentLesson.description && (
+                                            <p className="text-sm text-surface-500 leading-relaxed hidden sm:block shrink-0">
+                                                {currentLesson.description}
+                                            </p>
+                                        )}
+                                    </div>
                                 ) : null}
+                            </div>
+
+                            {/* Desktop pinned footer — Prev / Next / Complete always visible */}
+                            <div className="hidden lg:flex shrink-0 items-center gap-4 px-6 py-4 border-t border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs uppercase tracking-wider text-primary-500 font-semibold truncate">
+                                        {currentAssignment
+                                            ? `Assignment${currentAssignment.is_required ? ' · Required' : ''}`
+                                            : 'Lesson'}
+                                    </p>
+                                    <h2 className="text-base font-semibold text-surface-900 dark:text-white truncate">
+                                        {pageTitle}
+                                    </h2>
+                                </div>
+                                <NavActions
+                                    courseSlug={course.slug}
+                                    prevItem={prevItem}
+                                    nextItem={nextItem}
+                                    canAdvance={canAdvance}
+                                    showComplete={Boolean(currentLesson) && !currentAssignment}
+                                    isComplete={currentLesson?.progress?.status === 'completed'}
+                                    onMarkComplete={markComplete}
+                                    durationLabel={
+                                        currentLesson
+                                            ? formatDuration(currentLesson.duration_seconds)
+                                            : undefined
+                                    }
+                                    compact
+                                />
                             </div>
 
                             {/* Mobile sticky next / complete */}
@@ -629,6 +622,7 @@ function NavActions({
     isComplete = false,
     onMarkComplete,
     durationLabel,
+    compact = false,
 }: {
     courseSlug: string;
     prevItem: CurriculumItem | null;
@@ -638,13 +632,20 @@ function NavActions({
     isComplete?: boolean;
     onMarkComplete?: () => void;
     durationLabel?: string;
+    compact?: boolean;
 }) {
     return (
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 pt-3 sm:pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0 mt-3 sm:mt-5">
+        <div
+            className={
+                compact
+                    ? 'flex flex-row flex-wrap items-center gap-2 shrink-0'
+                    : 'grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 pt-3 sm:pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0 mt-3 sm:mt-5'
+            }
+        >
             {prevItem ? (
                 <Link
                     href={itemHref(courseSlug, prevItem)}
-                    className="btn-secondary h-11 w-full sm:w-auto justify-center px-4"
+                    className="btn-secondary h-11 w-auto justify-center px-4"
                 >
                     Previous
                 </Link>
@@ -654,7 +655,7 @@ function NavActions({
                 canAdvance ? (
                     <Link
                         href={itemHref(courseSlug, nextItem)}
-                        className={`btn-secondary h-11 w-full sm:w-auto justify-center px-4 ${prevItem ? '' : 'col-span-2 sm:col-auto'}`}
+                        className="btn-secondary h-11 w-auto justify-center px-4"
                     >
                         Next
                     </Link>
@@ -663,7 +664,7 @@ function NavActions({
                         type="button"
                         disabled
                         title="Submit the required assignment to continue"
-                        className={`btn-secondary h-11 w-full sm:w-auto justify-center px-4 ${prevItem ? '' : 'col-span-2 sm:col-auto'}`}
+                        className="btn-secondary h-11 w-auto justify-center px-4"
                     >
                         <Lock className="w-3.5 h-3.5 mr-1" />
                         Next
@@ -676,7 +677,7 @@ function NavActions({
                     type="button"
                     onClick={onMarkComplete}
                     disabled={isComplete}
-                    className={`col-span-2 sm:col-auto h-11 w-full sm:w-auto justify-center px-4 ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
+                    className={`h-11 w-auto justify-center px-4 ${isComplete ? 'btn-ghost cursor-default' : 'btn-primary'}`}
                 >
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     {isComplete ? 'Completed' : 'Mark as complete'}
@@ -827,7 +828,7 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
             className={
                 immersive
                     ? 'fixed inset-0 z-[200] bg-white dark:bg-surface-950'
-                    : 'card relative overflow-hidden h-full min-h-[min(48dvh,24rem)] sm:min-h-[22rem] lg:min-h-[min(70dvh,36rem)] bg-white dark:bg-surface-950'
+                    : 'card relative overflow-hidden flex-1 min-h-0 h-full bg-white dark:bg-surface-950'
             }
         >
             <iframe
@@ -860,8 +861,8 @@ function DocumentPanel({ lesson }: { lesson: Lesson }) {
     const src = route('lesson.pdf', lesson.id);
 
     return (
-        <div className="card overflow-hidden h-full flex flex-col min-h-[24rem]">
-            <object data={src} type="application/pdf" className="w-full flex-1 min-h-[20rem]">
+        <div className="card overflow-hidden flex-1 min-h-0 h-full flex flex-col">
+            <object data={src} type="application/pdf" className="w-full flex-1 min-h-0">
                 <div className="p-8 text-center">
                     <p className="text-surface-500">Your browser can&apos;t display PDFs inline.</p>
                     <a href={src} target="_blank" rel="noopener noreferrer" className="btn-primary mt-4">
