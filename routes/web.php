@@ -30,6 +30,7 @@ use App\Http\Controllers\LessonFileController;
 use App\Http\Controllers\MyCoursesController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PresentationController;
+use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SearchController;
@@ -160,6 +161,7 @@ Route::get('/verify/{code}', function (string $code) {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/dashboard/progress', ProgressController::class)->name('dashboard.progress');
     Route::get('/dashboard/courses', [MyCoursesController::class, 'index'])->name('dashboard.courses');
     Route::get('/dashboard/calendar', [CalendarController::class, 'index'])->name('dashboard.calendar');
     Route::get('/dashboard/certificates', [CertificateController::class, 'index'])->name('dashboard.certificates');

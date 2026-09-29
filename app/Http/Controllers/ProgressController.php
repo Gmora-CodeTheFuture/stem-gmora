@@ -9,9 +9,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The student home: resume learning, upcoming work, and a short course list.
+ * Student progress analytics: stats, activity, badges, and per-course completion.
  */
-class DashboardController extends Controller
+class ProgressController extends Controller
 {
     public function __construct(private readonly StudentDashboardData $dashboard) {}
 
@@ -23,21 +23,19 @@ class DashboardController extends Controller
             return redirect()->route('instructor.home');
         }
 
+        // Reuse the same cache entry — payload is built once for home/progress.
         $full = DashboardCache::remember(
             $user->id,
             fn () => $this->dashboard->build($user),
         );
 
-        return Inertia::render('Dashboard', [
-            'stats' => [
-                'progress_percentage' => $full['stats']['progress_percentage'],
-                'certificates' => $full['stats']['certificates'],
-            ],
+        return Inertia::render('Dashboard/Progress', [
+            'stats' => $full['stats'],
             'streak' => $full['streak'],
-            'enrollments' => array_slice($full['enrollments'], 0, 3),
-            'resume' => $full['resume'],
-            'upcoming' => $full['upcoming'],
-            'dueSoon' => $full['dueSoon'],
+            'badges' => $full['badges'],
+            'activity' => $full['activity'],
+            'enrollments' => $full['enrollments'],
+            'certificates' => $full['certificates'],
         ]);
     }
 }
