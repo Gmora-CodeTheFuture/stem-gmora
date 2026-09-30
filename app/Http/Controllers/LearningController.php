@@ -117,6 +117,7 @@ class LearningController extends Controller
         $assignment->load(['questions' => fn ($q) => $q->orderBy('order_index')]);
         $submission = $context['submissions']->get($assignment->id);
         $reveal = $submission && in_array($submission->status, ['graded', 'returned'], true);
+        $answers = $submission?->answers ?? [];
 
         return $this->renderLearn($course, $context, [
             'currentLesson' => null,
@@ -125,7 +126,9 @@ class LearningController extends Controller
                     'id', 'title', 'description', 'deadline_at', 'max_marks', 'is_required', 'module_id', 'order_index',
                 ]),
                 'questions' => $assignment->questions->map(
-                    fn ($q) => $q->forStudent($reveal)
+                    fn ($q) => $reveal
+                        ? $q->forStudentReview($answers[$q->id] ?? null)
+                        : $q->forStudent(false)
                 )->values(),
                 'submission' => $submission?->only([
                     'id', 'type', 'answers', 'notes', 'status', 'marks_awarded', 'feedback', 'graded_at', 'created_at',
@@ -337,13 +340,24 @@ class LearningController extends Controller
      */
     private function lessonPayload(Lesson $lesson, Collection $progress): array
     {
-        $lesson->loadMissing(['liveSession', 'quiz', 'presentation']);
+        $lesson->loadMissing(['liveSession', 'quiz', 'presentation', 'materials']);
+
+        $materials = $lesson->resolvedMaterials()
+            ->filter(fn ($material) => $material->type !== 'quiz')
+            ->map(fn ($material) => $material->toStudentArray())
+            ->values()
+            ->all();
+
+        $hasVideo = collect($materials)->contains(fn ($m) => ($m['type'] ?? null) === 'youtube' && ($m['has_video'] ?? false));
+        $hasPdf = collect($materials)->contains(fn ($m) => ($m['type'] ?? null) === 'pdf' && ($m['has_pdf'] ?? false));
+        $hasPresentation = collect($materials)->contains(fn ($m) => ($m['type'] ?? null) === 'html' && ($m['has_presentation'] ?? false));
 
         return [
             ...$lesson->only(['id', 'title', 'description', 'type', 'duration_seconds']),
-            'has_video' => $lesson->isVideo() && $lesson->content_ref !== null,
-            'has_presentation' => $lesson->type === Lesson::TYPE_HTML && $lesson->presentation !== null,
-            'has_pdf' => $lesson->type === Lesson::TYPE_PDF && filled($lesson->getRawOriginal('content_ref')),
+            'has_video' => $hasVideo || ($lesson->isVideo() && $lesson->content_ref !== null),
+            'has_presentation' => $hasPresentation || ($lesson->type === Lesson::TYPE_HTML && $lesson->presentation !== null),
+            'has_pdf' => $hasPdf || ($lesson->type === Lesson::TYPE_PDF && filled($lesson->getRawOriginal('content_ref'))),
+            'materials' => $materials,
             'live_session' => $lesson->liveSession?->only([
                 'id', 'title', 'scheduled_start', 'duration_minutes', 'zoom_join_url',
             ]),

@@ -60,10 +60,10 @@ export default {
                 },
             },
 
-            // One family throughout — no display/body split.
+            // Body: Inter. Display (hero outlines): Space Grotesk — wider glyphs reduce stroke collisions.
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
-                display: ['Inter', ...defaultTheme.fontFamily.sans],
+                display: ['"Space Grotesk"', ...defaultTheme.fontFamily.sans],
                 mono: ['JetBrains Mono', ...defaultTheme.fontFamily.mono],
             },
 

@@ -582,4 +582,60 @@ class AssignmentTest extends TestCase
         $this->assertStringNotContainsString('<script>', $submission->notes ?? '');
         $this->assertStringNotContainsString('<b>', $submission->notes ?? '');
     }
+
+    public function test_graded_assignment_review_reveals_answers_and_keys(): void
+    {
+        $module = \App\Models\Module::factory()->create([
+            'course_id' => $this->course->id,
+            'is_published' => true,
+            'order_index' => 0,
+        ]);
+
+        $assignment = Assignment::create([
+            'course_id' => $this->course->id,
+            'module_id' => $module->id,
+            'order_index' => 0,
+            'title' => 'Review me',
+            'max_marks' => 10,
+            'is_published' => true,
+            'is_required' => false,
+        ]);
+
+        $question = $assignment->questions()->create([
+            'type' => 'mcq',
+            'body' => '2 + 2?',
+            'options' => [
+                ['text' => '3', 'is_correct' => false],
+                ['text' => '4', 'is_correct' => true],
+            ],
+            'correct_answer' => [1],
+            'points' => 10,
+            'order_index' => 0,
+        ]);
+
+        $this->actingAs($this->student)
+            ->post(route('assignments.submit', $assignment), [
+                'type' => 'answers',
+                'answers' => [$question->id => [1]],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('submissions', [
+            'assignment_id' => $assignment->id,
+            'user_id' => $this->student->id,
+            'status' => 'graded',
+        ]);
+
+        $this->actingAs($this->student)
+            ->get(route('learn.assignment', [$this->course->slug, $assignment->id]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Learn/Show')
+                ->where('currentAssignment.id', $assignment->id)
+                ->where('currentAssignment.submission.status', 'graded')
+                ->where('currentAssignment.questions.0.correct_answer', [1])
+                ->where('currentAssignment.questions.0.given_answer', [1])
+                ->where('currentAssignment.questions.0.is_correct', true)
+                ->has('currentAssignment.questions.0.body'));
+    }
 }

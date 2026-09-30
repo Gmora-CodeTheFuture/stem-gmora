@@ -105,16 +105,12 @@ export default function Welcome({ content, figures }: Props) {
                         <Link href="/" className="flex items-center">
                             <img src={logoSrc} alt="Gmora STEM" className="h-12 w-auto object-contain transition-opacity duration-300" />
                         </Link>
-                        <nav className="hidden md:flex gap-6">
-                            <Link href="#stem" className={`transition-colors duration-300 ${linkHoverClass}`}>Curriculum</Link>
-                            <Link href="#vision" className={`transition-colors duration-300 ${linkHoverClass}`}>Directives</Link>
-                        </nav>
                     </div>
                     <div className="flex items-center gap-4 md:gap-6">
                         <div className="hidden md:flex items-center gap-6">
-                            <Link href="/login" className={`transition-colors duration-300 ${linkHoverClass}`}>Sys Login</Link>
+                            <Link href="/login" className={`transition-colors duration-300 ${linkHoverClass}`}>Login</Link>
                             <Link href="/register" className={`px-4 py-1.5 transition-colors duration-300 font-bold ${buttonClass}`}>
-                                Initialize
+                                Register
                             </Link>
                         </div>
                         <button
@@ -132,8 +128,6 @@ export default function Welcome({ content, figures }: Props) {
                 {mobileMenuOpen && (
                     <div className={`md:hidden border-t ${navTheme === 'dark' ? 'border-white/10 bg-black' : 'border-black/10 bg-white'}`}>
                         <nav className="max-w-[1440px] mx-auto px-6 py-4 flex flex-col gap-1 font-sans text-sm uppercase tracking-widest">
-                            <a href="#stem" onClick={closeMobileMenu} className={`py-3 transition-colors ${linkHoverClass}`}>Curriculum</a>
-                            <a href="#vision" onClick={closeMobileMenu} className={`py-3 transition-colors ${linkHoverClass}`}>Directives</a>
                             <Link href="/login" onClick={closeMobileMenu} className={`py-3 transition-colors ${linkHoverClass}`}>Login</Link>
                             <Link href="/register" onClick={closeMobileMenu} className={`mt-2 px-4 py-3 text-center font-bold ${buttonClass}`}>
                                 Register
@@ -213,7 +207,7 @@ export default function Welcome({ content, figures }: Props) {
                         <section data-theme="light" id="stem" className="py-32 relative z-10 border-y border-black/10 bg-white/80 backdrop-blur-sm">
                             <div className="max-w-[1440px] mx-auto px-6">
                                 <div className="max-w-2xl mb-20">
-                                    <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
+                                    <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6 text-primary-600">
                                         {content.stem.title}
                                     </h2>
                                     <p className="font-sans text-sm text-black/60 leading-relaxed border-l border-black/20 pl-4">
@@ -247,7 +241,7 @@ export default function Welcome({ content, figures }: Props) {
                         <section data-theme="light" id="vision" className="py-32 relative z-10 border-b border-black/10 bg-white">
                             <div className="max-w-[1440px] mx-auto px-6">
                                 <div className="max-w-2xl mb-16">
-                                    <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6">
+                                    <h2 className="font-sans text-3xl md:text-5xl font-bold uppercase tracking-tight mb-6 text-primary-600">
                                         {content.vision.title}
                                     </h2>
                                     <p className="font-sans text-sm text-black/60 leading-relaxed border-l border-black/20 pl-4">
@@ -268,7 +262,7 @@ export default function Welcome({ content, figures }: Props) {
                         {/* ── Closing CTA ──────────────────────────────── */}
                         <section data-theme="light" className="py-32 relative z-10 bg-white">
                             <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center">
-                                <h2 className="font-sans text-5xl md:text-6xl font-bold uppercase tracking-tight mb-8">
+                                <h2 className="font-sans text-5xl md:text-6xl font-bold uppercase tracking-tight mb-8 text-primary-600">
                                     {content.cta.title}
                                 </h2>
                                 <p className="font-sans text-base text-black/60 max-w-xl mx-auto mb-12 leading-relaxed">

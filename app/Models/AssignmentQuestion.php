@@ -106,4 +106,20 @@ class AssignmentQuestion extends Model
 
         return $payload;
     }
+
+    /**
+     * Graded review payload: student's answer, key, and auto-grade result.
+     *
+     * @return array<string, mixed>
+     */
+    public function forStudentReview(mixed $givenAnswer = null): array
+    {
+        $payload = $this->forStudent(revealAnswers: true);
+        $payload['given_answer'] = $givenAnswer;
+        $payload['is_correct'] = $this->isAutoGradable()
+            ? app(\App\Services\CurriculumGate::class)->isCorrect($this, $givenAnswer)
+            : null;
+
+        return $payload;
+    }
 }

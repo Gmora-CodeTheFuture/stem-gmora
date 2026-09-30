@@ -89,6 +89,26 @@ export interface Lesson {
     content_ref?: string | null;
     has_presentation?: boolean;
     has_pdf?: boolean;
+    /** Multi-format assets under this topic (student or tutor shape). */
+    materials?: Array<{
+        id: string;
+        type: 'youtube' | 'pdf' | 'html' | 'live';
+        title: string;
+        order_index: number;
+        has_video?: boolean;
+        has_pdf?: boolean;
+        has_presentation?: boolean;
+        legacy?: boolean;
+        scheduled_start?: string | null;
+        duration_minutes?: number | null;
+        zoom_join_url?: string | null;
+        zoom_meeting_id?: string | null;
+        zoom_passcode?: string | null;
+        recording_url?: string | null;
+        content_ref?: string | null;
+        original_filename?: string | null;
+        is_ready?: boolean;
+    }>;
     quiz?: Quiz | null;
     progress?: Pick<Progress, 'status' | 'watch_percentage'> | null;
 }

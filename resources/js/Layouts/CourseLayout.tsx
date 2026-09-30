@@ -7,6 +7,8 @@ import {
     Calendar,
     Home,
     MoreVertical,
+    PanelLeftClose,
+    PanelLeftOpen,
     X,
 } from 'lucide-react';
 import CourseCurriculum from '@/Components/Learn/CourseCurriculum';
@@ -31,6 +33,8 @@ type Props = {
     headerBack?: () => void;
 };
 
+const CURRICULUM_OPEN_KEY = 'course:curriculum:open';
+
 export default function CourseLayout({
     course,
     modules = [],
@@ -44,6 +48,12 @@ export default function CourseLayout({
 }: Props) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [openModules, setOpenModules] = useState<string[]>(() => modules.map((m) => m.id));
+    const [curriculumOpen, setCurriculumOpen] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem(CURRICULUM_OPEN_KEY) !== 'false';
+        }
+        return true;
+    });
 
     useEffect(() => {
         setOpenModules((prev) => {
@@ -52,6 +62,10 @@ export default function CourseLayout({
             return missing.length ? [...prev, ...missing] : prev;
         });
     }, [modules]);
+
+    useEffect(() => {
+        localStorage.setItem(CURRICULUM_OPEN_KEY, curriculumOpen ? 'true' : 'false');
+    }, [curriculumOpen]);
 
     // Lock document scroll — only inner panes (sidebar list / media) may scroll.
     useEffect(() => {
@@ -89,6 +103,8 @@ export default function CourseLayout({
         router.visit(route('learn.show', course.slug));
     };
 
+    const showCurriculum = !hideCurriculum && curriculumOpen;
+
     return (
         <div className="h-dvh flex flex-col bg-surface-50 dark:bg-surface-950 text-surface-900 dark:text-surface-100 overflow-hidden">
             {/* Top bar */}
@@ -114,6 +130,23 @@ export default function CourseLayout({
                     >
                         <X className="w-5 h-5" />
                     </Link>
+
+                    {!hideCurriculum && (
+                        <button
+                            type="button"
+                            onClick={() => setCurriculumOpen((open) => !open)}
+                            className="btn-icon shrink-0 hidden lg:inline-flex"
+                            aria-label={curriculumOpen ? 'Hide course content' : 'Show course content'}
+                            aria-expanded={curriculumOpen}
+                            title={curriculumOpen ? 'Hide course content' : 'Show course content'}
+                        >
+                            {curriculumOpen ? (
+                                <PanelLeftClose className="w-5 h-5" />
+                            ) : (
+                                <PanelLeftOpen className="w-5 h-5" />
+                            )}
+                        </button>
+                    )}
 
                     <div className="min-w-0 flex-1">
                         <p className="text-[11px] uppercase tracking-wider text-surface-400 font-semibold leading-none mb-0.5 hidden sm:block">
@@ -208,20 +241,14 @@ export default function CourseLayout({
 
             <div className="flex flex-1 min-h-0 overflow-hidden">
                 {/* Desktop curriculum rail */}
-                {!hideCurriculum && (
+                {showCurriculum && (
                     <aside className="hidden lg:flex w-[320px] shrink-0 flex-col border-r border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
                         <div className="px-4 py-4 border-b border-surface-100 dark:border-surface-800 shrink-0">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-1">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-surface-400 mb-3">
                                 Course content
                             </p>
-                            <p className="text-sm text-surface-600 dark:text-surface-300">
-                                {completionPercentage}% complete
-                            </p>
-                            <div className="mt-2 progress-track">
-                                <div className="progress-fill" style={{ width: `${completionPercentage}%` }} />
-                            </div>
 
-                            <div className="mt-4 flex gap-1">
+                            <div className="flex gap-1">
                                 {(
                                     [
                                         { key: 'content', label: 'Content' },

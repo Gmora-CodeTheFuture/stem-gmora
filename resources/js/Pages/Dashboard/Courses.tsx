@@ -300,7 +300,7 @@ export default function DashboardCourses({ enrolled, catalog, categories, filter
                             onClick={() => setView('gallery')}
                             className={`inline-flex items-center justify-center w-9 h-8 rounded-full transition-colors ${
                                 viewMode === 'gallery'
-                                    ? 'bg-surface-900 text-white dark:bg-white dark:text-surface-900'
+                                    ? 'bg-primary-600 text-white'
                                     : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
                             }`}
                         >
@@ -313,7 +313,7 @@ export default function DashboardCourses({ enrolled, catalog, categories, filter
                             onClick={() => setView('list')}
                             className={`inline-flex items-center justify-center w-9 h-8 rounded-full transition-colors ${
                                 viewMode === 'list'
-                                    ? 'bg-surface-900 text-white dark:bg-white dark:text-surface-900'
+                                    ? 'bg-primary-600 text-white'
                                     : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
                             }`}
                         >

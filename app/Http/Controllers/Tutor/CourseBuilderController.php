@@ -118,6 +118,7 @@ class CourseBuilderController extends Controller
             'modules.lessons.liveSession',
             'modules.lessons.quiz.questions',
             'modules.lessons.presentation:id,lesson_id,original_filename',
+            'modules.lessons.materials',
             'assignments' => fn ($q) => $q->orderByDesc('created_at'),
             'assignments.questions' => fn ($q) => $q->orderBy('order_index'),
         ]);
@@ -133,6 +134,11 @@ class CourseBuilderController extends Controller
                 $lesson->setAttribute(
                     'has_pdf',
                     $lesson->type === Lesson::TYPE_PDF && filled($lesson->getRawOriginal('content_ref')),
+                );
+
+                $lesson->setAttribute(
+                    'materials',
+                    $lesson->resolvedMaterials()->map->toTutorArray()->values()->all(),
                 );
 
                 // Authors need the answer key while editing questions.

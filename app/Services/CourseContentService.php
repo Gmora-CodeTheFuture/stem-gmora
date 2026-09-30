@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\LessonMaterial;
 use App\Models\Module;
 use Illuminate\Support\Str;
 
@@ -90,6 +91,23 @@ class CourseContentService
      */
     public function publishBlocker(Lesson $lesson): ?string
     {
+        if ($lesson->type === Lesson::TYPE_QUIZ) {
+            return $lesson->quiz()->where('is_published', true)->exists()
+                ? null
+                : 'Publish the quiz before publishing this lesson.';
+        }
+
+        $materials = $lesson->resolvedMaterials();
+
+        if ($materials->isNotEmpty()) {
+            $ready = $materials->first(fn (LessonMaterial $material) => $material->isReady());
+
+            return $ready
+                ? null
+                : 'Add at least one complete material (video, PDF, presentation, or live link) before publishing.';
+        }
+
+        // Pure legacy fallback when synthesis also returned nothing.
         return match ($lesson->type) {
             Lesson::TYPE_YOUTUBE => $lesson->content_ref
                 ? null
@@ -100,9 +118,6 @@ class CourseContentService
             Lesson::TYPE_LIVE => $lesson->liveSession()->exists()
                 ? null
                 : 'Schedule the live session before publishing this lesson.',
-            Lesson::TYPE_QUIZ => $lesson->quiz()->where('is_published', true)->exists()
-                ? null
-                : 'Publish the quiz before publishing this lesson.',
             Lesson::TYPE_HTML => $lesson->presentation()->exists()
                 ? null
                 : 'Upload the presentation .zip before publishing this lesson.',

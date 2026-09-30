@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AuditLog;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LessonMaterial;
 use App\Models\User;
 use App\Models\VideoAccessToken;
 use Illuminate\Http\Request;
@@ -32,9 +33,27 @@ class VideoAccessService
      *
      * @return array{video_id: string, ticket: string, expires_at: string, watermark: string}
      */
-    public function issue(User $user, Lesson $lesson, ?Enrollment $enrollment, Request $request): array
+    public function issue(User $user, Lesson $lesson, ?Enrollment $enrollment, Request $request, ?LessonMaterial $material = null): array
     {
-        abort_unless($lesson->isVideo() && $lesson->content_ref, 404, 'This lesson has no video.');
+        $videoId = null;
+
+        if ($material) {
+            abort_unless($material->lesson_id === $lesson->id, 404);
+            abort_unless($material->type === LessonMaterial::TYPE_YOUTUBE, 404, 'This material has no video.');
+            $videoId = $material->rawContentRef();
+        } else {
+            // Prefer the first ready YouTube material when present.
+            $youtube = $lesson->resolvedMaterials()
+                ->first(fn (LessonMaterial $item) => $item->type === LessonMaterial::TYPE_YOUTUBE && $item->isReady());
+            if ($youtube) {
+                $videoId = $youtube->rawContentRef();
+            } else {
+                abort_unless($lesson->isVideo() && $lesson->content_ref, 404, 'This lesson has no video.');
+                $videoId = $lesson->content_ref;
+            }
+        }
+
+        abort_unless(filled($videoId), 404, 'This lesson has no video.');
 
         $ticket = Str::random(64);
         $hash = hash('sha256', $ticket);
@@ -43,6 +62,7 @@ class VideoAccessService
         $payload = [
             'user_id' => $user->id,
             'lesson_id' => $lesson->id,
+            'material_id' => $material?->id,
             'enrollment_id' => $enrollment?->id,
             'expires_at' => $expiresAt->toIso8601String(),
         ];
@@ -67,10 +87,11 @@ class VideoAccessService
         AuditLog::record('video_token.issued', 'lesson', $lesson->id, [
             'expires_at' => $expiresAt->toIso8601String(),
             'free_preview' => $enrollment === null,
+            'material_id' => $material?->id,
         ], $user->id);
 
         return [
-            'video_id' => $lesson->content_ref,
+            'video_id' => $videoId,
             'ticket' => $ticket,
             'expires_at' => $expiresAt->toIso8601String(),
             'watermark' => $this->watermark($user),

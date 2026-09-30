@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LessonMaterial;
 use App\Services\VideoAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,16 @@ class VideoAccessController extends Controller
         /** @var Enrollment|null $enrollment set by EnsureEnrolled */
         $enrollment = $request->attributes->get('enrollment');
 
-        $payload = $this->videoAccess->issue($request->user(), $lesson, $enrollment, $request);
+        $material = null;
+        $materialId = $request->input('material_id');
+        if ($materialId) {
+            $material = LessonMaterial::query()
+                ->where('id', $materialId)
+                ->where('lesson_id', $lesson->id)
+                ->firstOrFail();
+        }
+
+        $payload = $this->videoAccess->issue($request->user(), $lesson, $enrollment, $request, $material);
 
         return response()->json(['data' => $payload]);
     }

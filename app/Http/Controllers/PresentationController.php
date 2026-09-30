@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\LessonMaterial;
 use App\Models\Presentation;
 use App\Services\PresentationService;
 use Illuminate\Http\Request;
@@ -49,6 +50,15 @@ class PresentationController extends Controller
      */
     public function show(Request $request, Lesson $lesson): Response
     {
+        $material = $lesson->materials()
+            ->where('type', LessonMaterial::TYPE_HTML)
+            ->orderBy('order_index')
+            ->first();
+
+        if ($material && $material->storage_path) {
+            return $this->showMaterial($request, $material);
+        }
+
         $presentation = $lesson->presentation;
 
         if (! $presentation) {
@@ -62,11 +72,28 @@ class PresentationController extends Controller
         );
     }
 
+    public function showMaterial(Request $request, LessonMaterial $material): Response
+    {
+        abort_unless($material->type === LessonMaterial::TYPE_HTML, 404);
+        abort_unless($material->storage_path && $material->entry_file, 404, 'No presentation uploaded.');
+
+        return $this->serveMaterialFile($material, $material->entry_file, 'text/html');
+    }
+
     /**
      * Serve a supporting asset (image, CSS, JS) from within the presentation bundle.
      */
     public function asset(Request $request, Lesson $lesson, string $path): Response
     {
+        $material = $lesson->materials()
+            ->where('type', LessonMaterial::TYPE_HTML)
+            ->orderBy('order_index')
+            ->first();
+
+        if ($material && $material->storage_path) {
+            return $this->assetMaterial($request, $material, $path);
+        }
+
         $presentation = $lesson->presentation;
 
         if (! $presentation) {
@@ -94,6 +121,82 @@ class PresentationController extends Controller
             'Cache-Control' => 'public, max-age=86400',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    public function assetMaterial(Request $request, LessonMaterial $material, string $path): Response
+    {
+        abort_unless($material->type === LessonMaterial::TYPE_HTML, 404);
+        abort_unless($material->storage_path, 404);
+
+        if (str_contains($path, '..')) {
+            abort(403);
+        }
+
+        $fullPath = "{$material->storage_path}/{$path}";
+        $disk = Storage::disk(PresentationService::DISK);
+
+        if (! $disk->exists($fullPath)) {
+            abort(404);
+        }
+
+        $mime = $this->guessMimeType($path);
+        $content = $disk->get($fullPath);
+
+        return response($content, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline',
+            'Cache-Control' => 'public, max-age=86400',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    private function serveMaterialFile(LessonMaterial $material, string $relativePath, string $mime): Response
+    {
+        $fullPath = "{$material->storage_path}/{$relativePath}";
+        $disk = Storage::disk(PresentationService::DISK);
+
+        if (! $disk->exists($fullPath)) {
+            abort(404, 'Presentation file not found.');
+        }
+
+        $content = $disk->get($fullPath);
+
+        if ($mime === 'text/html') {
+            $material->loadMissing('lesson.module.course:id,color,category');
+            $content = $this->rewriteMaterialAssetPaths($content, $material->id);
+            $content = $this->injectCourseColor($content, $material->lesson?->module?->course);
+        }
+
+        return response($content, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline',
+            'Content-Security-Policy' => "sandbox allow-scripts allow-same-origin allow-modals allow-forms; default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:; font-src * data:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'; worker-src blob: data: https:; connect-src * data: blob:",
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+
+    private function rewriteMaterialAssetPaths(string $html, string $materialId): string
+    {
+        $baseUrl = rtrim(url('/presentations/materials/'.$materialId), '/').'/assets/';
+
+        if (stripos($html, '<head>') !== false) {
+            $html = preg_replace(
+                '/<head>/i',
+                '<head><base href="'.htmlspecialchars($baseUrl, ENT_QUOTES).'">',
+                $html,
+                1,
+            );
+        } elseif (stripos($html, '<html>') !== false) {
+            $html = preg_replace(
+                '/<html>/i',
+                '<html><head><base href="'.htmlspecialchars($baseUrl, ENT_QUOTES).'"></head>',
+                $html,
+                1,
+            );
+        }
+
+        return $html;
     }
 
     /**

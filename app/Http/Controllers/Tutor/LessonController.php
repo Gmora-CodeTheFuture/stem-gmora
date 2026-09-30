@@ -51,6 +51,33 @@ class LessonController extends Controller
 
         if ($lesson->type === Lesson::TYPE_LIVE) {
             LiveSessionController::ensureForLesson($lesson);
+            $lesson->load('liveSession');
+        }
+
+        // Non-quiz lessons start with one material matching the chosen type.
+        if ($lesson->type !== Lesson::TYPE_QUIZ) {
+            $materialAttrs = [
+                'type' => $lesson->type,
+                'title' => null,
+                'order_index' => 0,
+                'content_ref' => $lesson->getRawOriginal('content_ref'),
+            ];
+
+            if ($lesson->type === Lesson::TYPE_LIVE && $lesson->liveSession) {
+                $session = $lesson->liveSession;
+                $materialAttrs = [
+                    ...$materialAttrs,
+                    'title' => $session->title,
+                    'scheduled_start' => $session->scheduled_start,
+                    'duration_minutes' => $session->duration_minutes,
+                    'zoom_join_url' => $session->zoom_join_url,
+                    'zoom_meeting_id' => $session->zoom_meeting_id,
+                    'zoom_passcode' => $session->zoom_passcode,
+                    'recording_url' => $session->recording_url,
+                ];
+            }
+
+            $lesson->materials()->create($materialAttrs);
         }
 
         $this->content->syncCounters($course);

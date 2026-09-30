@@ -5,11 +5,12 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import QuizBuilderPanel from '@/Components/Tutor/QuizBuilderPanel';
+import MaterialsEditor, { TutorMaterial } from '@/Components/Tutor/MaterialsEditor';
 import AssignmentQuestionBuilder from '@/Components/Tutor/AssignmentQuestionBuilder';
 import SystemSelect from '@/Components/SystemSelect';
-import { PageProps, Course, Module, Lesson, Assignment, LiveSession, User } from '@/types';
-import { FormEventHandler, useState } from 'react';
-import { Plus, GripVertical, Trash2, Video, FileText, CheckCircle, AlertCircle, Clock, Globe, Upload, Pencil, HelpCircle, Radio, ClipboardCheck } from 'lucide-react';
+import { PageProps, Course, Module, Lesson, Assignment, User } from '@/types';
+import { FormEventHandler, useEffect, useState } from 'react';
+import { Plus, GripVertical, Trash2, Video, FileText, CheckCircle, AlertCircle, Clock, Globe, Upload, Pencil, HelpCircle, Radio, ClipboardCheck, ChevronDown } from 'lucide-react';
 
 interface ReadinessCheck {
     label: string;
@@ -86,8 +87,6 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
     // Lesson Form State
     const [addingLessonTo, setAddingLessonTo] = useState<string | null>(null);
     const [lessonData, setLessonData] = useState({ title: '', type: 'youtube', content_ref: '', duration_minutes: 0, is_free_preview: false });
-    const [presentationFile, setPresentationFile] = useState<File | null>(null);
-    const [uploading, setUploading] = useState(false);
 
     const blankLesson = { title: '', type: 'youtube', content_ref: '', duration_minutes: 0, is_free_preview: false };
 
@@ -106,7 +105,6 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         router.post(`/tutor/modules/${addingLessonTo}/lessons`, lessonPayload(lessonData), {
             onSuccess: () => {
                 setLessonData(blankLesson);
-                setPresentationFile(null);
                 setAddingLessonTo(null);
             }
         });
@@ -116,7 +114,11 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
     // missing duration, a wrong video id) can only be fixed by deleting it.
     const [editingLesson, setEditingLesson] = useState<(typeof blankLesson & { id: string }) | null>(null);
 
-    const openLesson = (lesson: Lesson) =>
+    const openLesson = (lesson: Lesson) => {
+        const parentId = (course.modules ?? []).find((m: Module) =>
+            m.lessons?.some((l: Lesson) => l.id === lesson.id),
+        )?.id;
+        if (parentId) expandModule(parentId);
         setEditingLesson({
             id: lesson.id,
             title: lesson.title,
@@ -126,6 +128,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
             duration_minutes: Math.round((lesson.duration_seconds ?? 0) / 60),
             is_free_preview: lesson.is_free_preview ?? false,
         });
+    };
 
     const saveLesson: FormEventHandler = (e) => {
         e.preventDefault();
@@ -154,24 +157,11 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         router.post(`/tutor/courses/${course.id}/image`, formData, { forceFormData: true, preserveScroll: true });
     };
 
-    const uploadPdf = (lessonId: string, file: File) => {
+    const uploadPresentation = (lessonId: string, file: File) => {
         const formData = new FormData();
-        formData.append('pdf_file', file);
-        router.post(`/tutor/lessons/${lessonId}/pdf`, formData, { forceFormData: true, preserveScroll: true });
-    };
-
-    const uploadPresentation = (lessonId: string, file?: File) => {
-        const uploadFile = file || presentationFile;
-        if (!uploadFile) return;
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('presentation_file', uploadFile);
+        formData.append('presentation_file', file);
         router.post(`/tutor/lessons/${lessonId}/presentation`, formData, {
             forceFormData: true,
-            onFinish: () => {
-                setUploading(false);
-                setPresentationFile(null);
-            },
         });
     };
 
@@ -300,23 +290,36 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         return mod?.title ?? 'In curriculum';
     };
 
-    const saveLiveSession = (lesson: Lesson, session: Partial<LiveSession>) => {
-        router.patch(`/tutor/lessons/${lesson.id}/live-session`, {
-            title: session.title || lesson.title,
-            scheduled_start: session.scheduled_start,
-            duration_minutes: session.duration_minutes ?? 60,
-            zoom_join_url: session.zoom_join_url || null,
-            zoom_meeting_id: session.zoom_meeting_id || null,
-            zoom_passcode: session.zoom_passcode || null,
-            recording_url: session.recording_url || null,
-        }, { preserveScroll: true });
-    };
-
     // Reordering. The grip handles have always been there but nothing was
     // wired to them, so the order a course was authored in was the order it
     // shipped in. Drag for mice, arrow keys on the focused handle for everyone
     // else — a drag-only control is unusable from a keyboard.
     const [dragging, setDragging] = useState<{ kind: 'module' | 'lesson'; id: string; scope?: string } | null>(null);
+    const [expandedModules, setExpandedModules] = useState<string[]>(() =>
+        (course.modules ?? []).map((m: Module) => m.id),
+    );
+
+    useEffect(() => {
+        const ids = (course.modules ?? []).map((m: Module) => m.id);
+        setExpandedModules((prev) => {
+            const kept = prev.filter((id) => ids.includes(id));
+            const added = ids.filter((id) => !prev.includes(id));
+            // Keep collapsed state for existing modules; expand newly added ones.
+            return [...kept, ...added];
+        });
+    }, [course.modules]);
+
+    const isModuleExpanded = (id: string) => expandedModules.includes(id);
+
+    const toggleModuleExpanded = (id: string) => {
+        setExpandedModules((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+        );
+    };
+
+    const expandModule = (id: string) => {
+        setExpandedModules((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    };
 
     const moduleIds = () => (course.modules ?? []).map((m: Module) => m.id);
     const lessonIds = (moduleId: string) =>
@@ -327,6 +330,14 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
 
     const commitLessons = (moduleId: string, order: string[]) =>
         router.post(`/tutor/modules/${moduleId}/lessons/reorder`, { order }, { preserveScroll: true });
+
+    /** Pull `id` out and insert it before `targetId` (or at end if target missing). */
+    const resequenceBefore = (ids: string[], id: string, targetId: string) => {
+        const next = ids.filter((candidate) => candidate !== id);
+        const to = next.indexOf(targetId);
+        next.splice(to < 0 ? next.length : to, 0, id);
+        return next;
+    };
 
     /** Pull `id` out of the list and drop it back in at `to`. */
     const resequence = (ids: string[], id: string, to: number) => {
@@ -350,18 +361,46 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
     };
 
     const dropOnModule = (targetId: string) => {
-        if (dragging?.kind !== 'module' || dragging.id === targetId) return;
-        const ids = moduleIds();
-        commitModules(resequence(ids, dragging.id, ids.indexOf(targetId)));
+        if (dragging?.kind !== 'module' || dragging.id === targetId) {
+            setDragging(null);
+            return;
+        }
+        commitModules(resequenceBefore(moduleIds(), dragging.id, targetId));
         setDragging(null);
     };
 
     const dropOnLesson = (moduleId: string, targetId: string) => {
         // Lessons only reorder within their own module.
-        if (dragging?.kind !== 'lesson' || dragging.scope !== moduleId || dragging.id === targetId) return;
-        const ids = lessonIds(moduleId);
-        commitLessons(moduleId, resequence(ids, dragging.id, ids.indexOf(targetId)));
+        if (dragging?.kind !== 'lesson' || dragging.scope !== moduleId || dragging.id === targetId) {
+            setDragging(null);
+            return;
+        }
+        commitLessons(moduleId, resequenceBefore(lessonIds(moduleId), dragging.id, targetId));
         setDragging(null);
+    };
+
+    const startModuleDrag = (e: React.DragEvent, id: string) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+        setDragging({ kind: 'module', id });
+    };
+
+    const startLessonDrag = (e: React.DragEvent, moduleId: string, id: string) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', id);
+        setDragging({ kind: 'lesson', id, scope: moduleId });
+    };
+
+    const allowModuleDrop = (e: React.DragEvent) => {
+        if (dragging?.kind !== 'module') return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const allowLessonDrop = (e: React.DragEvent, moduleId: string) => {
+        if (dragging?.kind !== 'lesson' || dragging.scope !== moduleId) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
     };
 
     const gripKeys = (move: (delta: number) => void) => (e: React.KeyboardEvent) => {
@@ -582,44 +621,65 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                         {course.modules?.map((module: Module) => (
                             <div
                                 key={module.id}
-                                className={`card overflow-hidden transition-opacity ${dragging?.kind === 'module' && dragging.id === module.id ? 'opacity-50' : ''}`}
-                                onDragOver={(e) => dragging?.kind === 'module' && e.preventDefault()}
+                                className={`card overflow-hidden transition-opacity ${dragging?.kind === 'module' && dragging.id === module.id ? 'opacity-50' : ''} ${dragging?.kind === 'module' && dragging.id !== module.id ? 'ring-1 ring-primary-300 dark:ring-primary-700' : ''}`}
+                                onDragOver={allowModuleDrop}
                                 onDrop={() => dropOnModule(module.id)}
                             >
-                                <div className="bg-surface-50 dark:bg-surface-900/50 p-4 border-b border-surface-200 dark:border-surface-800 flex items-center justify-between">
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <button
-                                            type="button"
+                                <div className={`bg-surface-50 dark:bg-surface-900/50 p-4 flex items-center justify-between ${isModuleExpanded(module.id) ? 'border-b border-surface-200 dark:border-surface-800' : ''}`}>
+                                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                                        <span
+                                            role="button"
+                                            tabIndex={0}
                                             draggable
-                                            onDragStart={() => setDragging({ kind: 'module', id: module.id })}
+                                            onDragStart={(e) => startModuleDrag(e, module.id)}
                                             onDragEnd={() => setDragging(null)}
                                             onKeyDown={gripKeys((delta) => nudgeModule(module.id, delta))}
-                                            className="cursor-move text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            className="cursor-grab active:cursor-grabbing text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 p-0.5 shrink-0"
                                             title="Drag to reorder, or focus and use the arrow keys"
                                             aria-label={`Reorder module ${module.title}`}
                                         >
-                                            <GripVertical className="w-5 h-5" />
+                                            <GripVertical className="w-5 h-5 pointer-events-none" />
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleModuleExpanded(module.id)}
+                                            className="btn-icon text-surface-500 hover:text-surface-800 dark:hover:text-surface-200 shrink-0"
+                                            aria-expanded={isModuleExpanded(module.id)}
+                                            title={isModuleExpanded(module.id) ? 'Collapse module' : 'Expand module'}
+                                        >
+                                            <ChevronDown
+                                                className={`w-5 h-5 transition-transform duration-200 ${
+                                                    isModuleExpanded(module.id) ? '' : '-rotate-90'
+                                                }`}
+                                            />
                                         </button>
                                         {editingModule?.id === module.id ? (
-                                            <form onSubmit={saveModule} className="flex items-center gap-2 flex-1">
+                                            <form onSubmit={saveModule} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                                                 <TextInput className="flex-1" value={editingModule.title} onChange={(e) => setEditingModule({ ...editingModule, title: e.target.value })} required autoFocus />
                                                 <TextInput className="flex-1" value={editingModule.description} onChange={(e) => setEditingModule({ ...editingModule, description: e.target.value })} placeholder="Description (optional)" />
                                                 <PrimaryButton>Save</PrimaryButton>
                                                 <button type="button" onClick={() => setEditingModule(null)} className="text-sm text-surface-600 px-2">Cancel</button>
                                             </form>
                                         ) : (
-                                        <div>
-                                            <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleModuleExpanded(module.id)}
+                                            className="min-w-0 flex-1 text-left rounded-lg hover:bg-surface-100/80 dark:hover:bg-surface-800/60 px-1.5 py-1 -mx-1.5 -my-1 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2 flex-wrap">
                                                 <h3 className="font-semibold text-surface-900 dark:text-white">{module.title}</h3>
                                                 {!module.is_published && (
                                                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Draft</span>
                                                 )}
+                                                <span className="text-[11px] font-medium text-surface-500 dark:text-surface-400">
+                                                    {module.lessons?.length ?? 0} lesson{(module.lessons?.length ?? 0) === 1 ? '' : 's'}
+                                                </span>
                                             </div>
                                             {module.description && <p className="text-xs text-surface-500 mt-0.5">{module.description}</p>}
-                                        </div>
+                                        </button>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 shrink-0">
                                         <button
                                             onClick={() => setEditingModule({ id: module.id, title: module.title, description: module.description ?? '' })}
                                             className="btn-icon text-surface-500 hover:text-primary-600"
@@ -637,17 +697,18 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                         <button onClick={() => deleteModule(module.id)} className="btn-icon text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete module"><Trash2 className="w-4 h-4" /></button>
                                     </div>
                                 </div>
+                                {isModuleExpanded(module.id) && (
                                 <div className="p-4 space-y-2">
                                     {module.lessons?.map((lesson: Lesson) => editingLesson?.id === lesson.id ? (
                                         <form key={lesson.id} onSubmit={saveLesson} className="p-4 border border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20 space-y-4">
-                                            <h4 className="text-sm font-semibold text-primary-900 dark:text-primary-300">Edit lesson</h4>
+                                            <h4 className="text-sm font-semibold text-primary-900 dark:text-primary-300">Edit lesson topic</h4>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
-                                                    <InputLabel value="Lesson Title" />
+                                                    <InputLabel value="Topic title" />
                                                     <TextInput className="mt-1 block w-full" value={editingLesson.title} onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })} required autoFocus />
                                                 </div>
                                                 <div>
-                                                    <InputLabel value="Type" />
+                                                    <InputLabel value="Primary type" />
                                                     <SystemSelect
                                                         value={editingLesson.type}
                                                         onValueChange={(type) =>
@@ -656,68 +717,17 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                         triggerClassName="mt-1 w-full"
                                                         options={LESSON_TYPE_OPTIONS}
                                                     />
+                                                    <p className="text-xs text-surface-500 mt-1">
+                                                        Quiz stays single-purpose. Other types use materials below.
+                                                    </p>
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                {editingLesson.type === 'youtube' && (
-                                                    <div>
-                                                        <InputLabel value={editingLesson.type === 'youtube' ? 'YouTube Video ID' : 'PDF URL'} />
-                                                        <TextInput className="mt-1 block w-full" value={editingLesson.content_ref} onChange={(e) => setEditingLesson({ ...editingLesson, content_ref: e.target.value })} placeholder={editingLesson.type === 'youtube' ? 'Paste the YouTube link' : 'Leave blank to keep the current one'} />
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <InputLabel value="Duration (minutes)" />
-                                                    <TextInput type="number" min="0" className="mt-1 block w-full" value={editingLesson.duration_minutes} onChange={(e) => setEditingLesson({ ...editingLesson, duration_minutes: Number(e.target.value) })} />
-                                                    <p className="text-xs text-surface-500 mt-1">Required before the course can be published.</p>
-                                                </div>
+                                            <div>
+                                                <InputLabel value="Duration (minutes)" />
+                                                <TextInput type="number" min="0" className="mt-1 block w-full max-w-xs" value={editingLesson.duration_minutes} onChange={(e) => setEditingLesson({ ...editingLesson, duration_minutes: Number(e.target.value) })} />
+                                                <p className="text-xs text-surface-500 mt-1">Topic-level estimate shown to students.</p>
                                             </div>
-
-                                            {editingLesson.type === 'pdf' && (
-                                                <div className="p-3 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">
-                                                    <InputLabel value="PDF document" />
-                                                    <p className="text-xs text-surface-500 mt-1 mb-2">
-                                                        {lesson.has_pdf ? 'A document is attached. Uploading replaces it.' : 'No document attached yet.'}
-                                                    </p>
-                                                    <label className="btn-secondary text-sm cursor-pointer inline-flex">
-                                                        <Upload className="w-4 h-4" />
-                                                        {lesson.has_pdf ? 'Replace PDF' : 'Upload PDF'}
-                                                        <input
-                                                            type="file"
-                                                            accept="application/pdf,.pdf"
-                                                            className="hidden"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) uploadPdf(lesson.id, file);
-                                                            }}
-                                                        />
-                                                    </label>
-                                                </div>
-                                            )}
-
-                                            {editingLesson.type === 'html' && (
-                                                <div className="p-3 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">
-                                                    <InputLabel value="HTML presentation" />
-                                                    <p className="text-xs text-surface-500 mt-1 mb-2">
-                                                        {lesson.has_presentation
-                                                            ? 'A presentation is attached. Uploading replaces it.'
-                                                            : 'Upload a .zip containing index.html and its assets.'}
-                                                    </p>
-                                                    <label className="btn-secondary text-sm cursor-pointer inline-flex">
-                                                        <Upload className="w-4 h-4" />
-                                                        {lesson.has_presentation ? 'Replace .zip' : 'Upload .zip'}
-                                                        <input
-                                                            type="file"
-                                                            accept=".zip"
-                                                            className="hidden"
-                                                            onChange={(e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) uploadPresentation(lesson.id, file);
-                                                            }}
-                                                        />
-                                                    </label>
-                                                </div>
-                                            )}
 
                                             {editingLesson.type === 'quiz' && lesson.quiz && (
                                                 <QuizBuilderPanel quiz={lesson.quiz} />
@@ -727,10 +737,10 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 <p className="text-sm text-amber-600">Save this lesson as type Quiz, then reopen to configure questions.</p>
                                             )}
 
-                                            {editingLesson.type === 'live' && (
-                                                <LiveSessionFields
-                                                    lesson={lesson}
-                                                    onSave={(session) => saveLiveSession(lesson, session)}
+                                            {editingLesson.type !== 'quiz' && (
+                                                <MaterialsEditor
+                                                    lessonId={lesson.id}
+                                                    materials={(lesson.materials as TutorMaterial[] | undefined) ?? []}
                                                 />
                                             )}
 
@@ -748,25 +758,38 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                     ) : (
                                         <div
                                             key={lesson.id}
-                                            className={`flex items-center justify-between p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 group transition-opacity ${dragging?.kind === 'lesson' && dragging.id === lesson.id ? 'opacity-50' : ''}`}
-                                            onDragOver={(e) => dragging?.kind === 'lesson' && dragging.scope === module.id && e.preventDefault()}
+                                            className={`flex items-center justify-between p-3 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 group transition-opacity ${dragging?.kind === 'lesson' && dragging.id === lesson.id ? 'opacity-50' : ''} ${dragging?.kind === 'lesson' && dragging.scope === module.id && dragging.id !== lesson.id ? 'ring-1 ring-primary-300 dark:ring-primary-700' : ''}`}
+                                            onDragOver={(e) => allowLessonDrop(e, module.id)}
                                             onDrop={() => dropOnLesson(module.id, lesson.id)}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <button
-                                                    type="button"
+                                                <span
+                                                    role="button"
+                                                    tabIndex={0}
                                                     draggable
-                                                    onDragStart={() => setDragging({ kind: 'lesson', id: lesson.id, scope: module.id })}
+                                                    onDragStart={(e) => startLessonDrag(e, module.id, lesson.id)}
                                                     onDragEnd={() => setDragging(null)}
                                                     onKeyDown={gripKeys((delta) => nudgeLesson(module.id, lesson.id, delta))}
-                                                    className="cursor-move text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    className="cursor-grab active:cursor-grabbing text-surface-400 hover:text-surface-600 dark:hover:text-surface-200 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 p-0.5 shrink-0"
                                                     title="Drag to reorder, or focus and use the arrow keys"
                                                     aria-label={`Reorder lesson ${lesson.title}`}
                                                 >
-                                                    <GripVertical className="w-4 h-4" />
-                                                </button>
+                                                    <GripVertical className="w-4 h-4 pointer-events-none" />
+                                                </span>
                                                 {lesson.type === 'youtube' ? <Video className="w-4 h-4 text-blue-500" /> : lesson.type === 'html' ? <Globe className="w-4 h-4 text-violet-500" /> : lesson.type === 'quiz' ? <HelpCircle className="w-4 h-4 text-amber-500" /> : lesson.type === 'live' ? <Radio className="w-4 h-4 text-rose-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
                                                 <span className="text-sm font-medium text-surface-900 dark:text-white">{lesson.title}</span>
+                                                {(lesson.materials as TutorMaterial[] | undefined)?.length ? (
+                                                    <span className="flex items-center gap-1">
+                                                        {(lesson.materials as TutorMaterial[])
+                                                            .map((m) => m.type)
+                                                            .filter((t, i, arr) => arr.indexOf(t) === i)
+                                                            .map((type) => (
+                                                                <span key={type} className="inline-flex" title={type}>
+                                                                    {type === 'youtube' ? <Video className="w-3.5 h-3.5 text-blue-500" /> : type === 'html' ? <Globe className="w-3.5 h-3.5 text-violet-500" /> : type === 'live' ? <Radio className="w-3.5 h-3.5 text-rose-500" /> : <FileText className="w-3.5 h-3.5 text-emerald-500" />}
+                                                                </span>
+                                                            ))}
+                                                    </span>
+                                                ) : null}
                                                 {lesson.is_free_preview && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">Free</span>}
                                                 {!lesson.is_published && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Draft</span>}
                                             </div>
@@ -872,11 +895,18 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                             </div>
                                         </form>
                                     ) : (
-                                        <button onClick={() => setAddingLessonTo(module.id)} className="w-full mt-2 py-2 flex items-center justify-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors border border-dashed border-primary-200 dark:border-primary-800">
+                                        <button
+                                            onClick={() => {
+                                                expandModule(module.id);
+                                                setAddingLessonTo(module.id);
+                                            }}
+                                            className="w-full mt-2 py-2 flex items-center justify-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors border border-dashed border-primary-200 dark:border-primary-800"
+                                        >
                                             <Plus className="w-4 h-4" /> Add Lesson
                                         </button>
                                     )}
                                 </div>
+                                )}
                             </div>
                         ))}
 
@@ -1138,64 +1168,5 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                 )}
             </div>
         </DashboardLayout>
-    );
-}
-
-
-function LiveSessionFields({
-    lesson,
-    onSave,
-}: {
-    lesson: Lesson;
-    onSave: (session: Partial<LiveSession>) => void;
-}) {
-    const existing = lesson.live_session;
-    const toLocal = (iso?: string) => (iso ? iso.slice(0, 16) : '');
-    const [form, setForm] = useState({
-        title: existing?.title || lesson.title,
-        scheduled_start: toLocal(existing?.scheduled_start),
-        duration_minutes: existing?.duration_minutes ?? 60,
-        zoom_join_url: existing?.zoom_join_url ?? '',
-        zoom_meeting_id: existing?.zoom_meeting_id ?? '',
-        zoom_passcode: existing?.zoom_passcode ?? '',
-        recording_url: existing?.recording_url ?? '',
-    });
-
-    const submit: FormEventHandler = (e) => {
-        e.preventDefault();
-        onSave(form);
-    };
-
-    return (
-        <form onSubmit={submit} className="p-3 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700 space-y-3">
-            <h5 className="text-sm font-semibold">Live session</h5>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="sm:col-span-2">
-                    <InputLabel value="Session title" />
-                    <TextInput className="mt-1 block w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-                </div>
-                <div>
-                    <InputLabel value="Starts at" />
-                    <TextInput type="datetime-local" className="mt-1 block w-full" value={form.scheduled_start} onChange={(e) => setForm({ ...form, scheduled_start: e.target.value })} required />
-                </div>
-                <div>
-                    <InputLabel value="Duration (minutes)" />
-                    <TextInput type="number" min={5} className="mt-1 block w-full" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} />
-                </div>
-                <div className="sm:col-span-2">
-                    <InputLabel value="Zoom join URL" />
-                    <TextInput className="mt-1 block w-full" value={form.zoom_join_url} onChange={(e) => setForm({ ...form, zoom_join_url: e.target.value })} placeholder="https://zoom.us/j/..." />
-                </div>
-                <div>
-                    <InputLabel value="Meeting ID" />
-                    <TextInput className="mt-1 block w-full" value={form.zoom_meeting_id} onChange={(e) => setForm({ ...form, zoom_meeting_id: e.target.value })} />
-                </div>
-                <div>
-                    <InputLabel value="Passcode" />
-                    <TextInput className="mt-1 block w-full" value={form.zoom_passcode} onChange={(e) => setForm({ ...form, zoom_passcode: e.target.value })} />
-                </div>
-            </div>
-            <PrimaryButton type="submit">Save live session</PrimaryButton>
-        </form>
     );
 }

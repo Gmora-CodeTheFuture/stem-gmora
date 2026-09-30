@@ -401,7 +401,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                 <div className="p-3 border-t border-surface-200 dark:border-surface-800">
                     {expanded ? (
                         <Link
-                            href={route('courses.index')}
+                            href={route('dashboard.courses', { filter: 'all' })}
                             className="flex items-center gap-3 rounded-2xl bg-primary-50/90 dark:bg-primary-950/40 px-3 py-3 hover:bg-primary-50 dark:hover:bg-primary-950/60 transition-colors"
                         >
                             <span className="flex-1 min-w-0">
@@ -418,7 +418,7 @@ export default function DashboardLayout({ header, children, noScroll = false }: 
                         </Link>
                     ) : (
                         <Link
-                            href={route('courses.index')}
+                            href={route('dashboard.courses', { filter: 'all' })}
                             className="flex items-center justify-center py-2.5 rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors"
                             title="Explore new skills"
                         >

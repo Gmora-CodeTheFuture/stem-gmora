@@ -9,7 +9,9 @@ export default function Guest({ children }: PropsWithChildren) {
             <div className="hidden lg:flex lg:w-[45%] bg-black text-white p-12 flex-col relative overflow-hidden">
                 {/* Header/Logo */}
                 <div className="relative z-10">
-                    <img src="/logo-dark.png" alt="Gmora STEM" className="h-12 w-auto object-contain block" />
+                    <Link href="/" className="inline-block">
+                        <img src="/logo-dark.png" alt="Gmora STEM" className="h-12 w-auto object-contain block" />
+                    </Link>
                 </div>
 
                 {/* Hero Robot Background */}

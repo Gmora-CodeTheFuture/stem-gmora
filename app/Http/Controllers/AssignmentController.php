@@ -62,13 +62,18 @@ class AssignmentController extends Controller
             ->first();
 
         $reveal = $submission && in_array($submission->status, ['graded', 'returned'], true);
+        $answers = $submission?->answers ?? [];
 
         return Inertia::render('Dashboard/AssignmentDetail', [
             'assignment' => [
                 ...$assignment->only(['id', 'title', 'description', 'deadline_at', 'max_marks', 'rubric', 'is_required', 'module_id']),
                 'course' => $assignment->course?->only(['id', 'title', 'slug']),
                 'is_overdue' => $assignment->deadline_at?->isPast() ?? false,
-                'questions' => $assignment->questions->map(fn ($q) => $q->forStudent($reveal))->values(),
+                'questions' => $assignment->questions->map(
+                    fn ($q) => $reveal
+                        ? $q->forStudentReview($answers[$q->id] ?? null)
+                        : $q->forStudent(false)
+                )->values(),
             ],
             'submission' => $submission?->only([
                 'id', 'type', 'file_url', 'repo_url', 'link_url', 'notes', 'answers',

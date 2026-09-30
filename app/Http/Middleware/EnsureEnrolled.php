@@ -8,6 +8,7 @@ use App\Models\Discussion;
 use App\Models\DiscussionReply;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\LessonMaterial;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\Submission;
@@ -74,12 +75,13 @@ class EnsureEnrolled
      */
     private function resolveCourseId(Request $request): ?string
     {
-        foreach (['lesson', 'course', 'quiz', 'attempt', 'assignment', 'submission', 'discussion', 'reply'] as $parameter) {
+        foreach (['lesson', 'course', 'quiz', 'attempt', 'assignment', 'submission', 'discussion', 'reply', 'material'] as $parameter) {
             $model = $request->route($parameter);
 
             $courseId = match (true) {
                 $model instanceof Course => $model->id,
                 $model instanceof Lesson => $model->loadMissing('module')->module?->course_id,
+                $model instanceof LessonMaterial => $model->loadMissing('lesson.module')->lesson?->module?->course_id,
                 $model instanceof Quiz, $model instanceof Assignment => $model->course_id,
                 $model instanceof QuizAttempt => $model->loadMissing('quiz')->quiz?->course_id,
                 $model instanceof Submission => $model->loadMissing('assignment')->assignment?->course_id,

@@ -38,6 +38,16 @@ return [
             'report' => false,
         ],
 
+        // Non-public lesson PDFs and other enrollment-gated files.
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

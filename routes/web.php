@@ -38,6 +38,7 @@ use App\Http\Controllers\SupportController;
 use App\Http\Controllers\Tutor\AssignmentController as TutorAssignmentController;
 use App\Http\Controllers\Tutor\CourseBuilderController;
 use App\Http\Controllers\Tutor\LessonController;
+use App\Http\Controllers\Tutor\LessonMaterialController;
 use App\Http\Controllers\Tutor\LiveSessionController;
 use App\Http\Controllers\Tutor\ModuleController;
 use App\Http\Controllers\Tutor\QuizController as TutorQuizController;
@@ -223,11 +224,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Presentations — served in a new tab with sandboxed CSP
         Route::get('/lessons/{lesson}/pdf', [LessonFileController::class, 'pdf'])->name('lesson.pdf');
+        Route::get('/materials/{material}/pdf', [LessonFileController::class, 'pdfMaterial'])->name('lesson.material.pdf');
         Route::get('/presentations/{lesson}/view', [PresentationController::class, 'show'])
             ->name('presentation.show');
         Route::get('/presentations/{lesson}/assets/{path}', [PresentationController::class, 'asset'])
             ->where('path', '.*')
             ->name('presentation.asset');
+        Route::get('/presentations/materials/{material}/view', [PresentationController::class, 'showMaterial'])
+            ->name('presentation.material.show');
+        Route::get('/presentations/materials/{material}/assets/{path}', [PresentationController::class, 'assetMaterial'])
+            ->where('path', '.*')
+            ->name('presentation.material.asset');
 
         // Quizzes
         Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('quiz.show');
@@ -394,6 +401,14 @@ Route::middleware(['auth', 'verified', 'role:admin,instructor'])
         Route::post('/lessons/{lesson}/presentation', [PresentationController::class, 'upload'])->name('tutor.lessons.presentation.upload');
         Route::post('/lessons/{lesson}/pdf', [LessonController::class, 'uploadPdf'])->name('tutor.lessons.pdf.upload');
         Route::patch('/lessons/{lesson}/live-session', [LiveSessionController::class, 'update'])->name('tutor.lessons.live-session');
+
+        // Lesson materials (multi-format under one topic)
+        Route::post('/lessons/{lesson}/materials', [LessonMaterialController::class, 'store'])->name('tutor.materials.store');
+        Route::post('/lessons/{lesson}/materials/reorder', [LessonMaterialController::class, 'reorder'])->name('tutor.materials.reorder');
+        Route::patch('/materials/{material}', [LessonMaterialController::class, 'update'])->name('tutor.materials.update');
+        Route::delete('/materials/{material}', [LessonMaterialController::class, 'destroy'])->name('tutor.materials.destroy');
+        Route::post('/materials/{material}/pdf', [LessonMaterialController::class, 'uploadPdf'])->name('tutor.materials.pdf.upload');
+        Route::post('/materials/{material}/presentation', [LessonMaterialController::class, 'uploadPresentation'])->name('tutor.materials.presentation.upload');
 
         // Quizzes
         Route::patch('/quizzes/{quiz}', [TutorQuizController::class, 'update'])->name('tutor.quizzes.update');

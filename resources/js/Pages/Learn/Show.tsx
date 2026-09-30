@@ -26,6 +26,22 @@ import {
 } from '@/Components/Learn/courseShell';
 import { Lesson, Module, PageProps } from '@/types';
 
+type LessonMaterialItem = NonNullable<Lesson['materials']>[number];
+
+function readyMaterials(lesson: Lesson | null | undefined): LessonMaterialItem[] {
+    if (!lesson?.materials?.length) {
+        return [];
+    }
+
+    return lesson.materials.filter((m) => {
+        if (m.type === 'youtube') return Boolean(m.has_video);
+        if (m.type === 'pdf') return Boolean(m.has_pdf);
+        if (m.type === 'html') return Boolean(m.has_presentation);
+        if (m.type === 'live') return Boolean(m.zoom_join_url || m.scheduled_start);
+        return false;
+    });
+}
+
 type CurrentAssignment = {
     id: string;
     title: string;
@@ -39,6 +55,9 @@ type CurrentAssignment = {
         body: string;
         points: number;
         options?: Array<{ index?: number; text: string }>;
+        correct_answer?: unknown;
+        given_answer?: unknown;
+        is_correct?: boolean | null;
     }>;
     submission?: {
         id: string;
@@ -136,6 +155,39 @@ export default function LearnShow({
         ? Boolean(currentAssignment.submission) || !currentAssignment.is_required
         : currentLesson?.progress?.status === 'completed';
 
+    const materials = useMemo(() => readyMaterials(currentLesson), [currentLesson]);
+    const [activeMaterialId, setActiveMaterialId] = useState<string | null>(null);
+
+    useEffect(() => {
+        setActiveMaterialId(materials[0]?.id ?? null);
+    }, [currentLesson?.id]);
+
+    useEffect(() => {
+        if (materials.length === 0) {
+            if (activeMaterialId !== null) {
+                setActiveMaterialId(null);
+            }
+            return;
+        }
+        if (!materials.some((m) => m.id === activeMaterialId)) {
+            setActiveMaterialId(materials[0].id);
+        }
+    }, [materials, activeMaterialId]);
+
+    const activeMaterialIndex = materials.findIndex((m) => m.id === activeMaterialId);
+    const hasNextMaterial = materials.length > 1 && activeMaterialIndex >= 0 && activeMaterialIndex < materials.length - 1;
+    const hasPrevMaterial = materials.length > 1 && activeMaterialIndex > 0;
+
+    const goNextMaterial = useCallback(() => {
+        if (!hasNextMaterial) return;
+        setActiveMaterialId(materials[activeMaterialIndex + 1].id);
+    }, [hasNextMaterial, materials, activeMaterialIndex]);
+
+    const goPrevMaterial = useCallback(() => {
+        if (!hasPrevMaterial) return;
+        setActiveMaterialId(materials[activeMaterialIndex - 1].id);
+    }, [hasPrevMaterial, materials, activeMaterialIndex]);
+
     const [showCongrats, setShowCongrats] = useState(false);
     const lastDeckPercent = useRef(Number(currentLesson?.progress?.watch_percentage ?? 0));
 
@@ -186,19 +238,38 @@ export default function LearnShow({
             }
 
             if (data.type === 'deck-navigate') {
-                if (data.direction === 'next' && nextItem && canAdvance) {
-                    router.visit(itemHref(course.slug, nextItem));
-                } else if (data.direction === 'prev' && prevItem) {
-                    router.visit(itemHref(course.slug, prevItem));
-                } else if (data.direction === 'next' && !nextItem && canAdvance) {
-                    setShowCongrats(true);
+                if (data.direction === 'next') {
+                    if (hasNextMaterial) {
+                        goNextMaterial();
+                    } else if (nextItem && canAdvance) {
+                        router.visit(itemHref(course.slug, nextItem));
+                    } else if (!nextItem && canAdvance) {
+                        setShowCongrats(true);
+                    }
+                } else if (data.direction === 'prev') {
+                    if (hasPrevMaterial) {
+                        goPrevMaterial();
+                    } else if (prevItem) {
+                        router.visit(itemHref(course.slug, prevItem));
+                    }
                 }
             }
         };
 
         window.addEventListener('message', onMessage);
         return () => window.removeEventListener('message', onMessage);
-    }, [course.slug, currentLesson?.type, nextItem, prevItem, reportProgress, canAdvance]);
+    }, [
+        course.slug,
+        currentLesson?.type,
+        nextItem,
+        prevItem,
+        reportProgress,
+        canAdvance,
+        hasNextMaterial,
+        hasPrevMaterial,
+        goNextMaterial,
+        goPrevMaterial,
+    ]);
 
     const markComplete = () => {
         if (!currentLesson) return;
@@ -323,36 +394,13 @@ export default function LearnShow({
                                         )}
                                     </div>
                                 ) : currentLesson ? (
-                                    <div className="flex flex-col min-h-0 h-full gap-3">
-                                        <div className="flex-1 min-h-0 flex flex-col">
-                                            {currentLesson.type === 'youtube' && currentLesson.has_video ? (
-                                                <SecureVideoPlayer
-                                                    key={currentLesson.id}
-                                                    lessonId={currentLesson.id}
-                                                    title={currentLesson.title}
-                                                    initialPercentage={Number(
-                                                        currentLesson.progress?.watch_percentage ?? 0,
-                                                    )}
-                                                    onProgress={reportProgress}
-                                                />
-                                            ) : currentLesson.type === 'live' ? (
-                                                <LivePanel lesson={currentLesson} />
-                                            ) : currentLesson.type === 'quiz' ? (
-                                                <QuizPanel lesson={currentLesson} />
-                                            ) : currentLesson.type === 'html' ? (
-                                                <PresentationPanel lesson={currentLesson} />
-                                            ) : currentLesson.type === 'pdf' ? (
-                                                <DocumentPanel lesson={currentLesson} />
-                                            ) : (
-                                                <PlaceholderPanel lesson={currentLesson} />
-                                            )}
-                                        </div>
-                                        {currentLesson.description && (
-                                            <p className="text-sm text-surface-500 leading-relaxed hidden sm:block shrink-0">
-                                                {currentLesson.description}
-                                            </p>
-                                        )}
-                                    </div>
+                                    <LessonMaterialsPlayer
+                                        lesson={currentLesson}
+                                        materials={materials}
+                                        activeMaterialId={activeMaterialId}
+                                        onSelectMaterial={setActiveMaterialId}
+                                        reportProgress={reportProgress}
+                                    />
                                 ) : null}
                             </div>
 
@@ -373,6 +421,10 @@ export default function LearnShow({
                                     prevItem={prevItem}
                                     nextItem={nextItem}
                                     canAdvance={canAdvance}
+                                    hasNextMaterial={hasNextMaterial}
+                                    hasPrevMaterial={hasPrevMaterial}
+                                    onNextMaterial={goNextMaterial}
+                                    onPrevMaterial={goPrevMaterial}
                                     showComplete={Boolean(currentLesson) && !currentAssignment}
                                     isComplete={currentLesson?.progress?.status === 'completed'}
                                     onMarkComplete={markComplete}
@@ -392,6 +444,10 @@ export default function LearnShow({
                                     prevItem={prevItem}
                                     nextItem={nextItem}
                                     canAdvance={canAdvance}
+                                    hasNextMaterial={hasNextMaterial}
+                                    hasPrevMaterial={hasPrevMaterial}
+                                    onNextMaterial={goNextMaterial}
+                                    onPrevMaterial={goPrevMaterial}
                                     showComplete={Boolean(currentLesson) && !currentAssignment}
                                     isComplete={currentLesson?.progress?.status === 'completed'}
                                     onMarkComplete={markComplete}
@@ -560,6 +616,10 @@ function MobileStickyNav({
     prevItem,
     nextItem,
     canAdvance,
+    hasNextMaterial = false,
+    hasPrevMaterial = false,
+    onNextMaterial,
+    onPrevMaterial,
     showComplete,
     isComplete = false,
     onMarkComplete,
@@ -569,6 +629,10 @@ function MobileStickyNav({
     prevItem: CurriculumItem | null;
     nextItem: CurriculumItem | null;
     canAdvance: boolean;
+    hasNextMaterial?: boolean;
+    hasPrevMaterial?: boolean;
+    onNextMaterial?: () => void;
+    onPrevMaterial?: () => void;
     showComplete: boolean;
     isComplete?: boolean;
     onMarkComplete?: () => void;
@@ -576,7 +640,16 @@ function MobileStickyNav({
 }) {
     return (
         <div className="flex items-center gap-2">
-            {prevItem && (
+            {hasPrevMaterial && onPrevMaterial ? (
+                <button
+                    type="button"
+                    onClick={onPrevMaterial}
+                    className="btn-secondary h-11 px-3 shrink-0"
+                    aria-label="Previous resource"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                </button>
+            ) : prevItem ? (
                 <Link
                     href={itemHref(courseSlug, prevItem)}
                     className="btn-secondary h-11 px-3 shrink-0"
@@ -584,7 +657,7 @@ function MobileStickyNav({
                 >
                     <ArrowLeft className="w-4 h-4" />
                 </Link>
-            )}
+            ) : null}
 
             {showComplete && onMarkComplete && !isComplete && (
                 <button type="button" onClick={onMarkComplete} className="btn-secondary h-11 flex-1 justify-center">
@@ -593,7 +666,11 @@ function MobileStickyNav({
                 </button>
             )}
 
-            {nextItem ? (
+            {hasNextMaterial && onNextMaterial ? (
+                <button type="button" onClick={onNextMaterial} className="btn-primary h-11 flex-1 justify-center">
+                    Next resource
+                </button>
+            ) : nextItem ? (
                 canAdvance ? (
                     <Link href={itemHref(courseSlug, nextItem)} className="btn-primary h-11 flex-1 justify-center">
                         Go to next item
@@ -618,6 +695,10 @@ function NavActions({
     prevItem,
     nextItem,
     canAdvance,
+    hasNextMaterial = false,
+    hasPrevMaterial = false,
+    onNextMaterial,
+    onPrevMaterial,
     showComplete,
     isComplete = false,
     onMarkComplete,
@@ -628,6 +709,10 @@ function NavActions({
     prevItem: CurriculumItem | null;
     nextItem: CurriculumItem | null;
     canAdvance: boolean;
+    hasNextMaterial?: boolean;
+    hasPrevMaterial?: boolean;
+    onNextMaterial?: () => void;
+    onPrevMaterial?: () => void;
     showComplete: boolean;
     isComplete?: boolean;
     onMarkComplete?: () => void;
@@ -642,7 +727,15 @@ function NavActions({
                     : 'grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 pt-3 sm:pt-5 border-t border-surface-200 dark:border-surface-800 shrink-0 mt-3 sm:mt-5'
             }
         >
-            {prevItem ? (
+            {hasPrevMaterial && onPrevMaterial ? (
+                <button
+                    type="button"
+                    onClick={onPrevMaterial}
+                    className="btn-secondary h-11 w-auto justify-center px-4"
+                >
+                    Previous
+                </button>
+            ) : prevItem ? (
                 <Link
                     href={itemHref(courseSlug, prevItem)}
                     className="btn-secondary h-11 w-auto justify-center px-4"
@@ -651,7 +744,15 @@ function NavActions({
                 </Link>
             ) : null}
 
-            {nextItem ? (
+            {hasNextMaterial && onNextMaterial ? (
+                <button
+                    type="button"
+                    onClick={onNextMaterial}
+                    className="btn-secondary h-11 w-auto justify-center px-4"
+                >
+                    Next
+                </button>
+            ) : nextItem ? (
                 canAdvance ? (
                     <Link
                         href={itemHref(courseSlug, nextItem)}
@@ -688,9 +789,147 @@ function NavActions({
     );
 }
 
-function LivePanel({ lesson }: { lesson: Lesson }) {
-    const session = lesson.live_session;
-    const start = session ? new Date(session.scheduled_start) : null;
+function LessonMaterialsPlayer({
+    lesson,
+    materials,
+    activeMaterialId,
+    onSelectMaterial,
+    reportProgress,
+}: {
+    lesson: Lesson;
+    materials: LessonMaterialItem[];
+    activeMaterialId: string | null;
+    onSelectMaterial: (id: string) => void;
+    reportProgress: (percentage: number, completed: boolean) => void;
+}) {
+    const active = materials.find((m) => m.id === activeMaterialId) ?? materials[0] ?? null;
+
+    if (lesson.type === 'quiz' && materials.length === 0) {
+        return (
+            <div className="flex flex-col min-h-0 h-full gap-3">
+                <div className="flex-1 min-h-0 flex flex-col">
+                    <QuizPanel lesson={lesson} />
+                </div>
+            </div>
+        );
+    }
+
+    if (!active) {
+        // Legacy single-type fallback when materials array is empty but flags exist.
+        return (
+            <div className="flex flex-col min-h-0 h-full gap-3">
+                <div className="flex-1 min-h-0 flex flex-col">
+                    {lesson.type === 'youtube' && lesson.has_video ? (
+                        <SecureVideoPlayer
+                            key={lesson.id}
+                            lessonId={lesson.id}
+                            title={lesson.title}
+                            initialPercentage={Number(lesson.progress?.watch_percentage ?? 0)}
+                            onProgress={reportProgress}
+                        />
+                    ) : lesson.type === 'live' ? (
+                        <LivePanel lesson={lesson} />
+                    ) : lesson.type === 'html' ? (
+                        <PresentationPanel lesson={lesson} />
+                    ) : lesson.type === 'pdf' ? (
+                        <DocumentPanel lesson={lesson} />
+                    ) : (
+                        <PlaceholderPanel lesson={lesson} />
+                    )}
+                </div>
+                {lesson.description && (
+                    <p className="text-sm text-surface-500 leading-relaxed hidden sm:block shrink-0">
+                        {lesson.description}
+                    </p>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col min-h-0 h-full gap-3">
+            {materials.length > 1 && (
+                <div
+                    className="shrink-0 flex items-center gap-1 overflow-x-auto scrollbar-thin pb-1"
+                    role="tablist"
+                    aria-label="Lesson materials"
+                >
+                    {materials.map((material) => (
+                        <button
+                            key={material.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={material.id === active.id}
+                            onClick={() => onSelectMaterial(material.id)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                                material.id === active.id
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-surface-700'
+                            }`}
+                        >
+                            {material.type === 'youtube' ? (
+                                <PlayCircle className="w-3.5 h-3.5" />
+                            ) : material.type === 'html' ? (
+                                <Globe className="w-3.5 h-3.5" />
+                            ) : material.type === 'live' ? (
+                                <Radio className="w-3.5 h-3.5" />
+                            ) : (
+                                <FileText className="w-3.5 h-3.5" />
+                            )}
+                            {material.title}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            <div className="flex-1 min-h-0 flex flex-col">
+                {active.type === 'youtube' && active.has_video ? (
+                    <SecureVideoPlayer
+                        key={active.id}
+                        lessonId={lesson.id}
+                        materialId={active.legacy ? null : active.id}
+                        title={active.title || lesson.title}
+                        initialPercentage={Number(lesson.progress?.watch_percentage ?? 0)}
+                        onProgress={reportProgress}
+                    />
+                ) : active.type === 'live' ? (
+                    <LivePanel
+                        lesson={lesson}
+                        material={active}
+                    />
+                ) : active.type === 'html' ? (
+                    <PresentationPanel lesson={lesson} material={active} />
+                ) : active.type === 'pdf' ? (
+                    <DocumentPanel lesson={lesson} material={active} />
+                ) : (
+                    <PlaceholderPanel lesson={lesson} />
+                )}
+            </div>
+
+            {lesson.description && (
+                <p className="text-sm text-surface-500 leading-relaxed hidden sm:block shrink-0">
+                    {lesson.description}
+                </p>
+            )}
+        </div>
+    );
+}
+
+function LivePanel({
+    lesson,
+    material,
+}: {
+    lesson: Lesson;
+    material?: NonNullable<Lesson['materials']>[number];
+}) {
+    const session = material
+        ? {
+            scheduled_start: material.scheduled_start ?? '',
+            duration_minutes: material.duration_minutes ?? undefined,
+            zoom_join_url: material.zoom_join_url ?? undefined,
+        }
+        : lesson.live_session;
+    const start = session?.scheduled_start ? new Date(session.scheduled_start) : null;
     const soon = start ? start.getTime() - Date.now() < 30 * 60 * 1000 : false;
 
     return (
@@ -698,8 +937,10 @@ function LivePanel({ lesson }: { lesson: Lesson }) {
             <div className="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-950 flex items-center justify-center mx-auto mb-4">
                 <Radio className="w-7 h-7 text-primary-600 dark:text-primary-400" />
             </div>
-            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Live class</h2>
-            {start && (
+            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                {material?.title || 'Live class'}
+            </h2>
+            {start && !Number.isNaN(start.getTime()) && (
                 <p className="text-surface-500 mt-1">
                     {start.toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' })}
                     {session?.duration_minutes ? ` · ${session.duration_minutes} min` : ''}
@@ -744,12 +985,20 @@ function QuizPanel({ lesson }: { lesson: Lesson }) {
     );
 }
 
-function PresentationPanel({ lesson }: { lesson: Lesson }) {
+function PresentationPanel({
+    lesson,
+    material,
+}: {
+    lesson: Lesson;
+    material?: NonNullable<Lesson['materials']>[number];
+}) {
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [immersive, setImmersive] = useState(false);
+    const hasPresentation = material ? Boolean(material.has_presentation) : Boolean(lesson.has_presentation);
+    const viewKey = material && !material.legacy ? material.id : lesson.id;
 
     useEffect(() => {
-        if (!lesson.has_presentation) {
+        if (!hasPresentation) {
             return;
         }
 
@@ -796,7 +1045,7 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
             window.removeEventListener('keydown', onKeyDown);
             window.removeEventListener('message', onMessage);
         };
-    }, [lesson.has_presentation, lesson.id]);
+    }, [hasPresentation, viewKey]);
 
     useEffect(() => {
         if (!immersive) {
@@ -809,7 +1058,7 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
         };
     }, [immersive]);
 
-    if (!lesson.has_presentation) {
+    if (!hasPresentation) {
         return (
             <div className="card p-8 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-100 dark:from-violet-950 dark:to-indigo-950 flex items-center justify-center mx-auto mb-4">
@@ -821,7 +1070,9 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
         );
     }
 
-    const src = route('presentation.show', lesson.id);
+    const src = material && !material.legacy
+        ? route('presentation.material.show', material.id)
+        : route('presentation.show', lesson.id);
 
     return (
         <div
@@ -833,9 +1084,9 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
         >
             <iframe
                 ref={iframeRef}
-                key={lesson.id}
+                key={viewKey}
                 src={src}
-                title={lesson.title}
+                title={material?.title || lesson.title}
                 className="absolute inset-0 h-full w-full border-0"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
                 allow="clipboard-write; fullscreen"
@@ -845,8 +1096,16 @@ function PresentationPanel({ lesson }: { lesson: Lesson }) {
     );
 }
 
-function DocumentPanel({ lesson }: { lesson: Lesson }) {
-    if (!lesson.has_pdf) {
+function DocumentPanel({
+    lesson,
+    material,
+}: {
+    lesson: Lesson;
+    material?: NonNullable<Lesson['materials']>[number];
+}) {
+    const hasPdf = material ? Boolean(material.has_pdf) : Boolean(lesson.has_pdf);
+
+    if (!hasPdf) {
         return (
             <div className="card p-8 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mx-auto mb-4">
@@ -858,7 +1117,9 @@ function DocumentPanel({ lesson }: { lesson: Lesson }) {
         );
     }
 
-    const src = route('lesson.pdf', lesson.id);
+    const src = material && !material.legacy
+        ? route('lesson.material.pdf', material.id)
+        : route('lesson.pdf', lesson.id);
 
     return (
         <div className="card overflow-hidden flex-1 min-h-0 h-full flex flex-col">

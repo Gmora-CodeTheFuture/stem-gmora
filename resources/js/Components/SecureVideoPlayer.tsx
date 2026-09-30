@@ -18,6 +18,8 @@ const AUTO_COMPLETE_AT = 90;
 
 interface Props {
     lessonId: string;
+    /** When set, request a ticket for this YouTube material specifically. */
+    materialId?: string | null;
     title: string;
     /** Percentage already watched, used to resume where the student left off. */
     initialPercentage?: number;
@@ -76,7 +78,7 @@ function loadYouTubeApi(): Promise<void> {
     return apiPromise;
 }
 
-export default function SecureVideoPlayer({ lessonId, title, initialPercentage = 0, onProgress }: Props) {
+export default function SecureVideoPlayer({ lessonId, materialId = null, title, initialPercentage = 0, onProgress }: Props) {
     const [status, setStatus] = useState<Status>('idle');
     const [message, setMessage] = useState<string>('');
     const [watermark, setWatermark] = useState<string>('');
@@ -108,6 +110,7 @@ export default function SecureVideoPlayer({ lessonId, title, initialPercentage =
                     'X-XSRF-TOKEN': xsrfToken(),
                     'X-Requested-With': 'XMLHttpRequest',
                 },
+                body: JSON.stringify(materialId ? { material_id: materialId } : {}),
             });
 
             if (response.status === 403) {
@@ -168,7 +171,7 @@ export default function SecureVideoPlayer({ lessonId, title, initialPercentage =
             setStatus('error');
             setMessage('We could not start this lesson. Check your connection and try again.');
         }
-    }, [lessonId, initialPercentage]);
+    }, [lessonId, materialId, initialPercentage]);
 
     useEffect(() => {
         void start();

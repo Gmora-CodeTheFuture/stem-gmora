@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lesson;
+use App\Models\LessonMaterial;
 use App\Models\Presentation;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -44,6 +45,76 @@ class PresentationService
             'storage_path' => $storageDir,
             'file_size' => $file->getSize(),
         ]);
+    }
+
+    /** Store an HTML presentation bundle on a lesson material row. */
+    public function storeForMaterial(LessonMaterial $material, UploadedFile $file): LessonMaterial
+    {
+        if ($material->storage_path) {
+            Storage::disk(self::DISK)->deleteDirectory($material->storage_path);
+        }
+
+        $uuid = (string) Str::uuid();
+        $storageDir = "presentations/{$uuid}";
+
+        $this->extractZip($file, $storageDir);
+
+        $entryFile = $this->findEntryFile($storageDir);
+
+        $material->forceFill([
+            'type' => LessonMaterial::TYPE_HTML,
+            'original_filename' => $file->getClientOriginalName(),
+            'entry_file' => $entryFile,
+            'storage_path' => $storageDir,
+            'file_size' => $file->getSize(),
+        ])->save();
+
+        return $material->fresh();
+    }
+
+    /**
+     * Copy a staged directory (index.html + assets) onto a material row.
+     * Used by seeders and one-off attach of course-content lesson HTML.
+     */
+    public function storeFromDirectoryForMaterial(
+        LessonMaterial $material,
+        string $sourceDir,
+        string $entryFile = 'index.html',
+        ?string $originalFilename = null,
+    ): LessonMaterial {
+        if (! is_dir($sourceDir)) {
+            throw new \RuntimeException("Presentation source directory not found: {$sourceDir}");
+        }
+
+        $entryPath = rtrim($sourceDir, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$entryFile;
+        if (! is_file($entryPath)) {
+            throw new \RuntimeException("Presentation entry file not found: {$entryPath}");
+        }
+
+        if ($material->storage_path) {
+            Storage::disk(self::DISK)->deleteDirectory($material->storage_path);
+        }
+
+        $uuid = (string) Str::uuid();
+        $storageDir = "presentations/{$uuid}";
+        $disk = Storage::disk(self::DISK);
+
+        $this->moveDirectoryToStorage($sourceDir, $storageDir, $disk);
+
+        $fileSize = 0;
+        foreach ($disk->allFiles($storageDir) as $file) {
+            $fileSize += (int) $disk->size($file);
+        }
+
+        $material->forceFill([
+            'type' => LessonMaterial::TYPE_HTML,
+            'original_filename' => $originalFilename ?? basename($sourceDir),
+            'entry_file' => $entryFile,
+            'storage_path' => $storageDir,
+            'file_size' => $fileSize,
+        ])->save();
+
+        return $material->fresh();
     }
 
     /**

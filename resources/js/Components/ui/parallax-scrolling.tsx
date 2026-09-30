@@ -81,9 +81,9 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
                 className="parallax__layer-img absolute top-[10%] right-[5%] w-1/3 h-[40%] object-contain z-10 mix-blend-screen" 
             />
             <div data-parallax-layer="3" className="parallax__layer-title absolute inset-0 flex flex-col justify-start px-6 md:px-20 pt-[25vh] md:pt-[20vh] pb-20 md:pb-32 z-20">
-              <h2 className="parallax__title font-sans text-[22vw] md:text-[min(16vw,28vh)] xl:text-[min(18vw,30vh)] leading-[0.8] font-black text-white uppercase tracking-tighter text-left drop-shadow-2xl">
-                  <span className="text-transparent" style={{ WebkitTextStroke: 'max(1px, 0.15vw) white' }}>SHAPE</span><br/>
-                  <span className="text-transparent" style={{ WebkitTextStroke: 'max(1px, 0.15vw) white' }}>THE</span><br/>
+              <h2 className="parallax__title font-display text-[22vw] md:text-[min(16vw,28vh)] xl:text-[min(18vw,30vh)] leading-[0.9] font-bold text-white uppercase tracking-wide text-left drop-shadow-2xl">
+                  <span className="text-transparent" style={{ WebkitTextStroke: 'max(1px, 0.12vw) white' }}>SHAPE</span><br/>
+                  <span className="text-transparent" style={{ WebkitTextStroke: 'max(1px, 0.12vw) white' }}>THE</span><br/>
                   FUTURE
               </h2>
             </div>
