@@ -49,13 +49,13 @@ class SecurityHeaders
 
     private function contentSecurityPolicy(): string
     {
-        // Vite injects inline styles and the dev client uses websockets, so the
-        // policy is relaxed for local development only.
-        $scriptSrc = "'self' https://www.youtube.com https://s.ytimg.com";
+        // Ziggy (@routes) and the theme boot script are inline in app.blade.php.
+        // Vite HMR / eval are only needed in local.
+        $scriptSrc = "'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com";
         $connectSrc = "'self'";
 
         if (app()->environment('local')) {
-            $scriptSrc .= " 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* http://[::1]:*";
+            $scriptSrc .= " 'unsafe-eval' http://localhost:* http://127.0.0.1:* http://[::1]:*";
             $connectSrc .= ' ws://localhost:* ws://127.0.0.1:* ws://[::1]:* http://localhost:* http://127.0.0.1:* http://[::1]:*';
         }
 

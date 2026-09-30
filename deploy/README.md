@@ -21,8 +21,10 @@ docker compose build
 docker compose up -d
 ```
 
-App: http://localhost:8080  
-MinIO console: http://localhost:9001 (`gmora` / `gmorasecret`)
+App: http://localhost:8088  
+MinIO console: http://localhost:9011 (`gmora` / `gmorasecret`)
+
+Host ports are remapped in `docker-compose.yml` to avoid clashes with other local stacks (Postgres `5436`, Redis `6381`, MinIO `9010`/`9011`).
 
 Roles share image `gmora-stem:local`. Scale web with:
 

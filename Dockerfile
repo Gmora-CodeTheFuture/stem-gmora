@@ -14,7 +14,8 @@ COPY resources ./resources
 COPY vite.config.js tsconfig.json tailwind.config.js ./
 COPY public ./public
 
-RUN npm run build
+# Skip `tsc` in the image build — Vite emits assets; typecheck runs in CI.
+RUN npx vite build
 
 # -----------------------------------------------------------------------------
 # Stage: PHP dependencies
@@ -37,7 +38,7 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 # -----------------------------------------------------------------------------
 # Stage: runtime (nginx + php-fpm)
 # -----------------------------------------------------------------------------
-FROM php:8.3-fpm-bookworm AS runtime
+FROM php:8.4-fpm-bookworm AS runtime
 
 ARG APP_USER=www-data
 

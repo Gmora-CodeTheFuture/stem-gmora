@@ -130,8 +130,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
         });
     };
 
-    const saveLesson: FormEventHandler = (e) => {
-        e.preventDefault();
+    const saveLesson = () => {
         if (!editingLesson) return;
         router.patch(`/tutor/lessons/${editingLesson.id}`, lessonPayload(editingLesson), {
             preserveScroll: true,
@@ -700,7 +699,7 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                 {isModuleExpanded(module.id) && (
                                 <div className="p-4 space-y-2">
                                     {module.lessons?.map((lesson: Lesson) => editingLesson?.id === lesson.id ? (
-                                        <form key={lesson.id} onSubmit={saveLesson} className="p-4 border border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20 space-y-4">
+                                        <div key={lesson.id} className="p-4 border border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20 space-y-4">
                                             <h4 className="text-sm font-semibold text-primary-900 dark:text-primary-300">Edit lesson topic</h4>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div>
@@ -751,10 +750,10 @@ export default function EditCourse({ course, readiness, canPublishDirectly, inst
                                                 </label>
                                                 <div className="flex gap-2">
                                                     <button type="button" onClick={() => setEditingLesson(null)} className="px-3 py-1.5 text-sm font-medium text-surface-600">Cancel</button>
-                                                    <PrimaryButton>Save lesson</PrimaryButton>
+                                                    <PrimaryButton type="button" onClick={saveLesson}>Save lesson</PrimaryButton>
                                                 </div>
                                             </div>
-                                        </form>
+                                        </div>
                                     ) : (
                                         <div
                                             key={lesson.id}

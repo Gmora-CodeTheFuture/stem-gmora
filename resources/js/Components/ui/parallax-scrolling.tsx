@@ -50,7 +50,9 @@ export function ParallaxComponent({ children }: { children?: React.ReactNode }) 
 
     return () => {
       ScrollTrigger.getAll().forEach(st => st.kill());
-      gsap.killTweensOf(triggerElement);
+      if (triggerElement) {
+        gsap.killTweensOf(triggerElement);
+      }
       gsap.ticker.remove(tick);
       gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();

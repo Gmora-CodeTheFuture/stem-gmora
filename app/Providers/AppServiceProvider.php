@@ -32,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // Host-relative asset URLs so Docker published ports / 127.0.0.1 vs
+        // localhost do not break module script loading.
+        Vite::createAssetPathsUsing(fn (string $path): string => '/'.ltrim($path, '/'));
+
         // `artisan serve` is single-threaded, so one request that outruns PHP's
         // 30 second limit does not just fail — it takes the whole dev server
         // down. The database is remote and occasionally cold, which is enough

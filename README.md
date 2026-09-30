@@ -17,8 +17,8 @@ docker compose build
 docker compose up -d
 ```
 
-- App: http://localhost:8080  
-- MinIO: http://localhost:9001  
+- App: http://localhost:8088  
+- MinIO: http://localhost:9011  
 
 See [deploy/README.md](deploy/README.md) for architecture, Helm install, CI image publish, storage migration, and dual-replica checks.
 

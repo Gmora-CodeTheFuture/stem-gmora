@@ -3,7 +3,7 @@ import TextInput from '@/Components/TextInput';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { router } from '@inertiajs/react';
 import { FileText, Globe, GripVertical, Plus, Radio, Trash2, Upload, Video } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export type MaterialType = 'youtube' | 'pdf' | 'html' | 'live';
 
@@ -187,9 +187,18 @@ function MaterialFields({ material }: { material: TutorMaterial }) {
     const [zoomMeetingId, setZoomMeetingId] = useState(material.zoom_meeting_id ?? '');
     const [zoomPasscode, setZoomPasscode] = useState(material.zoom_passcode ?? '');
     const [recordingUrl, setRecordingUrl] = useState(material.recording_url ?? '');
+    const [hasPdf, setHasPdf] = useState(Boolean(material.has_pdf));
+    const [hasPresentation, setHasPresentation] = useState(Boolean(material.has_presentation));
+    const [presentationName, setPresentationName] = useState(material.original_filename ?? null);
+    const [uploading, setUploading] = useState(false);
 
-    const save = (e: FormEvent) => {
-        e.preventDefault();
+    useEffect(() => {
+        setHasPdf(Boolean(material.has_pdf));
+        setHasPresentation(Boolean(material.has_presentation));
+        setPresentationName(material.original_filename ?? null);
+    }, [material.has_pdf, material.has_presentation, material.original_filename]);
+
+    const save = () => {
         const payload: Record<string, unknown> = { title: title || null };
         if (material.type === 'youtube') {
             payload.content_ref = contentRef;
@@ -202,11 +211,39 @@ function MaterialFields({ material }: { material: TutorMaterial }) {
             payload.zoom_passcode = zoomPasscode || null;
             payload.recording_url = recordingUrl || null;
         }
-        router.patch(`/tutor/materials/${material.id}`, payload, { preserveScroll: true });
+        router.patch(`/tutor/materials/${material.id}`, payload as never, { preserveScroll: true });
     };
 
+    const uploadPdf = (file: File) => {
+        const data = new FormData();
+        data.append('pdf_file', file);
+        setUploading(true);
+        router.post(`/tutor/materials/${material.id}/pdf`, data, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => setHasPdf(true),
+            onFinish: () => setUploading(false),
+        });
+    };
+
+    const uploadPresentation = (file: File) => {
+        const data = new FormData();
+        data.append('presentation_file', file);
+        setUploading(true);
+        router.post(`/tutor/materials/${material.id}/presentation`, data, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setHasPresentation(true);
+                setPresentationName(file.name);
+            },
+            onFinish: () => setUploading(false),
+        });
+    };
+
+    // Must not be a <form>: this editor is rendered inside the lesson edit form.
     return (
-        <form onSubmit={save} className="space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             <div>
                 <InputLabel value="Label (optional)" />
                 <TextInput className="mt-1 block w-full" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Walkthrough video" />
@@ -222,22 +259,27 @@ function MaterialFields({ material }: { material: TutorMaterial }) {
             {material.type === 'pdf' && (
                 <div>
                     <p className="text-xs text-surface-500 mb-2">
-                        {material.has_pdf ? 'A document is attached. Uploading replaces it.' : 'No document attached yet.'}
+                        {uploading
+                            ? 'Uploading document…'
+                            : hasPdf
+                              ? 'A document is attached. Uploading replaces it.'
+                              : 'No document attached yet.'}
                     </p>
-                    <label className="btn-secondary text-sm cursor-pointer inline-flex">
+                    <label className={`btn-secondary text-sm cursor-pointer inline-flex items-center gap-1.5 ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
                         <Upload className="w-4 h-4" />
-                        {material.has_pdf ? 'Replace PDF' : 'Upload PDF'}
+                        {hasPdf ? 'Replace PDF' : 'Upload PDF'}
                         <input
                             type="file"
                             accept="application/pdf,.pdf"
-                            className="hidden"
+                            className="sr-only"
+                            disabled={uploading}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
+                                e.stopPropagation();
                                 const file = e.target.files?.[0];
+                                e.target.value = '';
                                 if (!file) return;
-                                router.post(`/tutor/materials/${material.id}/pdf`, { pdf_file: file }, {
-                                    forceFormData: true,
-                                    preserveScroll: true,
-                                });
+                                uploadPdf(file);
                             }}
                         />
                     </label>
@@ -247,24 +289,27 @@ function MaterialFields({ material }: { material: TutorMaterial }) {
             {material.type === 'html' && (
                 <div>
                     <p className="text-xs text-surface-500 mb-2">
-                        {material.has_presentation
-                            ? `Attached: ${material.original_filename ?? 'presentation.zip'}`
-                            : 'Upload a .zip containing index.html and its assets.'}
+                        {uploading
+                            ? 'Uploading presentation…'
+                            : hasPresentation
+                              ? `Attached: ${presentationName ?? 'presentation.zip'}`
+                              : 'Upload a .zip containing index.html and its assets.'}
                     </p>
-                    <label className="btn-secondary text-sm cursor-pointer inline-flex">
+                    <label className={`btn-secondary text-sm cursor-pointer inline-flex items-center gap-1.5 ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
                         <Upload className="w-4 h-4" />
-                        {material.has_presentation ? 'Replace .zip' : 'Upload .zip'}
+                        {hasPresentation ? 'Replace .zip' : 'Upload .zip'}
                         <input
                             type="file"
-                            accept=".zip"
-                            className="hidden"
+                            accept=".zip,application/zip"
+                            className="sr-only"
+                            disabled={uploading}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => {
+                                e.stopPropagation();
                                 const file = e.target.files?.[0];
+                                e.target.value = '';
                                 if (!file) return;
-                                router.post(`/tutor/materials/${material.id}/presentation`, { presentation_file: file }, {
-                                    forceFormData: true,
-                                    preserveScroll: true,
-                                });
+                                uploadPresentation(file);
                             }}
                         />
                     </label>
@@ -302,9 +347,9 @@ function MaterialFields({ material }: { material: TutorMaterial }) {
 
             {(material.type === 'youtube' || material.type === 'live' || material.type === 'pdf' || material.type === 'html') && (
                 <div className="flex justify-end">
-                    <PrimaryButton type="submit">Save material</PrimaryButton>
+                    <PrimaryButton type="button" onClick={save}>Save material</PrimaryButton>
                 </div>
             )}
-        </form>
+        </div>
     );
 }

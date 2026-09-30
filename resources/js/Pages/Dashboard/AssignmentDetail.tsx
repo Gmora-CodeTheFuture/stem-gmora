@@ -42,9 +42,13 @@ const options: Array<{ value: SubmissionType; label: string; icon: typeof FileUp
     { value: 'link', label: 'External link', icon: Link2 },
 ];
 
+function asUploadType(type: SubmissionType | 'answers' | undefined): SubmissionType {
+    return type === 'file' || type === 'repo' || type === 'link' ? type : 'file';
+}
+
 export default function AssignmentDetail({ assignment, submission }: Props) {
     const locked = submission?.status === 'graded';
-    const [type, setType] = useState<SubmissionType>(submission?.type ?? 'file');
+    const [type, setType] = useState<SubmissionType>(() => asUploadType(submission?.type));
 
     const form = useForm<{
         type: SubmissionType;
@@ -53,7 +57,7 @@ export default function AssignmentDetail({ assignment, submission }: Props) {
         link_url: string;
         notes: string;
     }>({
-        type: submission?.type ?? 'file',
+        type: asUploadType(submission?.type),
         file: null,
         repo_url: submission?.repo_url ?? '',
         link_url: submission?.link_url ?? '',
