@@ -1,0 +1,142 @@
+replicaCount:
+  web: 2
+  worker: 1
+  scheduler: 1
+
+image:
+  repository: ghcr.io/example/gmora-stem
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: learn.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: gmora-tls
+      hosts:
+        - learn.example.com
+
+resources:
+  web:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  worker:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  scheduler:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+autoscaling:
+  web:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  worker:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  web:
+    enabled: true
+    minAvailable: 1
+
+migrate:
+  enabled: true
+
+probes:
+  liveness:
+    path: /up
+    initialDelaySeconds: 20
+    periodSeconds: 20
+    timeoutSeconds: 5
+  readiness:
+    path: /ready
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+
+env:
+  APP_NAME: "Gmora STEM"
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_URL: https://learn.example.com
+  LOG_CHANNEL: stack
+  LOG_STACK: stderr
+  LOG_LEVEL: info
+  DB_CONNECTION: pgsql
+  DB_PORT: "5432"
+  SESSION_DRIVER: redis
+  SESSION_SECURE_COOKIE: "true"
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  REDIS_CLIENT: phpredis
+  REDIS_PORT: "6379"
+  FILESYSTEM_DISK: local
+  FILESYSTEM_CLOUD: s3
+  AWS_DEFAULT_REGION: us-east-1
+  AWS_USE_PATH_STYLE_ENDPOINT: "false"
+  CACHE_CONFIG: "true"
+  RUN_MIGRATIONS: "false"
+
+# Non-secret connection hosts (override per environment)
+config:
+  DB_HOST: postgres.example.internal
+  DB_DATABASE: gmora
+  DB_USERNAME: gmora
+  REDIS_HOST: redis.example.internal
+  AWS_BUCKET: gmora-prod
+  AWS_URL: ""
+  AWS_ENDPOINT: ""
+
+# Create a Secret from these values for local/dev clusters only.
+# Prefer External Secrets / sealed-secrets in real environments.
+secrets:
+  create: true
+  APP_KEY: ""
+  DB_PASSWORD: ""
+  REDIS_PASSWORD: ""
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+
+networkPolicy:
+  enabled: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

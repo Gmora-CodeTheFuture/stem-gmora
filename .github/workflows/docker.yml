@@ -1,0 +1,142 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - Dockerfile
+      - docker/**
+      - docker-compose.yml
+      - deploy/helm/**
+      - composer.lock
+      - package-lock.json
+      - .github/workflows/docker.yml
+  workflow_dispatch:
+    inputs:
+      deploy_staging:
+        description: Deploy the built image to the staging cluster
+        type: boolean
+        default: false
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  helm-lint:
+    name: Helm lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Lint chart
+        run: |
+          helm lint deploy/helm/gmora \
+            --set secrets.APP_KEY=base64:dGVzdC1rZXktZm9yLWhlbG0tbGludC1vbmx5LTE= \
+            --set secrets.DB_PASSWORD=secret \
+            --set secrets.AWS_ACCESS_KEY_ID=test \
+            --set secrets.AWS_SECRET_ACCESS_KEY=test
+
+      - name: Render templates
+        run: |
+          helm template gmora deploy/helm/gmora \
+            --set secrets.APP_KEY=base64:dGVzdC1rZXktZm9yLWhlbG0tbGludC1vbmx5LTE= \
+            --set secrets.DB_PASSWORD=secret \
+            --set secrets.AWS_ACCESS_KEY_ID=test \
+            --set secrets.AWS_SECRET_ACCESS_KEY=test \
+            > /tmp/gmora-manifests.yaml
+          test -s /tmp/gmora-manifests.yaml
+
+  build:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy staging
+    needs: [build, helm-lint]
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.deploy_staging == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Helm upgrade staging
+        run: |
+          helm upgrade --install gmora-staging deploy/helm/gmora \
+            -f deploy/helm/gmora/values.yaml \
+            -f deploy/helm/gmora/values-staging.yaml \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ github.sha }} \
+            --set secrets.APP_KEY="${{ secrets.STAGING_APP_KEY }}" \
+            --set secrets.DB_PASSWORD="${{ secrets.STAGING_DB_PASSWORD }}" \
+            --set secrets.REDIS_PASSWORD="${{ secrets.STAGING_REDIS_PASSWORD }}" \
+            --set secrets.AWS_ACCESS_KEY_ID="${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}" \
+            --set secrets.AWS_SECRET_ACCESS_KEY="${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}" \
+            --set config.DB_HOST="${{ secrets.STAGING_DB_HOST }}" \
+            --set config.REDIS_HOST="${{ secrets.STAGING_REDIS_HOST }}" \
+            --set config.AWS_BUCKET="${{ secrets.STAGING_AWS_BUCKET }}" \
+            --wait --timeout 10m

@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: gmora
+      POSTGRES_USER: gmora
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gmora -d gmora"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: gmora
+      MINIO_ROOT_PASSWORD: gmorasecret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 gmora gmorasecret;
+      mc mb -p local/gmora || true;
+      mc anonymous set download local/gmora/app/public || true;
+      exit 0;
+      "
+
+  app:
+    build: .
+    image: gmora-stem:local
+    command: ["web"]
+    env_file: .env.docker
+    environment:
+      APP_ROLE: web
+      RUN_MIGRATIONS: "true"
+      CACHE_CONFIG: "true"
+    ports:
+      - "8080:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  worker:
+    image: gmora-stem:local
+    command: ["worker"]
+    env_file: .env.docker
+    environment:
+      APP_ROLE: worker
+      RUN_MIGRATIONS: "false"
+      CACHE_CONFIG: "true"
+    depends_on:
+      app:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    image: gmora-stem:local
+    command: ["scheduler"]
+    env_file: .env.docker
+    environment:
+      APP_ROLE: scheduler
+      RUN_MIGRATIONS: "false"
+      CACHE_CONFIG: "true"
+    depends_on:
+      app:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  miniodata:

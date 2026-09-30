@@ -1,0 +1,15 @@
+{{- if .Values.podDisruptionBudget.web.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "gmora.fullname" . }}-web
+  labels:
+    {{- include "gmora.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.web.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "gmora.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+{{- end }}

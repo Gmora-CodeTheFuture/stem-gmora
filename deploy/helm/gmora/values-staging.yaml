@@ -1,0 +1,28 @@
+image:
+  tag: staging
+
+ingress:
+  hosts:
+    - host: staging.learn.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: gmora-staging-tls
+      hosts:
+        - staging.learn.example.com
+
+env:
+  APP_ENV: staging
+  APP_DEBUG: "false"
+  APP_URL: https://staging.learn.example.com
+  LOG_LEVEL: debug
+
+replicaCount:
+  web: 2
+  worker: 1
+
+autoscaling:
+  web:
+    minReplicas: 2
+    maxReplicas: 4

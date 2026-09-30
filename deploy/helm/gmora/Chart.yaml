@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gmora
+description: Gmora STEM Laravel application (web, worker, scheduler)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

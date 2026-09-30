@@ -20,8 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            require __DIR__.'/../routes/health.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Ingress / load-balancer forwarded headers (TLS termination).
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
